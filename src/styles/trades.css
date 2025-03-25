@@ -1,0 +1,36 @@
+.trades-navbar {
+    max-width: 100%; /* ✅ Limits width so it does not stretch full screen */
+    margin: 0 auto; /* ✅ Centers the navbar */
+    background: #fff;
+    border-bottom: 2px solid #ddd;
+    overflow-x: auto; /* ✅ Allows horizontal scrolling if needed */
+    white-space: nowrap;
+    padding: 10px 0;
+    position: relative;
+}
+
+.trades-container {
+    display: flex;
+    justify-content: center; /* ✅ Keeps buttons centered */
+    gap: 10px;
+    padding: 0 15px;
+}
+
+.trade-btn {
+    background: #007bff;
+    color: white;
+    padding: 10px 15px;
+    text-decoration: none;
+    border-radius: 5px;
+    transition: 0.3s;
+    font-weight: bold;
+}
+
+.trade-btn:hover {
+    background: #0056b3;
+}
+
+/* ✅ Ensures the navbar does not disappear on page change */
+.active {
+    background: #0056b3;
+}

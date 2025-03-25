@@ -1,0 +1,91 @@
+.walletContainer {
+    max-width: 600px;
+    margin: auto;
+    padding: 20px;
+    background: #f8f9fa;
+    border-radius: 10px;
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+  }
+  
+  .walletHeader {
+    text-align: center;
+    font-size: 24px;
+    font-weight: bold;
+    margin-bottom: 20px;
+  }
+  
+  .balanceSection {
+    text-align: center;
+    font-size: 20px;
+    font-weight: bold;
+    margin-bottom: 20px;
+    color: #28a745;
+  }
+  
+  .transactionForm {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    margin-bottom: 20px;
+  }
+  
+  .formGroup {
+    display: flex;
+    flex-direction: column;
+  }
+  
+  label {
+    font-weight: bold;
+  }
+  
+  input, select {
+    padding: 8px;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+    font-size: 16px;
+  }
+  
+  .submitButton {
+    padding: 10px;
+    background: #007bff;
+    color: white;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    font-size: 16px;
+  }
+  
+  .submitButton:hover {
+    background: #0056b3;
+  }
+  
+  .transactionHistory {
+    margin-top: 20px;
+  }
+  
+  .transactionHistory h3 {
+    text-align: center;
+    margin-bottom: 10px;
+  }
+  
+  .transactionList {
+    list-style: none;
+    padding: 0;
+  }
+  
+  .transactionItem {
+    padding: 10px;
+    border-bottom: 1px solid #ddd;
+    display: flex;
+    justify-content: space-between;
+    font-size: 14px;
+  }
+  
+  .transactionItem.deposit {
+    color: #28a745;
+  }
+  
+  .transactionItem.withdrawal {
+    color: #dc3545;
+  }
+  

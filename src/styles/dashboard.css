@@ -1,0 +1,11 @@
+body {
+    font-family: 'Inter', sans-serif;
+    background-color: var(--background-light);
+    color: var(--text-light);
+    transition: background-color 0.3s, color 0.3s;
+}
+.uk-button-primary {
+    background-color: var(--primary-color);
+    border: none;
+    color: white;
+}

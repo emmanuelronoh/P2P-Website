@@ -1,0 +1,12 @@
+:root {
+    --primary-color: #1A237E; /* Adjust to match VULT Blue */
+    --secondary-color: #FFD700;
+    --background-light: #ffffff;
+    --background-dark: #121212;
+    --text-light: #000000;
+    --text-dark: #ffffff;
+}
+[data-theme="dark"] {
+    --background-light: #121212;
+    --text-light: #ffffff;
+}
