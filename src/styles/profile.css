@@ -1,0 +1,123 @@
+.profile-container {
+    max-width: 900px;
+    margin: 20px auto;
+    padding: 20px;
+    margin-top: 60PX;
+    width: 100VW;
+    color: #333;
+    border-radius: 10px;
+    box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.1);
+    font-family: 'Arial', sans-serif;
+  }
+  
+  h1 {
+    color: #333;
+    font-size: 26px;
+    text-align: center;
+  }
+  
+  .verified-badge {
+    color: green;
+    font-size: 20px;
+  }
+  
+  .trader-details-card,
+  .trader-list,
+  .feedback-section {
+    background: #fff;
+    padding: 15px;
+    border-radius: 8px;
+    margin-top: 15px;
+    box-shadow: 0px 2px 8px rgba(0, 0, 0, 0.1);
+  }
+  
+  .trader-card {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 15px;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    margin-top: 10px;
+    background: #fafafa;
+  }
+  
+  .trader-info {
+    flex: 1;
+  }
+  
+  .trader-info h3 {
+    margin: 0;
+    font-size: 18px;
+    color: #333;
+  }
+  
+  .trader-link {
+    text-decoration: none;
+    color: #007bff;
+    font-weight: bold;
+  }
+  
+  .trader-link:hover {
+    text-decoration: underline;
+  }
+  
+  .verified-icon {
+    color: green;
+  }
+  
+  .price-section {
+    text-align: center;
+    margin-right: 240px;
+  }
+  
+  .price {
+    font-size: 18px;
+    font-weight: bold;
+    color: #28a745;
+  }
+  
+  .buy-button,
+  .sell-button {
+    padding: 10px 15px;
+    border: none;
+    border-radius: 5px;
+    font-size: 16px;
+    cursor: pointer;
+    transition: background 0.3s ease;
+  }
+  
+  .buy-button {
+    background: #28a745;
+    color: #fff;
+  }
+  
+  .sell-button {
+    background: #dc3545;
+    color: #fff;
+  }
+  
+  .buy-button:hover,
+  .sell-button:hover {
+    opacity: 0.8;
+  }
+  
+  .feedback-card {
+    background: #f1f1f1;
+    padding: 10px;
+    border-radius: 5px;
+    margin-top: 10px;
+  }
+  
+  @media (max-width: 768px) {
+    .trader-card {
+      flex-direction: column;
+      align-items: flex-start;
+    }
+  
+    .price-section {
+      text-align: left;
+      margin-top: 10px;
+    }
+  }
+  

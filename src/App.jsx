@@ -6,12 +6,15 @@ import Register from "./pages/Register";
 import Login from "./pages/Login";
 import NavbarBeforeLogin from "./components/NavbarBeforeLogin";
 import NavbarAfterLogin from "./components/NavbarAfterLogin";
+import Footer from "./pages/Footer"; // ✅ Import Footer
 import "./styles/theme.css";
 import Wallet from "./pages/Wallet";
 import Trades from "./pages/Trades";
 import VerifyOTP from "./components/VerifyOTP";
 import BuyCrypto from "./pages/BuyCrypto";
+import Profile from "./pages/Profile";
 import SellCrypto from "./pages/SellCrypto";
+import Market from "./pages/Market";
 import ForgotPassword from "./components/ForgotPassword";
 import "uikit/dist/css/uikit.min.css";
 
@@ -34,7 +37,6 @@ function App() {
             {isAuthenticated ? <NavbarAfterLogin /> : <NavbarBeforeLogin />}
 
             <div className="app uk-container">
-                {/* Trades Navbar should only be shown on P2P pages */}
                 <Routes>
                     <Route path="/" element={<Home />} />
                     <Route path="/dashboard" element={<Dashboard />} />
@@ -43,11 +45,16 @@ function App() {
                     <Route path="/verify-otp" element={<VerifyOTP />} />
                     <Route path="/forgot-password" element={<ForgotPassword />} />
                     <Route path="/wallet" element={<Wallet />} />
-
-                    {/* P2P Trading Pages - Show Trades Navbar */}
+                    <Route path="/market" element={<Market />} />
+                    <Route path="/profile/:id" element={<Profile />} />
+                    
+                    {/* P2P Trading Pages */}
                     <Route path="/p2p/*" element={<P2PRoutes />} />
                 </Routes>
             </div>
+
+            {/* ✅ Add Footer Here */}
+            <Footer />
         </Router>
     );
 }

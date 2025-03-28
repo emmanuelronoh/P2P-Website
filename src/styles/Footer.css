@@ -1,0 +1,158 @@
+/* Default Dark Mode Styles (Dark background) */
+:root {
+    --footer-bg-color: #0d021f;
+    --footer-text-color: white;
+    --footer-heading-color: white;
+    --footer-link-color: white;
+    --footer-link-hover-color: #8000ff;
+    --footer-button-bg-color: #8000ff;
+    --footer-button-hover-bg-color: #4c00cc;
+    --footer-border-color: #555;
+    --footer-social-icon-color: white;
+    --footer-social-icon-hover-scale: 1.2;
+    --footer-social-icon-transition: 0.3s ease-in-out, transform 0.2s;
+    --footer-input-border-color: #ccc;
+    --footer-input-bg-color: #333;
+    --footer-button-text-color: white;
+    --footer-border-top-color: #555;
+    --footer-bottom-text-color: #888;
+}
+
+/* Light Mode Styles */
+@media (prefers-color-scheme: light) {
+    :root {
+        --footer-bg-color: #ffffff;
+        --footer-text-color: black;
+        --footer-heading-color: #0d021f;  /* Keep this color in light mode for heading */
+        --footer-link-color: #0d021f;  /* Light Mode links color */
+        --footer-link-hover-color: #8000ff;
+        --footer-button-bg-color: #8000ff;
+        --footer-button-hover-bg-color: #4c00cc;
+        --footer-border-color: #ddd;
+        --footer-social-icon-color: black;
+        --footer-social-icon-hover-scale: 1.2;
+        --footer-social-icon-transition: 0.3s ease-in-out, transform 0.2s;
+        --footer-input-border-color: #ccc;
+        --footer-input-bg-color: #fff;
+        --footer-button-text-color: white;
+        --footer-border-top-color: #ddd;
+        --footer-bottom-text-color: #555;
+    }
+}
+
+/* Footer Section Styles */
+.footer {
+    background: var(--footer-bg-color);
+    color: var(--footer-text-color);
+    padding: 0px 20px;
+    font-family: Arial, sans-serif;
+    animation: fadeIn 1s ease-in-out;
+
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.footer-container {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-between;
+    max-width: 1200px;
+    margin: auto;
+}
+
+.footer-brand,
+.footer-links,
+.footer-contact,
+.footer-social,
+.footer-newsletter {
+    flex: 1;
+    min-width: 250px;
+    margin: 10px;
+}
+
+.footer h3 {
+    font-size: 18px;
+    margin-bottom: 10px;
+    color: var(--footer-heading-color);
+}
+
+/* Navigation Links */
+.footer-links ul {
+    list-style: none;
+    padding: 0;
+}
+
+.footer-links li {
+    margin: 5px 0;
+}
+
+.footer-links a {
+    color: var(--footer-link-color);
+    text-decoration: none;
+    transition: color 0.3s ease-in-out;
+}
+
+.footer-links a:hover {
+    color: var(--footer-link-hover-color);
+    text-decoration: underline;
+}
+
+/* Social Media Icons */
+.social-icons a {
+    margin-right: 15px;
+    font-size: 22px;
+    color: var(--footer-social-icon-color);
+    transition: var(--footer-social-icon-transition);
+}
+
+.social-icons a:hover {
+    transform: scale(var(--footer-social-icon-hover-scale));
+}
+
+.facebook:hover { color: #1877F2; }  /* Facebook Blue */
+.twitter:hover { color: #1DA1F2; }   /* Twitter Blue */
+.instagram:hover { color: #C13584; } /* Instagram Pink */
+.linkedin:hover { color: #0077B5; }  /* LinkedIn Blue */
+
+/* Newsletter Subscription */
+.footer-newsletter input {
+    width: 80%;
+    padding: 10px;
+    border: 1px solid var(--footer-input-border-color);
+    background: var(--footer-input-bg-color);
+    border-radius: 5px;
+}
+
+.footer-newsletter button {
+    padding: 10px 14px;
+    border: none;
+    background: var(--footer-button-bg-color);
+    color: var(--footer-button-text-color);
+    cursor: pointer;
+    border-radius: 5px;
+    transition: background 0.3s ease-in-out, transform 0.2s;
+}
+
+.footer-newsletter button:hover {
+    background: var(--footer-button-hover-bg-color);
+    transform: scale(1.1);
+}
+
+/* Copyright Section */
+.footer-bottom {
+    text-align: center;
+    margin-top: 20px;
+    font-size: 14px;
+    border-top: 1px solid var(--footer-border-top-color);
+    padding-top: 10px;
+    color: var(--footer-bottom-text-color);
+}
