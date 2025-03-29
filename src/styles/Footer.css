@@ -1,43 +1,21 @@
-/* Default Dark Mode Styles (Dark background) */
+/* Default Light Mode Styles */
 :root {
-    --footer-bg-color: #0d021f;
-    --footer-text-color: white;
-    --footer-heading-color: white;
-    --footer-link-color: white;
+    --footer-bg-color: #ffffff;
+    --footer-text-color: black;
+    --footer-heading-color: #0d021f;  /* Keep this color in light mode for heading */
+    --footer-link-color: #0d021f;  /* Light Mode links color */
     --footer-link-hover-color: #8000ff;
     --footer-button-bg-color: #8000ff;
     --footer-button-hover-bg-color: #4c00cc;
-    --footer-border-color: #555;
-    --footer-social-icon-color: white;
+    --footer-border-color: #ddd;
+    --footer-social-icon-color: black;
     --footer-social-icon-hover-scale: 1.2;
     --footer-social-icon-transition: 0.3s ease-in-out, transform 0.2s;
     --footer-input-border-color: #ccc;
-    --footer-input-bg-color: #333;
+    --footer-input-bg-color: #fff;
     --footer-button-text-color: white;
-    --footer-border-top-color: #555;
-    --footer-bottom-text-color: #888;
-}
-
-/* Light Mode Styles */
-@media (prefers-color-scheme: light) {
-    :root {
-        --footer-bg-color: #ffffff;
-        --footer-text-color: black;
-        --footer-heading-color: #0d021f;  /* Keep this color in light mode for heading */
-        --footer-link-color: #0d021f;  /* Light Mode links color */
-        --footer-link-hover-color: #8000ff;
-        --footer-button-bg-color: #8000ff;
-        --footer-button-hover-bg-color: #4c00cc;
-        --footer-border-color: #ddd;
-        --footer-social-icon-color: black;
-        --footer-social-icon-hover-scale: 1.2;
-        --footer-social-icon-transition: 0.3s ease-in-out, transform 0.2s;
-        --footer-input-border-color: #ccc;
-        --footer-input-bg-color: #fff;
-        --footer-button-text-color: white;
-        --footer-border-top-color: #ddd;
-        --footer-bottom-text-color: #555;
-    }
+    --footer-border-top-color: #ddd;
+    --footer-bottom-text-color: #555;
 }
 
 /* Footer Section Styles */
@@ -47,7 +25,6 @@
     padding: 0px 20px;
     font-family: Arial, sans-serif;
     animation: fadeIn 1s ease-in-out;
-
 }
 
 @keyframes fadeIn {
@@ -67,6 +44,7 @@
     justify-content: space-between;
     max-width: 1200px;
     margin: auto;
+    margin-top: 90px;
 }
 
 .footer-brand,

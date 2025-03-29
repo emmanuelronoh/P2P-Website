@@ -47,7 +47,7 @@ const Footer = () => {
       <div className="footer-container">
         {/* Brand Section */}
         <div className="footer-brand">
-          <h2>Blif</h2>
+          <h2>Company Name</h2>
           <p>Innovating for a better tomorrow.</p>
         </div>
 
@@ -65,7 +65,7 @@ const Footer = () => {
         {/* Contact Information */}
         <div className="footer-contact">
           <h3>Contact Us</h3>
-          <p>Email: support@blif.com</p>
+          <p>Email: support@company.com</p>
           <p>Phone: +1 (212) 123-4567</p>
           <p>123 Main Street, New York, NY 10001, USA</p>
         </div>

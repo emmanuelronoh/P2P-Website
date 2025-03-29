@@ -8,12 +8,18 @@ import NavbarBeforeLogin from "./components/NavbarBeforeLogin";
 import NavbarAfterLogin from "./components/NavbarAfterLogin";
 import Footer from "./pages/Footer"; // ✅ Import Footer
 import "./styles/theme.css";
+import ConnectWallet from "./components/ConnectWallet";
+import Messages from "./pages/Messages.jsx";
 import Wallet from "./pages/Wallet";
+import Vendor from "./pages/Vendor";
+import Amount from "./pages/Amount";
+import Chat from "./pages/Chat";
 import Trades from "./pages/Trades";
 import VerifyOTP from "./components/VerifyOTP";
 import BuyCrypto from "./pages/BuyCrypto";
 import Profile from "./pages/Profile";
 import SellCrypto from "./pages/SellCrypto";
+import ProfileDetails from "./pages/ProfileDetails";
 import Market from "./pages/Market";
 import ForgotPassword from "./components/ForgotPassword";
 import "uikit/dist/css/uikit.min.css";
@@ -47,7 +53,11 @@ function App() {
                     <Route path="/wallet" element={<Wallet />} />
                     <Route path="/market" element={<Market />} />
                     <Route path="/profile/:id" element={<Profile />} />
-                    
+                    <Route path="/chat" element={<Chat />} />
+                    <Route path="/amount" element={<Amount />} />
+                    <Route path="/messages" element={<Messages />} />
+                    <Route path="/become-vendor" element={<Vendor />} /> 
+                    <Route path="/profile-details/:id" element={<ProfileDetails />} />                 
                     {/* P2P Trading Pages */}
                     <Route path="/p2p/*" element={<P2PRoutes />} />
                 </Routes>

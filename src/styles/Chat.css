@@ -1,0 +1,156 @@
+/* Chat Container */
+.chat-container {
+    display: flex;
+    flex-direction: column;
+    max-width: 800px;
+    margin: 40px auto;
+    background: #1f1f1f; /* Dark theme */
+    border-radius: 12px;
+    overflow: hidden;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+    margin-top: 80px;
+  }
+  
+  /* Chat Header */
+  .chat-header {
+    background: #222;
+    color: #fff;
+    padding: 15px 20px;
+    font-size: 18px;
+    font-weight: bold;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    border-bottom: 1px solid #333;
+  }
+  
+  /* Trader Name */
+  .trader-name {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  
+  .trader-name img {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    border: 2px solid #34d399; /* Green border for verified traders */
+  }
+  
+  /* Chat Messages Box */
+  .chat-box {
+    padding: 15px;
+    height: 300px; /* Scrollable chat area */
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    background: #181818;
+  }
+  
+  /* Chat Bubble Styling */
+  .message {
+    max-width: 70%;
+    padding: 12px 16px;
+    margin-bottom: 10px;
+    border-radius: 18px;
+    font-size: 14px;
+    line-height: 1.5;
+    position: relative;
+  }
+  
+  /* Seller Messages (Left Side) */
+  .message.seller {
+    align-self: flex-start;
+    background: #262626;
+    color: #fff;
+    border-bottom-left-radius: 4px;
+  }
+  
+  /* Buyer Messages (Right Side) */
+  .message.buyer {
+    align-self: flex-end;
+    background: #34d399; /* Green */
+    color: #fff;
+    border-bottom-right-radius: 4px;
+  }
+  
+  /* Message Timestamp */
+  .message-time {
+    font-size: 12px;
+    color: #888;
+    margin-top: 5px;
+  }
+  
+  /* Chat Input Box */
+  .chat-input-box {
+    display: flex;
+    padding: 12px;
+    background: #222;
+    border-top: 1px solid #333;
+  }
+  
+  .chat-input {
+    flex: 1;
+    padding: 12px;
+    font-size: 14px;
+    background: #181818;
+    color: #fff;
+    border: none;
+    border-radius: 8px;
+    outline: none;
+  }
+  
+  .send-button {
+    background: #34d399;
+    color: #fff;
+    padding: 12px 18px;
+    border: none;
+    border-radius: 8px;
+    font-weight: bold;
+    cursor: pointer;
+    transition: background 0.3s;
+    margin-left: 10px;
+  }
+  
+  .send-button:hover {
+    background: #2bc48c;
+  }
+  
+  /* Scrollbar Styling */
+  .chat-box::-webkit-scrollbar {
+    width: 6px;
+  }
+  
+  .chat-box::-webkit-scrollbar-thumb {
+    background: #444;
+    border-radius: 10px;
+  }
+  
+  .chat-box::-webkit-scrollbar-track {
+    background: #222;
+  }
+  
+  /* Responsive Design */
+  @media (max-width: 768px) {
+    .chat-container {
+      width: 95%;
+    }
+  
+    .chat-header {
+      font-size: 16px;
+    }
+  
+    .message {
+      max-width: 85%;
+    }
+  
+    .chat-input {
+      font-size: 12px;
+    }
+  
+    .send-button {
+      padding: 10px 14px;
+    }
+  }
+  
