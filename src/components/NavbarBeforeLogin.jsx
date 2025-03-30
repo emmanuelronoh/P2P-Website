@@ -1,9 +1,8 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
-import { FaMoon, FaSun, FaUser, FaChevronDown, FaBars, FaTimes } from "react-icons/fa"; // Import icons
+import { FaMoon, FaSun, FaChevronDown, FaBars, FaTimes } from "react-icons/fa"; // Import icons
 import "../styles/navbar-before.css";
 import logo from "../assets/cheetah-logo.png";
-
 function NavbarBeforeLogin({ toggleTheme, theme }) {
     const [activeDropdown, setActiveDropdown] = useState(null);
     const [menuOpen, setMenuOpen] = useState(false); // Track menu state
