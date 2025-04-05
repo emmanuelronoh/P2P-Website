@@ -42,7 +42,7 @@ function App() {
             {/* Show different Navbar based on authentication */}
             {isAuthenticated ? <NavbarAfterLogin /> : <NavbarBeforeLogin />}
 
-            <div className="app uk-container">
+            <div className="app">
                 <Routes>
                     <Route path="/" element={<Home />} />
                     <Route path="/dashboard" element={<Dashboard />} />

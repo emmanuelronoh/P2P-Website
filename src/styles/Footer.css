@@ -1,6 +1,6 @@
 /* Default Light Mode Styles */
 :root {
-    --footer-bg-color: #ffffff;
+    --footer-bg-color: #003366;
     --footer-text-color: black;
     --footer-heading-color: #0d021f;  /* Keep this color in light mode for heading */
     --footer-link-color: #0d021f;  /* Light Mode links color */
@@ -22,9 +22,13 @@
 .footer {
     background: var(--footer-bg-color);
     color: var(--footer-text-color);
-    padding: 0px 20px;
+    padding: 20px;  /* Increased padding for spacing */
     font-family: Arial, sans-serif;
     animation: fadeIn 1s ease-in-out;
+    width: 100%; /* Ensure it spans the full width */
+    box-sizing: border-box;
+    margin-top: 50px;
+    margin-bottom: 0%;
 }
 
 @keyframes fadeIn {
@@ -42,9 +46,10 @@
     display: flex;
     flex-wrap: wrap;
     justify-content: space-between;
-    max-width: 1200px;
-    margin: auto;
-    margin-top: 90px;
+    margin: 0;  /* Remove any extra margins */
+    padding: 0 20px;
+    width: 100%;  /* Ensure it spans the full width */
+    box-sizing: border-box;
 }
 
 .footer-brand,
@@ -133,4 +138,30 @@
     border-top: 1px solid var(--footer-border-top-color);
     padding-top: 10px;
     color: var(--footer-bottom-text-color);
+}
+
+/* Mobile adjustments */
+@media screen and (max-width: 768px) {
+    .footer-container {
+        flex-direction: column; /* Stack items vertically */
+        align-items: center; /* Center all items */
+        padding: 0 10px; /* Adjust padding for small screens */
+    }
+
+    .footer-newsletter input {
+        width: 100%; /* Full width for the input */
+    }
+
+    .footer-newsletter button {
+        width: 100%; /* Full width for the button */
+    }
+
+    .footer-brand,
+    .footer-links,
+    .footer-contact,
+    .footer-social,
+    .footer-newsletter {
+        flex: 1 1 100%; /* Stack the sections vertically */
+        margin: 15px 0;
+    }
 }

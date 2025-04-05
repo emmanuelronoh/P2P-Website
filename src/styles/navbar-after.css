@@ -2,7 +2,7 @@
 .navbar {
     width: 100vw; /* Ensure full width */
     max-width: 100%; /* Prevent restrictions */
-    background: #003366; /* Dark background */
+    background: #808080; /* Dark background */
     color: white;
     display: flex;
     justify-content: space-between;
@@ -46,7 +46,6 @@
 }
 
 .navbar-container {
-    max-width: 1200px;
     width: 100%;
     margin: 0 auto;
     display: flex;
@@ -72,7 +71,7 @@
 
 .navbar-center a {
     font-size: 14px;
-    color: #dddddd;
+    color: #ffffff;
     text-decoration: none;
     transition: color 0.3s ease-in-out;
 

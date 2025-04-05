@@ -7,11 +7,14 @@ const Login = ({ setIsAuthenticated }) => {
     const [email, setEmail] = useState("");
     const [password, setPassword] = useState("");
     const [error, setError] = useState("");
+    const [isLoading, setIsLoading] = useState(false);
+    const [showPassword, setShowPassword] = useState(false);
     const navigate = useNavigate();
 
     const handleLogin = async (e) => {
         e.preventDefault();
         setError(""); 
+        setIsLoading(true);
 
         try {
             const response = await axios.post("http://127.0.0.1:8000/api/auth/login/", { 
@@ -23,8 +26,7 @@ const Login = ({ setIsAuthenticated }) => {
                 localStorage.setItem("accessToken", response.data.access);
                 localStorage.setItem("refreshToken", response.data.refresh);
                 
-                setIsAuthenticated(true); // ✅ Update auth state in App.js
-                alert("Login Successful!");
+                setIsAuthenticated(true);
                 navigate("/dashboard");
             }
         } catch (error) {
@@ -33,6 +35,8 @@ const Login = ({ setIsAuthenticated }) => {
             } else {
                 setError("An error occurred. Please try again.");
             }
+        } finally {
+            setIsLoading(false);
         }
     };
 
@@ -52,15 +56,27 @@ const Login = ({ setIsAuthenticated }) => {
                 />
 
                 <label>Password</label>
-                <input 
-                    type="password" 
-                    placeholder="Enter your password" 
-                    value={password} 
-                    onChange={(e) => setPassword(e.target.value)} 
-                    required 
-                />
+                <div className="password-input-container">
+                    <input 
+                        type={showPassword ? "text" : "password"} 
+                        placeholder="Enter your password" 
+                        value={password} 
+                        onChange={(e) => setPassword(e.target.value)} 
+                        required 
+                    />
+                    <button 
+                        type="button" 
+                        className="toggle-password"
+                        onClick={() => setShowPassword(!showPassword)}
+                        aria-label={showPassword ? "Hide password" : "Show password"}
+                    >
+                        {showPassword ? "🙈" : "👁️"}
+                    </button>
+                </div>
 
-                <button type="submit">Login</button>
+                <button type="submit" className={isLoading ? "loading" : ""} disabled={isLoading}>
+                    {isLoading ? "" : "Login"}
+                </button>
 
                 <div className="forgot-password">
                     <p>

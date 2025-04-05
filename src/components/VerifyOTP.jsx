@@ -22,7 +22,7 @@ const VerifyOTP = () => {
 
         try {
             // ✅ Corrected API request variable name (was "otp", now "otp_code")
-            const response = await axios.post("http://127.0.0.1:8000/api/auth/verify-otp/", { email, otp_code });
+            const response = await axios.post("http://127.0.0.1:8000/api/auth/verify-email/", { email, otp_code });
             setMessage({ type: "success", text: response.data.message });
 
             // Redirect after successful OTP verification
