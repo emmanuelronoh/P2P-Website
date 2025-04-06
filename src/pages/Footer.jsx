@@ -1,109 +1,136 @@
-import React, { useState } from "react";
-import { FaFacebook, FaTwitter, FaInstagram, FaLinkedin } from "react-icons/fa";
-import axios from "axios";
-import Cookies from "js-cookie"; // Import js-cookie to manage cookies
+import React from 'react';
+import { FaBitcoin, FaEthereum, FaTwitter, FaTelegram, FaDiscord, FaGithub, FaMedium, FaLinkedin, FaReddit, FaYoutube } from 'react-icons/fa';
+import { SiBinance, SiSolana, SiRipple } from 'react-icons/si';
 import "../styles/Footer.css";
 
-const Footer = () => {
-  const [email, setEmail] = useState("");
-  const [message, setMessage] = useState("");
-
-  const handleSubscribe = async (e) => {
-    e.preventDefault();
-    setMessage(""); // Clear previous messages
-
-    const token = Cookies.get("jwt"); // Get token from cookies
-    console.log("Token:", token); // Check if token is available
-
-    if (!token) {
-      setMessage("Please log in to subscribe.");
-      return;
-    }
-
-    try {
-      const response = await axios.post(
-        "https://backend-github-code.onrender.com/api/notifications/",
-        { message: `New newsletter subscription: ${email}` }, // Custom notification
-        {
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${token}`, // Ensure 'Bearer' prefix is added
-          },
-        }
-      );
-
-      if (response.status === 201) {
-        setMessage("Subscribed successfully! 🎉");
-        setEmail(""); // Clear input field
-      }
-    } catch (error) {
-      console.error("Error subscribing:", error); // Log detailed error
-      setMessage("Failed to subscribe. Please try again.");
-    }
-  };
-
+const CheetahXFooter = () => {
   return (
-    <footer className="footer">
-      <div className="footer-container">
-        {/* Brand Section */}
+    <footer className="cheetahx-footer">
+      {/* Top Section */}
+      <div className="footer-top">
         <div className="footer-brand">
-          <h2>Company Name</h2>
-          <p>Innovating for a better tomorrow.</p>
-        </div>
-
-        {/* Quick Links */}
-        <div className="footer-links">
-          <h3>Quick Links</h3>
-          <ul>
-            <li><a href="/transfer-portal">Home</a></li>
-            <li><a href="/about-us">About Us</a></li>
-            <li><a href="#">Services</a></li>
-            <li><a href="/contact-us">Contact</a></li>
-          </ul>
-        </div>
-
-        {/* Contact Information */}
-        <div className="footer-contact">
-          <h3>Contact Us</h3>
-          <p>Email: support@company.com</p>
-          <p>Phone: +1 (212) 123-4567</p>
-          <p>123 Main Street, New York, NY 10001, USA</p>
-        </div>
-
-        {/* Social Media Icons */}
-        <div className="footer-social">
-          <h3>Follow Us</h3>
-          <div className="social-icons">
-            <a href="#" className="facebook"><FaFacebook /></a>
-            <a href="#" className="twitter"><FaTwitter /></a>
-            <a href="#" className="instagram"><FaInstagram /></a>
-            <a href="#" className="linkedin"><FaLinkedin /></a>
+          <div className="logo-container">
+            <span className="logo-icon">🤑</span>
+            <h2 className="logo-text">CheetahX</h2>
+          </div>
+          <p className="brand-tagline">Lightning-fast P2P Crypto Exchange</p>
+          <div className="crypto-icons">
+            <FaBitcoin className="crypto-icon" title="Bitcoin" />
+            <FaEthereum className="crypto-icon" title="Ethereum" />
+            <SiBinance className="crypto-icon" title="Binance Coin" />
+            <SiSolana className="crypto-icon" title="Solana" />
+            <SiRipple className="crypto-icon" title="XRP" />
           </div>
         </div>
 
-        {/* Newsletter Subscription */}
-        <div className="footer-newsletter">
-          <h3>Subscribe to Our Newsletter</h3>
-          {message && <p className="message">{message}</p>} {/* Display message */}
-          <form onSubmit={handleSubscribe}>
-            <input
-              type="email"
-              placeholder="Enter your email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              required
-            />
-            <button type="submit">Subscribe</button>
-          </form>
+        <div className="footer-links-container">
+          {/* Navigation Links */}
+          <div className="footer-links">
+            <h3 className="links-heading">Navigation</h3>
+            <ul className="links-list">
+              <li><a href="/">Home</a></li>
+              <li><a href="/exchange">Exchange</a></li>
+              <li><a href="/wallet">Wallet</a></li>
+              <li><a href="/markets">Markets</a></li>
+              <li><a href="/portfolio">Portfolio</a></li>
+            </ul>
+          </div>
+
+          {/* Resources Links */}
+          <div className="footer-links">
+            <h3 className="links-heading">Resources</h3>
+            <ul className="links-list">
+              <li><a href="/blog">Blog</a></li>
+              <li><a href="/documentation">Documentation</a></li>
+              <li><a href="/api">API</a></li>
+              <li><a href="/status">System Status</a></li>
+              <li><a href="/glossary">Crypto Glossary</a></li>
+            </ul>
+          </div>
+
+          {/* Legal Links */}
+          <div className="footer-links">
+            <h3 className="links-heading">Legal</h3>
+            <ul className="links-list">
+              <li><a href="/privacy">Privacy Policy</a></li>
+              <li><a href="/terms">Terms of Service</a></li>
+              <li><a href="/aml">AML Policy</a></li>
+              <li><a href="/risk">Risk Disclosure</a></li>
+              <li><a href="/cookie">Cookie Policy</a></li>
+            </ul>
+          </div>
+
+          {/* Support Links */}
+          <div className="footer-links">
+            <h3 className="links-heading">Support</h3>
+            <ul className="links-list">
+              <li><a href="/help">Help Center</a></li>
+              <li><a href="/contact">Contact Us</a></li>
+              <li><a href="/faq">FAQ</a></li>
+              <li><a href="/feedback">Feedback</a></li>
+              <li><a href="/community">Community</a></li>
+            </ul>
+          </div>
         </div>
       </div>
 
-      {/* Copyright Section */}
+      {/* Middle Section */}
+      <div className="footer-middle">
+        <div className="newsletter-container">
+          <h3 className="newsletter-heading">Stay Updated</h3>
+          <p className="newsletter-text">Subscribe to our newsletter for the latest updates</p>
+          <form className="newsletter-form">
+            <input 
+              type="email" 
+              placeholder="Your email address" 
+              className="newsletter-input" 
+              required 
+            />
+            <button type="submit" className="newsletter-button">Subscribe</button>
+          </form>
+        </div>
+
+        <div className="social-container">
+          <h3 className="social-heading">Connect With Us</h3>
+          <div className="social-icons">
+            <a href="https://twitter.com/cheetahx" aria-label="Twitter"><FaTwitter className="social-icon" /></a>
+            <a href="https://t.me/cheetahx" aria-label="Telegram"><FaTelegram className="social-icon" /></a>
+            <a href="https://discord.gg/cheetahx" aria-label="Discord"><FaDiscord className="social-icon" /></a>
+            <a href="https://github.com/cheetahx" aria-label="GitHub"><FaGithub className="social-icon" /></a>
+            <a href="https://medium.com/cheetahx" aria-label="Medium"><FaMedium className="social-icon" /></a>
+            <a href="https://linkedin.com/company/cheetahx" aria-label="LinkedIn"><FaLinkedin className="social-icon" /></a>
+            <a href="https://reddit.com/r/cheetahx" aria-label="Reddit"><FaReddit className="social-icon" /></a>
+            <a href="https://youtube.com/cheetahx" aria-label="YouTube"><FaYoutube className="social-icon" /></a>
+          </div>
+        </div>
+      </div>
+
+      {/* Bottom Section */}
       <div className="footer-bottom">
-        <p>&copy; 2025 Blif. All Rights Reserved. | <a href="#">Privacy Policy</a> | <a href="#">Terms of Use</a></p>
+        <div className="copyright">
+          © {new Date().getFullYear()} CheetahX. All rights reserved.
+        </div>
+        <div className="legal-links">
+          <a href="/compliance">Compliance</a>
+          <span className="separator">|</span>
+          <a href="/security">Security</a>
+          <span className="separator">|</span>
+          <a href="/sitemap">Sitemap</a>
+        </div>
+        <div className="language-selector">
+          <select className="language-dropdown" aria-label="Language selector">
+            <option value="en">English</option>
+            <option value="es">Español</option>
+            <option value="zh">中文</option>
+            <option value="ja">日本語</option>
+            <option value="ru">Русский</option>
+            <option value="de">Deutsch</option>
+            <option value="fr">Français</option>
+          </select>
+        </div>
       </div>
     </footer>
   );
 };
 
-export default Footer;
+export default CheetahXFooter;

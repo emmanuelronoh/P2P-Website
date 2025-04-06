@@ -1,0 +1,61 @@
+.trading-limits-container {
+    background-color: #f8f9fa;
+    border-radius: 8px;
+    padding: 12px;
+    margin-top: 8px;
+    border: 1px solid #e0e0e0;
+  }
+  
+  .limits-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 8px;
+  }
+  
+  .limits-header h4 {
+    margin: 0;
+    font-size: 0.875rem;
+    color: #616161;
+  }
+  
+  .limits-range {
+    font-weight: 600;
+    font-size: 0.875rem;
+    color: #2962ff;
+  }
+  
+  .limits-progress-bar {
+    position: relative;
+    height: 6px;
+    background-color: #e0e0e0;
+    border-radius: 3px;
+    margin: 8px 0;
+    overflow: hidden;
+  }
+  
+  .progress-indicator {
+    position: absolute;
+    height: 100%;
+    background-color: #2962ff;
+    border-radius: 3px;
+  }
+  
+  .limits-labels {
+    display: flex;
+    justify-content: space-between;
+    font-size: 0.75rem;
+    color: #757575;
+  }
+  
+  .min-label::before {
+    content: "⬌";
+    margin-right: 4px;
+    color: #2962ff;
+  }
+  
+  .max-label::after {
+    content: "⬌";
+    margin-left: 4px;
+    color: #2962ff;
+  }

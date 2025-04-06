@@ -22,6 +22,9 @@ import SellCrypto from "./pages/SellCrypto";
 import ProfileDetails from "./pages/ProfileDetails";
 import Market from "./pages/Market";
 import ForgotPassword from "./components/ForgotPassword";
+import TermsAndCondition from "./components/VendorDashboard/TermsAndCondition";
+import CryptoListing from "./components/VendorDashboard/CryptoListing";
+import DashboardVendors from "./components/VendorDashboard/DashboardVendors";
 import "uikit/dist/css/uikit.min.css";
 
 function App() {
@@ -57,8 +60,10 @@ function App() {
                     <Route path="/amount" element={<Amount />} />
                     <Route path="/messages" element={<Messages />} />
                     <Route path="/become-vendor" element={<Vendor />} /> 
-                    <Route path="/profile-details/:id" element={<ProfileDetails />} />                 
-                    {/* P2P Trading Pages */}
+                    <Route path="/profile-details/:id" element={<ProfileDetails />} /> 
+                    <Route path="/TermsAndCondition"  element={<TermsAndCondition />} />
+                    <Route path="/CryptoListing"  element={<CryptoListing />} />
+                    <Route path="/DashboardVendors"  element={<DashboardVendors />} />            
                     <Route path="/p2p/*" element={<P2PRoutes />} />
                 </Routes>
             </div>

@@ -2,6 +2,7 @@ import { useState } from "react";
 import axios from "axios"; // Using axios for better error handling
 import snsWebSdk from '@sumsub/websdk'; // Import Sumsub Web SDK
 import "../styles/Vendor.css";
+import { useNavigate } from "react-router-dom";
 
 const VendorApplication = () => {
   const [formData, setFormData] = useState({
@@ -13,6 +14,9 @@ const VendorApplication = () => {
   const [message, setMessage] = useState({ text: "", type: "" });
   const [loading, setLoading] = useState(false);
   const [accessToken, setAccessToken] = useState(null); // Store the access token
+  const navigate = useNavigate();
+
+
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
@@ -187,6 +191,14 @@ const VendorApplication = () => {
 
         <button type="submit" className="submit-btn" disabled={loading}>
           {loading ? "Processing..." : "Start KYC Verification"}
+        </button>
+        <button
+          type="button"
+          className="navigate-btn"
+          onClick={() => navigate("/TermsAndCondition")}
+          style={{ marginBottom: "1rem", backgroundColor: "#007bff", color: "#fff", padding: "10px 20px", border: "none", cursor: "pointer", borderRadius: "5px" }}
+        >
+          Go to P2P Posting
         </button>
       </form>
 
