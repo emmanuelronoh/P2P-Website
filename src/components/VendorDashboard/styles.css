@@ -129,7 +129,6 @@
   max-width: 1200px;
   margin: 0 auto;
   padding: 20px;
-  margin-top: 80px;
 }
 
 /* Header Styles */
@@ -247,7 +246,7 @@
 
 @media (min-width: 992px) {
   .dashboard-content {
-    grid-template-columns: 2fr 1fr;
+    grid-template-columns: 0fr 1fr;
   }
 }
 

@@ -15,7 +15,11 @@ import Chat from "./pages/Chat";
 import Trades from "./pages/Trades";
 import VerifyOTP from "./components/VerifyOTP";
 import BuyCrypto from "./pages/BuyCrypto";
+import Support from "./pages/Support";
+import Tutorials from "./pages/Tutorials";
+import Faq from "./pages/Faq-page";
 import Profile from "./pages/Profile";
+import Notifications from "./pages/Notifications";
 import SellCrypto from "./pages/SellCrypto";
 import ProfileDetails from "./pages/ProfileDetails";
 import Market from "./pages/Market";
@@ -101,12 +105,16 @@ function App() {
                     <Route path="/market" element={<Market />} />
                     <Route path="/profile/:id" element={<Profile />} />
                     <Route path="/chat" element={<Chat />} />
+                    <Route path="/notifications" element={<Notifications />} />
+                    <Route path="/support" element={<Support />} />
                     <Route path="/amount" element={<Amount />} />
                     <Route path="/messages" element={<Messages />} />
+                    <Route path="/tutorials" element={<Tutorials />} />
                     <Route path="/become-vendor" element={<Vendor />} />
                     <Route path="/profile-details/:id" element={<ProfileDetails />} />
                     <Route path="/TermsAndCondition" element={<TermsAndCondition />} />
                     <Route path="/CryptoListing" element={<CryptoListing />} />
+                    <Route path="/faq" element={<Faq />} />
                     <Route path="/DashboardVendors" element={<DashboardVendors />} />
                     <Route path="/p2p/*" element={<P2PRoutes />} />
                 </Routes>

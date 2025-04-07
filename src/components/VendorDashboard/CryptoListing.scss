@@ -1,4 +1,5 @@
 // VendorDashboard/CryptoListing.scss
+@use 'sass:color';
 @import '../../styles/variables';
 
 .crypto-listing-form {
@@ -213,8 +214,8 @@
       max-width: 280px;
 
       &:hover {
-        background-color: darken($color-primary, 5%);
-      }
+        background-color: color.scale($color-primary, $lightness: -5%);
+      }      
 
       &:disabled {
         background-color: $color-disabled;
