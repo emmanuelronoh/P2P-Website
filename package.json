@@ -12,6 +12,7 @@
   "dependencies": {
     "@coinbase/wallet-sdk": "^4.3.2",
     "@hookform/resolvers": "^5.0.1",
+    "@oku-ui/motion": "^0.4.3",
     "@sumsub/websdk": "^2.3.13",
     "@walletconnect/ethereum-provider": "^2.19.2",
     "axios": "^1.8.4",
@@ -45,7 +46,6 @@
     "vite": "^6.2.5"
   },
   "engines": {
-  "node": ">=20.0.0"
-}
-
+    "node": ">=20.0.0"
+  }
 }
