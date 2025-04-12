@@ -112,7 +112,7 @@ const Amount = () => {
       return;
     }
 
-    navigate("/trade-confirmation", {
+    navigate("/messages", {
       state: {
         trader,
         tradeType,

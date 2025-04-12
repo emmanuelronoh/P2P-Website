@@ -1,11 +1,13 @@
 import { useState, useEffect, useRef } from "react";
 import { useLocation } from "react-router-dom";
+import EmojiPicker from "emoji-picker-react";
 import "../styles/Messages.css";
 
 const Messages = () => {
   const location = useLocation();
   const { trader, tradeType = "", crypto = "", amount = 0 } = location.state || {};
   const messagesEndRef = useRef(null);
+  const fileInputRef = useRef(null);
 
   const [chats, setChats] = useState([
     { 
@@ -80,27 +82,23 @@ const Messages = () => {
   const [newMessage, setNewMessage] = useState("");
   const [searchTerm, setSearchTerm] = useState("");
   const [isTyping, setIsTyping] = useState(false);
+  const [showEmojiPicker, setShowEmojiPicker] = useState(false);
 
   // Auto-scroll to bottom of messages
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   };
 
-  
-
   useEffect(() => {
     scrollToBottom();
-  }, [selectedChat]);
+  }, [selectedChat, isTyping]);
 
   useEffect(() => {
-    // Only proceed if we have trader data
     if (trader?.name) {
       setChats(prevChats => {
-        // Check if trader already exists in chats
         const existingChat = prevChats.find(chat => chat.trader === trader.name);
         
         if (!existingChat) {
-          // Create new chat if it doesn't exist
           const newChat = {
             id: Date.now(),
             trader: trader.name,
@@ -115,17 +113,13 @@ const Messages = () => {
             unread: false,
             lastActive: new Date()
           };
-          
           return [...prevChats, newChat];
         }
-        
         return prevChats;
       });
-  
-      // Set the selected chat to the trader's chat
+
       setSelectedChat(prevSelected => {
         const existingChat = chats.find(chat => chat.trader === trader.name);
-        
         return existingChat || {
           id: Date.now(),
           trader: trader.name,
@@ -143,6 +137,109 @@ const Messages = () => {
       });
     }
   }, [trader, tradeType, crypto, amount]);
+
+  const handleEmojiClick = (emojiData) => {
+    setNewMessage(prev => prev + emojiData.emoji);
+    setShowEmojiPicker(false);
+  };
+
+  const handleFileChange = (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+
+    // Create a preview for the file
+    let filePreview;
+    if (file.type.startsWith('image/')) {
+      filePreview = URL.createObjectURL(file);
+    } else {
+      filePreview = null;
+    }
+
+    const fileMessage = {
+      text: file.name,
+      sender: "me",
+      status: "sent",
+      timestamp: new Date(),
+      file: {
+        name: file.name,
+        type: file.type,
+        size: file.size,
+        preview: filePreview
+      }
+    };
+
+    setChats(prevChats =>
+      prevChats.map(chat =>
+        chat.id === selectedChat.id
+          ? { 
+              ...chat, 
+              messages: [...chat.messages, fileMessage],
+              lastActive: new Date()
+            }
+          : chat
+      )
+    );
+
+    setSelectedChat(prev => ({
+      ...prev,
+      messages: [...prev.messages, fileMessage],
+      lastActive: new Date()
+    }));
+
+    // Simulate file upload and response
+    setIsTyping(true);
+    setTimeout(() => {
+      const replyMessage = {
+        text: getRandomFileResponse(file.type),
+        sender: "them",
+        status: "delivered",
+        timestamp: new Date()
+      };
+
+      setChats(prevChats =>
+        prevChats.map(chat =>
+          chat.id === selectedChat.id
+            ? { 
+                ...chat, 
+                messages: [...chat.messages, replyMessage],
+                lastActive: new Date(),
+                unread: true
+              }
+            : chat
+        )
+      );
+
+      setSelectedChat(prev => ({
+        ...prev,
+        messages: [...prev.messages, replyMessage],
+        lastActive: new Date()
+      }));
+
+      setIsTyping(false);
+    }, 2000 + Math.random() * 3000);
+  };
+
+  const getRandomFileResponse = (fileType) => {
+    if (fileType.startsWith('image/')) {
+      const responses = [
+        "Nice picture!",
+        "Thanks for sharing this image.",
+        "I've received the image.",
+        "This looks great!",
+        "Image received successfully."
+      ];
+      return responses[Math.floor(Math.random() * responses.length)];
+    } else {
+      const responses = [
+        "File received, thanks!",
+        "I'll check this document.",
+        "Thanks for sending this over.",
+        "File downloaded successfully.",
+        "I've received the file."
+      ];
+      return responses[Math.floor(Math.random() * responses.length)];
+    }
+  };
 
   const sendMessage = () => {
     if (newMessage.trim() && selectedChat) {
@@ -172,9 +269,10 @@ const Messages = () => {
       }));
       
       setNewMessage("");
+      setShowEmojiPicker(false);
       
       // Simulate typing indicator and reply
-      if (Math.random() > 0.3) { // 70% chance of reply
+      if (Math.random() > 0.3) {
         setIsTyping(true);
         setTimeout(() => {
           const replyMessage = {
@@ -263,6 +361,37 @@ const Messages = () => {
       msg.text.toLowerCase().includes(searchTerm.toLowerCase())
     )
   );
+
+  const renderMessageContent = (msg) => {
+    if (msg.file) {
+      if (msg.file.type.startsWith('image/')) {
+        return (
+          <div className="file-message">
+            <img src={msg.file.preview} alt={msg.file.name} className="file-preview" />
+            <div className="file-info">
+              <span className="file-name">{msg.file.name}</span>
+              <span className="file-size">{(msg.file.size / 1024).toFixed(1)} KB</span>
+            </div>
+          </div>
+        );
+      } else {
+        return (
+          <div className="file-message">
+            <div className="file-icon">
+              <svg viewBox="0 0 24 24" width="24" height="24">
+                <path fill="currentColor" d="M14 2H6c-1.1 0-1.99.9-1.99 2L4 20c0 1.1.89 2 1.99 2H18c1.1 0 2-.9 2-2V8l-6-6zM6 20V4h7v5h5v11H6z"/>
+              </svg>
+            </div>
+            <div className="file-info">
+              <span className="file-name">{msg.file.name}</span>
+              <span className="file-size">{(msg.file.size / 1024).toFixed(1)} KB</span>
+            </div>
+          </div>
+        );
+      }
+    }
+    return <p>{msg.text}</p>;
+  };
 
   return (
     <div className="messages-app">
@@ -375,7 +504,6 @@ const Messages = () => {
             <div className="message-container">
               <div className="message-list">
                 {selectedChat.messages.map((msg, index) => {
-                  // Show date separator if needed
                   const showDateSeparator = index === 0 || 
                     formatDate(msg.timestamp) !== formatDate(selectedChat.messages[index - 1]?.timestamp);
                   
@@ -390,7 +518,7 @@ const Messages = () => {
                         className={`message-bubble ${msg.sender === 'me' ? 'outgoing' : 'incoming'}`}
                       >
                         <div className="message-content">
-                          <p>{msg.text}</p>
+                          {renderMessageContent(msg)}
                           <div className="message-meta">
                             <span className="message-time">{formatTime(msg.timestamp)}</span>
                             {msg.sender === 'me' && (
@@ -425,16 +553,36 @@ const Messages = () => {
               </div>
               
               <div className="message-composer">
-                <button className="emoji-btn">
+                <button 
+                  className="emoji-btn"
+                  onClick={() => setShowEmojiPicker(!showEmojiPicker)}
+                >
                   <svg viewBox="0 0 24 24" width="24" height="24">
                     <path fill="currentColor" d="M12 22C6.477 22 2 17.523 2 12S6.477 2 12 2s10 4.477 10 10-4.477 10-10 10zm0-2a8 8 0 1 0 0-16 8 8 0 0 0 0 16zm-5-7h2a3 3 0 0 0 6 0h2a5 5 0 0 1-10 0zm1-2a1.5 1.5 0 1 1 0-3 1.5 1.5 0 0 1 0 3zm8 0a1.5 1.5 0 1 1 0-3 1.5 1.5 0 0 1 0 3z"/>
                   </svg>
                 </button>
-                <button className="attachment-btn">
+                
+                {showEmojiPicker && (
+                  <div className="emoji-picker-container">
+                    <EmojiPicker onEmojiClick={handleEmojiClick} width={300} height={350} />
+                  </div>
+                )}
+                
+                <button 
+                  className="attachment-btn"
+                  onClick={() => fileInputRef.current.click()}
+                >
                   <svg viewBox="0 0 24 24" width="24" height="24">
                     <path fill="currentColor" d="M16.5 6v11.5c0 2.21-1.79 4-4 4s-4-1.79-4-4V5c0-1.38 1.12-2.5 2.5-2.5s2.5 1.12 2.5 2.5v10.5c0 .55-.45 1-1 1s-1-.45-1-1V6H10v9.5c0 1.38 1.12 2.5 2.5 2.5s2.5-1.12 2.5-2.5V5c0-2.21-1.79-4-4-4S7 2.79 7 5v12.5c0 3.04 2.46 5.5 5.5 5.5s5.5-2.46 5.5-5.5V6h-1.5z"/>
                   </svg>
+                  <input
+                    type="file"
+                    ref={fileInputRef}
+                    style={{ display: 'none' }}
+                    onChange={handleFileChange}
+                  />
                 </button>
+                
                 <input
                   type="text"
                   placeholder="Type a message..."
@@ -442,6 +590,7 @@ const Messages = () => {
                   onChange={(e) => setNewMessage(e.target.value)}
                   onKeyPress={(e) => e.key === 'Enter' && sendMessage()}
                 />
+                
                 <button 
                   className="send-btn" 
                   onClick={sendMessage}

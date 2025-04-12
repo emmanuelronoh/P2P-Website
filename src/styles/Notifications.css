@@ -26,12 +26,12 @@
   
   .title-icon {
     margin-right: 0.75rem;
-    color: #f97316;
+    color: #1e87f0;
   }
   
   .unread-count {
     margin-left: 0.75rem;
-    background-color: #f97316;
+    background-color: #1e87f0;
     color: white;
     font-size: 0.875rem;
     font-weight: 600;
@@ -81,7 +81,7 @@
   }
   
   .filter-tab.active {
-    background-color: #f97316;
+    background-color: #1e87f0;
     color: white;
   }
   
@@ -165,7 +165,7 @@
   }
   
   .notification-item.unread {
-    border-left-color: #f97316;
+    border-left-color: #1e87f0;
   }
   
   .notification-content {

@@ -83,7 +83,7 @@ const WalletPage = () => {
                   <div className="wallet-header">
                     {wallet.currency === 'BTC' && <FaBitcoin className="currency-icon btc" />}
                     {wallet.currency === 'ETH' && <FaEthereum className="currency-icon eth" />}
-                    {wallet.currency === 'USDT' && <SiTether className="currency-icon usdt" />}
+                    {wallet.currency === 'USDT' && <SiTether className="currency-icon USDT" />}
                     <h3>{wallet.name}</h3>
                     <span className="balance">{wallet.balance} {wallet.currency}</span>
                   </div>

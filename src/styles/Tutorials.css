@@ -5,22 +5,52 @@
     line-height: 1.6;
     background-color: #f8fafc;
   }
-  
-  /* Header Styles */
-  .tutorials-header {
-    background: linear-gradient(135deg, #1e3a8a 0%, #2563eb 100%);
-    color: white;
-    padding: 4rem 2rem;
-    text-align: center;
-    position: relative;
-    overflow: hidden;
-    transition: all 0.3s ease;
-  }
-  
-  .tutorials-header.scrolled {
-    padding: 2rem;
-  }
-  
+  /* Premium P2P Header Style */
+.tutorials-header {
+  background: linear-gradient(135deg, #1e3a8a 0%, #3b82f6 100%);
+  color: #ffffff;
+  padding: 6rem 2rem;
+  text-align: center;
+  position: relative;
+  overflow: hidden;
+  transition: padding 0.3s ease, background 0.3s ease;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2);
+  border-bottom-left-radius: 2rem;
+  border-bottom-right-radius: 2rem;
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+
+/* When user scrolls */
+.tutorials-header.scrolled {
+  padding: 2rem;
+  background: linear-gradient(135deg, #1e40af 0%, #2563eb 100%);
+}
+
+/* Add a subtle glowing effect */
+.tutorials-header::after {
+  content: '';
+  position: absolute;
+  top: -50%;
+  left: -50%;
+  width: 200%;
+  height: 200%;
+  background: radial-gradient(circle, rgba(255, 255, 255, 0.05), transparent 70%);
+  animation: glow 6s ease-in-out infinite;
+  z-index: 0;
+}
+
+/* Animate glow */
+@keyframes glow {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+/* Place content above glow */
+.tutorials-header > * {
+  position: relative;
+  z-index: 1;
+}
+
   .header-content {
     max-width: 800px;
     margin: 0 auto;

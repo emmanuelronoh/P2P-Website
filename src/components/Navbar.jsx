@@ -1,10 +1,11 @@
-import { useState, useEffect, useRef } from "react";
+
+import { useState, useEffect, useRef, useCallback } from "react";
 import { Link, useNavigate, useLocation } from "react-router-dom";
-import { ethers } from "ethers";
-import Web3Modal from "web3modal";
-import axios from "axios";
+import { useAuth } from '../contexts/AuthContext';
 import {
   FaMoon,
+  FaUserPlus,
+  FaSignInAlt,
   FaSun,
   FaChevronDown,
   FaBars,
@@ -17,15 +18,17 @@ import {
   FaHeadset,
   FaChartLine,
   FaCoins,
-  FaGlobe
+  FaGlobe,
+  FaSignOutAlt
 } from "react-icons/fa";
 import { IoMdChatbubbles } from "react-icons/io";
 import { GiTrade } from "react-icons/gi";
 import { motion, AnimatePresence } from "framer-motion";
 import logo from "../assets/cheetah-logo.png";
 import "../styles/navbar.css";
+import ConnectWalletModal from './WalletConnectModal';
 
-// Advertisement component (can be controlled by admin)
+// Advertisement component
 const AdvertisementBar = () => {
   const ads = [
     "🔥 Limited Time Offer: 0% Trading Fees This Week!",
@@ -67,6 +70,8 @@ const DropdownMenu = ({ title, items, icon: Icon }) => {
   const [isOpen, setIsOpen] = useState(false);
   const dropdownRef = useRef(null);
   const [isMobile, setIsMobile] = useState(window.innerWidth < 992);
+  const { user, isAuthenticated, loading: authLoading } = useAuth();
+
 
   useEffect(() => {
     const handleResize = () => {
@@ -133,7 +138,13 @@ const DropdownMenu = ({ title, items, icon: Icon }) => {
 
 // Main Navbar component
 const Navbar = ({ toggleTheme, theme }) => {
-  const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const {
+    user,
+    isAuthenticated,
+    logout,
+    loading: authLoading
+  } = useAuth();
+
   const [walletAddress, setWalletAddress] = useState(null);
   const [unreadMessages, setUnreadMessages] = useState(0);
   const [notifications, setNotifications] = useState(3);
@@ -142,31 +153,64 @@ const Navbar = ({ toggleTheme, theme }) => {
   const [isScrolled, setIsScrolled] = useState(false);
   const navigate = useNavigate();
   const location = useLocation();
-  const userId = localStorage.getItem("userId");
+  const [showWalletModal, setShowWalletModal] = useState(false);
+  const [key, setKey] = useState(0);
 
-  // Check auth status
-  useEffect(() => {
-    const token = localStorage.getItem("accessToken");
-    setIsLoggedIn(!!token);
 
-    const storedAddress = localStorage.getItem("walletAddress");
-    if (storedAddress) {
-      setWalletAddress(storedAddress);
-      fetchBalance(storedAddress);
+  const handleWalletConnect = async (walletType) => {
+    try {
+      let provider;
+      
+      switch(walletType) {
+        case 'metamask':
+          if (!window.ethereum) {
+            window.open('https://metamask.io/download.html', '_blank');
+            throw new Error('MetaMask not installed');
+          }
+          provider = window.ethereum;
+          await window.ethereum.request({ method: 'eth_requestAccounts' });
+          break;
+          
+        case 'trustwallet':
+          if (!window.ethereum) {
+            throw new Error('Trust Wallet not detected');
+          }
+          provider = window.ethereum;
+          await window.ethereum.request({ method: 'eth_requestAccounts' });
+          break;
+          
+        case 'binance':
+          if (!window.BinanceChain) {
+            throw new Error('Binance Chain Wallet not detected');
+          }
+          provider = window.BinanceChain;
+          await window.BinanceChain.request({ method: 'eth_requestAccounts' });
+          break;
+          
+        default:
+          throw new Error('Unsupported wallet type');
+      }
+      
+      const accounts = await provider.request({ method: 'eth_accounts' });
+      const address = accounts[0];
+      
+      if (!address) throw new Error('No accounts found');
+      
+      handleWalletConnected(address);
+      setShowWalletModal(false);
+      
+    } catch (error) {
+      console.error('Wallet connection error:', error);
+      // You can add error state and display it in the modal if you want
     }
+  };
 
-    // Simulate fetching unread messages
-    setUnreadMessages(Math.floor(Math.random() * 5));
+  useEffect(() => {
+    setKey(prevKey => prevKey + 1);
+  }, [isAuthenticated, location.pathname]);
 
-    // Scroll event listener
-    const handleScroll = () => {
-      setIsScrolled(window.scrollY > 10);
-    };
 
-    window.addEventListener("scroll", handleScroll);
-    return () => window.removeEventListener("scroll", handleScroll);
-  }, [location]);
-
+  // Fetch user balance
   const fetchBalance = async (address) => {
     try {
       // Simulate balance fetch
@@ -178,75 +222,67 @@ const Navbar = ({ toggleTheme, theme }) => {
     }
   };
 
-  const handleWalletConnected = (address) => {
+  // Handle wallet connection
+  const handleWalletConnected = useCallback((address) => {
     setWalletAddress(address);
     localStorage.setItem("walletAddress", address);
     fetchBalance(address);
-  };
+  }, []);
 
-  const handleLogout = async () => {
+  // Handle logout using context
+  const handleLogout = useCallback(async () => {
     try {
-      const refreshToken = localStorage.getItem("refreshToken");
-
-      await axios.post(
-        "http://127.0.0.1:8000/api/auth/logout/",
-        { refresh_token: refreshToken },
-        {
-          headers: {
-            Authorization: `Bearer ${localStorage.getItem("accessToken")}`,
-            "Content-Type": "application/json",
-          },
-        }
-      );
-
-      localStorage.removeItem("accessToken");
-      localStorage.removeItem("refreshToken");
-      localStorage.removeItem("user");
-      localStorage.removeItem("walletAddress");
-
-      setIsLoggedIn(false);
-      setWalletAddress(null);
-      navigate("/login");
+      await logout();
+      navigate("/");
     } catch (error) {
-      console.error("Logout failed:", error);
+      console.error("Logout error:", error);
     }
-  };
+  }, [logout, navigate]);
 
-  const sendCrypto = async () => {
-    if (!walletAddress) {
-      alert("Please connect your wallet first");
-      return;
-    }
+  // Scroll effect
+  useEffect(() => {
+    const handleScroll = () => {
+      setIsScrolled(window.scrollY > 10);
+    };
+    window.addEventListener("scroll", handleScroll);
+    return () => window.removeEventListener("scroll", handleScroll);
+  }, []);
 
-    navigate("/send-crypto");
-  };
+  useEffect(() => {
+    // This will force a re-render when the route changes
+  }, [location.pathname]);
 
   // Menu items configuration
   const marketItems = [
     { label: "Crypto Pairs", path: "/market/crypto", icon: FaCoins },
     { label: "Stocks", path: "/market/stocks", icon: FaChartLine },
     { label: "Become a Vendor", path: "/become-vendor", icon: FaGlobe },
-    { label: "P2P Trading", path: "/market/p2p", icon: GiTrade }
+    { label: "P2P Trading", path: "/p2p", icon: GiTrade }
   ];
 
   const helpItems = [
-    { label: "FAQ", path: "/faq", icon: FaQuestionCircle },
+    { label: "FAQ", path: "/fiat-p2p", icon: FaQuestionCircle },
     { label: "Tutorials", path: "/tutorials", icon: FaQuestionCircle },
     { label: "Contact Support", path: "/support", icon: FaHeadset }
   ];
 
-  const accountItems = isLoggedIn
+  const accountItems = isAuthenticated
     ? [
       { label: "Dashboard", path: "/dashboard", icon: FaChartLine },
       { label: "Wallet", path: "/wallet", icon: FaWallet },
-      { label: "Profile", path: `/profile/${userId}`, icon: FaUserCircle },
-      { label: "Messages", path: "/messages", icon: IoMdChatbubbles },
-      { label: "Logout", path: "#", icon: FaUserCircle, action: handleLogout }
+      { label: "Profile", path: `/profile/${user?.id}`, icon: FaUserCircle },
+      {
+        label: `Messages ${unreadMessages > 0 ? `(${unreadMessages})` : ""}`,
+        path: "/messages",
+        icon: IoMdChatbubbles
+      },
+      { label: "Logout", path: "#", icon: FaSignOutAlt, action: handleLogout }
     ]
     : [
-      { label: "Sign In", path: "/login", icon: FaUserCircle },
-      { label: "Register", path: "/register", icon: FaUserCircle }
+      { label: "Sign In", path: "/login", icon: FaSignInAlt },
+      { label: "Register", path: "/register", icon: FaUserPlus }
     ];
+
 
   return (
     <>
@@ -282,7 +318,7 @@ const Navbar = ({ toggleTheme, theme }) => {
               icon={FaChartLine}
             />
 
-            {isLoggedIn && (
+            {isAuthenticated && (
               <>
                 <Link to="/market" className="nav-link">
                   <FaExchangeAlt className="nav-icon" />
@@ -304,13 +340,13 @@ const Navbar = ({ toggleTheme, theme }) => {
 
           {/* User actions */}
           <div className="user-actions">
-            {isLoggedIn ? (
+            {isAuthenticated ? (
               <>
                 {/* Notifications */}
                 <div className="notification-icon">
                   <button
                     className="notification-button"
-                    onClick={() => navigate('/notifications')} // Navigate to your desired route
+                    onClick={() => navigate('/notifications')}
                   >
                     <FaBell />
                     {notifications > 0 && (
@@ -357,9 +393,10 @@ const Navbar = ({ toggleTheme, theme }) => {
                     </button>
                   </div>
                 ) : (
+
                   <button
                     className="connect-wallet-btn"
-                    onClick={() => document.getElementById("wallet-connect").click()}
+                    onClick={() => setShowWalletModal(true)}
                   >
                     <FaWallet />
                     Connect Wallet
@@ -394,37 +431,14 @@ const Navbar = ({ toggleTheme, theme }) => {
           </div>
         </div>
 
-        {/* Wallet connect component (hidden) */}
-        <ConnectWallet
-          id="wallet-connect"
-          onWalletConnected={handleWalletConnected}
-          style={{ display: "none" }}
-        />
       </header>
+      {showWalletModal && (
+          <ConnectWalletModal
+            onClose={() => setShowWalletModal(false)}
+            onConnect={handleWalletConnect}
+          />
+        )}
     </>
-  );
-};
-
-// Wallet connect component
-const ConnectWallet = ({ onWalletConnected, id, style }) => {
-  const connectWallet = async () => {
-    try {
-      const web3Modal = new Web3Modal();
-      const provider = await web3Modal.connect();
-      const ethersProvider = new ethers.providers.Web3Provider(provider);
-      const signer = ethersProvider.getSigner();
-      const address = await signer.getAddress();
-
-      onWalletConnected(address);
-    } catch (error) {
-      console.error("Wallet connection failed:", error);
-    }
-  };
-
-  return (
-    <button id={id} style={style} onClick={connectWallet}>
-      Connect Wallet
-    </button>
   );
 };
 

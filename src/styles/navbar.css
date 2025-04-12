@@ -1,7 +1,7 @@
 :root {
     --primary-color: #6c5ce7;
     --secondary-color: #a29bfe;
-    --accent-color: #fd79a8;
+    --accent-color: #FF6B00;
     --text-color: #2d3436;
     --bg-color: #f5f6fa;
     --card-bg: #ffffff;
@@ -85,8 +85,8 @@
   }
   
   .logo-text {
-    font-weight: 700;
-    font-size: 1.2rem;
+    font-weight: 900;
+    font-size: 1.7rem;
     color: var(--primary-color);
   }
   
@@ -103,7 +103,7 @@
   .nav-links {
     display: flex;
     align-items: center;
-    gap: 1.5rem;
+    gap: 1.8rem;
   }
   
   .nav-link {
@@ -450,3 +450,126 @@
     width: 100%;
   }
 }
+
+/* Wallet Modal Styles */
+.wallet-modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.5);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+  backdrop-filter: blur(5px);
+}
+
+.wallet-modal {
+  background-color: var(--bg-color);
+  border-radius: 12px;
+  width: 100%;
+  max-width: 400px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+  overflow: hidden;
+}
+
+.wallet-modal-header {
+  padding: 20px;
+  border-bottom: 1px solid var(--border-color);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.wallet-modal-header h3 {
+  margin: 0;
+  font-size: 1.25rem;
+  font-weight: 600;
+}
+
+.wallet-modal-close {
+  background: none;
+  border: none;
+  font-size: 1.2rem;
+  cursor: pointer;
+  color: var(--text-secondary);
+}
+
+.wallet-modal-body {
+  padding: 20px;
+}
+
+.wallet-section {
+  margin-bottom: 20px;
+}
+
+.wallet-section-title {
+  margin: 0 0 12px 0;
+  font-size: 0.9rem;
+  color: var(--text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.wallet-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 8px;
+}
+
+.wallet-option {
+  display: flex;
+  align-items: center;
+  padding: 12px 16px;
+  background-color: var(--bg-secondary);
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  width: 100%;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.wallet-option:hover {
+  background-color: var(--bg-tertiary);
+  transform: translateY(-1px);
+}
+
+.wallet-icon {
+  margin-right: 12px;
+  width: 24px;
+  height: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.wallet-arrow {
+  margin-left: auto;
+  color: var(--text-secondary);
+}
+
+.wallet-modal-footer {
+  padding: 16px 20px;
+  border-top: 1px solid var(--border-color);
+  text-align: center;
+  font-size: 0.9rem;
+  color: var(--text-secondary);
+}
+
+.wallet-modal-footer a {
+  color: var(--primary-color);
+  text-decoration: none;
+}
+
+.wallet-modal-footer a:hover {
+  text-decoration: underline;
+}
+
+/* Wallet icons */
+.icon-metamask { color: #f6851b; font-weight: bold; }
+.icon-trustwallet { color: #3375bb; font-weight: bold; }
+.icon-binance { color: #f3ba2f; font-weight: bold; }
+.icon-walletconnect { color: #3b99fc; font-weight: bold; }
+.icon-coinbase { color: #1652f0; font-weight: bold; }

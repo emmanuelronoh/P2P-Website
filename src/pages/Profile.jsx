@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { useParams, Link } from "react-router-dom";
+import { useParams, Link, useNavigate } from "react-router-dom";
 import { 
   FaRegCheckCircle, 
   FaStar, 
@@ -12,18 +12,116 @@ import {
 } from "react-icons/fa";
 import { IoMdFlash, IoMdTime } from "react-icons/io";
 import { MdOutlineArrowForwardIos, MdPayment, MdLocationOn } from "react-icons/md";
-import { tradersData } from "./Market";
 import "../styles/profile.css";
 
 const Profile = () => {
-  const { id } = useParams();
+  const { username } = useParams();
+  const navigate = useNavigate();
   const [trader, setTrader] = useState(null);
+  const [offers, setOffers] = useState({ buy: [], sell: [] });
+  const [feedback, setFeedback] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
   const [activeTab, setActiveTab] = useState("details");
 
   useEffect(() => {
-    const foundTrader = tradersData.find((t) => t.id === parseInt(id, 10));
-    setTrader(foundTrader);
-  }, [id]);
+    const fetchData = async () => {
+      try {
+        // Verify token first
+        const token = localStorage.getItem('accessToken');
+        if (!token) {
+          navigate('/login');
+          return;
+        }
+
+        // Verify token is valid
+        const tokenValid = await validateToken(token);
+        if (!tokenValid) {
+          localStorage.removeItem('accessToken');
+          navigate('/login');
+          return;
+        }
+
+        // Fetch trader profile
+        const traderResponse = await fetchTraderProfile(username, token);
+        setTrader(traderResponse);
+
+        // Pre-fetch offers and feedback
+        const offersResponse = await fetchTraderOffers(username, token);
+        setOffers(offersResponse);
+
+        const feedbackResponse = await fetchTraderFeedback(username, token);
+        setFeedback(feedbackResponse.reviews);
+
+      } catch (err) {
+        setError(err.message);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchData();
+  }, [username, navigate]);
+
+  const validateToken = async (token) => {
+    try {
+      const response = await fetch('http://127.0.0.1:8000/api/auth/validate-token', {
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      return response.ok;
+    } catch (error) {
+      return false;
+    }
+  };
+
+  const fetchTraderProfile = async (username, token) => {
+    const response = await fetch(`http://127.0.0.1:8000/api/auth/traders/${username}`, {
+      headers: { 'Authorization': `Bearer ${token}` }
+    });
+    if (!response.ok) throw new Error('Failed to fetch trader profile');
+    return await response.json();
+  };
+  
+  const fetchTraderOffers = async (username, token) => {
+    const response = await fetch(`http://127.0.0.1:8000/api/auth/traders/${username}/offers`, {
+      headers: { 'Authorization': `Bearer ${token}` }
+    });
+    if (!response.ok) throw new Error('Failed to fetch trader offers');
+    return await response.json();
+  };
+  
+  const fetchTraderFeedback = async (username, token) => {
+    const response = await fetch(`http://127.0.0.1:8000/api/auth/traders/${username}/feedback`, {
+      headers: { 'Authorization': `Bearer ${token}` }
+    });
+    if (!response.ok) throw new Error('Failed to fetch trader feedback');
+    return await response.json();
+  };
+  
+  const handleInitiateTrade = async (offerId, tradeType) => {
+    try {
+      const token = localStorage.getItem('accessToken');
+      const response = await fetch('http://127.0.0.1:8000/api/auth/trades/initiate', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          trader_username: username,
+          offer_id: offerId,
+          type: tradeType.toLowerCase()
+        })
+      });
+
+      if (!response.ok) throw new Error('Failed to initiate trade');
+
+      const data = await response.json();
+      navigate(`/trade/${data.tradeId}`);
+    } catch (error) {
+      setError(error.message);
+    }
+  };
 
   const renderRatingStars = (rating) => {
     const stars = [];
@@ -37,6 +135,22 @@ const Profile = () => {
     }
     return stars;
   };
+
+  if (loading) {
+    return <div className="loading">Loading trader profile...</div>;
+  }
+
+  if (error) {
+    return (
+      <div className="profile-error">
+        <h2>Error loading profile</h2>
+        <p>{error}</p>
+        <Link to="/market" className="back-button">
+          Back to Marketplace
+        </Link>
+      </div>
+    );
+  }
 
   if (!trader) {
     return (
@@ -54,7 +168,7 @@ const Profile = () => {
     <div className="profile-container">
       <div className="profile-header">
         <div className="profile-avatar">
-          <div className="avatar">{trader.name.charAt(0)}</div>
+          <div className="avatar">{trader.user?.first_name?.charAt(0) || 'T'}</div>
           {trader.rating >= 4.9 && (
             <div className="trusted-badge">
               <FaUserShield /> Trusted Trader
@@ -64,7 +178,7 @@ const Profile = () => {
         
         <div className="profile-info">
           <h1>
-            {trader.name} 
+            {trader.user?.first_name} {trader.user?.last_name}
             <FaRegCheckCircle className="verified-icon" />
           </h1>
           
@@ -72,7 +186,7 @@ const Profile = () => {
             <div className="stars">{renderRatingStars(trader.rating)}</div>
             <span className="rating-value">{trader.rating.toFixed(2)}</span>
             <span className="trades-count">
-              <IoMdFlash /> {trader.trades.toLocaleString()} trades
+              <IoMdFlash /> {trader.trades_completed.toLocaleString()} trades
             </span>
           </div>
           
@@ -81,7 +195,7 @@ const Profile = () => {
           </div>
           
           <div className="last-active">
-            <IoMdTime /> Last online: {trader.lastOnline}
+            <IoMdTime /> Last online: {new Date(trader.last_online).toLocaleString()}
           </div>
         </div>
       </div>
@@ -103,7 +217,7 @@ const Profile = () => {
           className={`tab-button ${activeTab === "feedback" ? "active" : ""}`}
           onClick={() => setActiveTab("feedback")}
         >
-          Feedback ({trader.feedback?.length || 0})
+          Feedback ({feedback.length || 0})
         </button>
       </div>
 
@@ -114,7 +228,7 @@ const Profile = () => {
               <FaClock className="detail-icon" />
               <div>
                 <h3>Member since</h3>
-                <p>{trader.memberSince}</p>
+                <p>{new Date(trader.member_since).toLocaleDateString()}</p>
               </div>
             </div>
             
@@ -138,7 +252,7 @@ const Profile = () => {
               <FaBan className="detail-icon" />
               <div>
                 <h3>Blocked by</h3>
-                <p>{trader.blockedBy} traders</p>
+                <p>{trader.blocked_by_count} traders</p>
               </div>
             </div>
             
@@ -146,7 +260,7 @@ const Profile = () => {
               <FaHandshake className="detail-icon" />
               <div>
                 <h3>Trusted by</h3>
-                <p>{trader.trustedBy} traders</p>
+                <p>{trader.trusted_by_count} traders</p>
               </div>
             </div>
           </div>
@@ -154,59 +268,42 @@ const Profile = () => {
 
         {activeTab === "offers" && (
           <div className="trader-offers">
-            {['Buy', 'Sell'].map((tradeType) => (
-              <div className="offer-card" key={tradeType}>
-                <div className="offer-header">
-                  <h2>
-                    {tradeType} {trader.crypto.split(" - ")[0]} in {trader.location}
-                  </h2>
-                  <span className="offer-type">{tradeType}</span>
-                </div>
-                
-                <div className="offer-details">
-                  <div className="price-info">
-                    <p className="price">{trader.price}</p>
-                    <p className="price-change">
-                      {trader.priceIncrease.includes("above") ? (
-                        <span className="above">▲ {trader.priceIncrease}</span>
-                      ) : (
-                        <span className="below">▼ {trader.priceIncrease}</span>
-                      )}
-                    </p>
-                  </div>
-                  
-                  <div className="limits-info">
-                    <p><strong>Min:</strong> {trader.minLimit}</p>
-                    <p><strong>Max:</strong> {trader.maxLimit}</p>
-                  </div>
-                  
-                  <div className="payment-method">
-                    <MdPayment /> {trader.paymentMethod}
-                  </div>
-                </div>
-                
-                <button className={`trade-button ${tradeType.toLowerCase()}`}>
-                  {tradeType} Now <MdOutlineArrowForwardIos />
-                </button>
+            {offers.buy.length === 0 && offers.sell.length === 0 ? (
+              <div className="no-offers">
+                <p>This trader currently has no active offers.</p>
               </div>
-            ))}
+            ) : (
+              <>
+                {offers.buy.map((offer) => (
+                  <OfferCard 
+                    key={`buy-${offer.id}`}
+                    offer={offer}
+                    tradeType="Buy"
+                    onInitiateTrade={handleInitiateTrade}
+                  />
+                ))}
+                {offers.sell.map((offer) => (
+                  <OfferCard 
+                    key={`sell-${offer.id}`}
+                    offer={offer}
+                    tradeType="Sell"
+                    onInitiateTrade={handleInitiateTrade}
+                  />
+                ))}
+              </>
+            )}
           </div>
         )}
 
         {activeTab === "feedback" && (
           <div className="feedback-section">
-            {trader.feedback?.length > 0 ? (
-              trader.feedback.map((review, index) => (
-                <div key={index} className="feedback-card">
-                  <div className="feedback-header">
-                    <div className="reviewer">{review.user}</div>
-                    <div className="review-rating">
-                      {renderRatingStars(review.rating)}
-                    </div>
-                  </div>
-                  <p className="review-comment">{review.comment}</p>
-                  <div className="review-date">2 weeks ago</div>
-                </div>
+            {feedback.length > 0 ? (
+              feedback.map((review) => (
+                <FeedbackCard 
+                  key={review.id}
+                  review={review}
+                  renderRatingStars={renderRatingStars}
+                />
               ))
             ) : (
               <div className="no-feedback">
@@ -216,6 +313,75 @@ const Profile = () => {
           </div>
         )}
       </div>
+    </div>
+  );
+};
+
+// Extracted Offer Card Component
+const OfferCard = ({ offer, tradeType, onInitiateTrade }) => (
+  <div className="offer-card">
+    <div className="offer-header">
+      <h2>
+        {tradeType} {offer.crypto} in {offer.trader.trader_profile?.location}
+      </h2>
+      <span className="offer-type">{tradeType}</span>
+    </div>
+    
+    <div className="offer-details">
+      <div className="price-info">
+        <p className="price">${offer.price}</p>
+        <p className="price-change">
+          {offer.price_change.includes("above") ? (
+            <span className="above">▲ {offer.price_change}</span>
+          ) : (
+            <span className="below">▼ {offer.price_change}</span>
+          )}
+        </p>
+      </div>
+      
+      <div className="limits-info">
+        <p><strong>Min:</strong> ${offer.min_limit}</p>
+        <p><strong>Max:</strong> ${offer.max_limit}</p>
+      </div>
+      
+      <div className="payment-method">
+        <MdPayment /> {offer.payment_method}
+      </div>
+    </div>
+    
+    <button 
+      className={`trade-button ${tradeType.toLowerCase()}`}
+      onClick={() => onInitiateTrade(offer.id, tradeType)}
+    >
+      {tradeType} Now <MdOutlineArrowForwardIos />
+    </button>
+  </div>
+);
+
+// Extracted Feedback Card Component
+const FeedbackCard = ({ review, renderRatingStars }) => {
+  const getTimeAgo = (dateString) => {
+    const date = new Date(dateString);
+    const now = new Date();
+    const diffInDays = Math.floor((now - date) / (1000 * 60 * 60 * 24));
+    
+    if (diffInDays === 0) return 'Today';
+    if (diffInDays === 1) return 'Yesterday';
+    if (diffInDays < 7) return `${diffInDays} days ago`;
+    if (diffInDays < 30) return `${Math.floor(diffInDays / 7)} weeks ago`;
+    return date.toLocaleDateString();
+  };
+
+  return (
+    <div className="feedback-card">
+      <div className="feedback-header">
+        <div className="reviewer">{review.reviewer.first_name}</div>
+        <div className="review-rating">
+          {renderRatingStars(review.rating)}
+        </div>
+      </div>
+      <p className="review-comment">{review.comment}</p>
+      <div className="review-date">{getTimeAgo(review.created_at)}</div>
     </div>
   );
 };

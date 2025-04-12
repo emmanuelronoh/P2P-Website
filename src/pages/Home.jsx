@@ -1,5 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import '../styles/Home.css';
+import btc from '../assets/btc.svg'
+import eth from '../assets/eth.svg'
+import USDT from '../assets/USDT.svg'
 
 const CheetahXHome = () => {
     const [stats, setStats] = useState({
@@ -66,15 +69,8 @@ const CheetahXHome = () => {
 
     return (
         <div className={`cheetah-x-home ${isMenuOpen ? 'menu-open' : ''}`}>
-            {/* Animated Background Elements */}
-            <div className="animated-bg-elements">
-                <div className="floating-coin btc"></div>
-                <div className="floating-coin eth"></div>
-                <div className="floating-coin usdt"></div>
-                <div className="floating-wave"></div>
-            </div>
 
-            
+
             {/* Hero Section */}
             <section className="hero-section">
                 <div className="hero-content">
@@ -115,7 +111,7 @@ const CheetahXHome = () => {
                 </div>
 
                 <div className="hero-image">
-                    <div className="platform-preview">
+                    <div className="image-container">
                         <div className="preview-header">
                             <div className="preview-tabs">
                                 <button
@@ -138,7 +134,7 @@ const CheetahXHome = () => {
                                 <div className="buy-crypto-preview">
                                     <div className="currency-selector">
                                         <div className="selected-currency">
-                                            <img src="/btc-icon.svg" alt="BTC" />
+                                            <img src="https://i.ibb.co/21d9TgJT/bitcoin-btc-logo.png" alt="BTC" />
                                             <span>Bitcoin (BTC)</span>
                                             <span className="dropdown-arrow">▼</span>
                                         </div>
@@ -179,7 +175,7 @@ const CheetahXHome = () => {
                                 <div className="sell-crypto-preview">
                                     <div className="currency-selector">
                                         <div className="selected-currency">
-                                            <img src="/eth-icon.svg" alt="ETH" />
+                                            <img src="https://i.ibb.co/hFJ0yD0m/ethereum-eth-logo.png" alt="ETH" />
                                             <span>Ethereum (ETH)</span>
                                             <span className="dropdown-arrow">▼</span>
                                         </div>
@@ -230,7 +226,7 @@ const CheetahXHome = () => {
                 <div className="features-grid">
                     <div className="feature-card">
                         <div className="feature-icon">
-                            <img src="/shield-icon.svg" alt="Security" />
+                            <img src="https://i.ibb.co/DTrbN39/shield.png" alt="Security" />
                         </div>
                         <h3>Military-Grade Security</h3>
                         <p>Multi-signature escrow, 2FA, and biometric authentication protect your assets</p>
@@ -238,7 +234,7 @@ const CheetahXHome = () => {
 
                     <div className="feature-card">
                         <div className="feature-icon">
-                            <img src="/speed-icon.svg" alt="Speed" />
+                            <img src="https://i.ibb.co/DDj3BtMj/control.png" alt="Speed" />
                         </div>
                         <h3>Lightning Fast</h3>
                         <p>Our matching engine finds the best offers in under 0.5 seconds</p>
@@ -246,7 +242,7 @@ const CheetahXHome = () => {
 
                     <div className="feature-card">
                         <div className="feature-icon">
-                            <img src="/global-icon.svg" alt="Global" />
+                            <img src="https://i.ibb.co/GfF7PT9V/global-network.png" alt="Global" />
                         </div>
                         <h3>Truly Global</h3>
                         <p>Trade with users in 190+ countries with 45+ fiat currencies</p>
@@ -254,7 +250,7 @@ const CheetahXHome = () => {
 
                     <div className="feature-card">
                         <div className="feature-icon">
-                            <img src="/fee-icon.svg" alt="Low Fees" />
+                            <img src="https://i.ibb.co/XZx76gwj/money.png" alt="Low Fees" />
                         </div>
                         <h3>Lowest Fees</h3>
                         <p>Only 0.5% fee - half of what most competitors charge</p>
@@ -262,7 +258,7 @@ const CheetahXHome = () => {
 
                     <div className="feature-card">
                         <div className="feature-icon">
-                            <img src="/support-icon.svg" alt="Support" />
+                            <img src="https://i.ibb.co/hhMrGKj/24-7.png" alt="Support" />
                         </div>
                         <h3>24/7 Support</h3>
                         <p>Real humans available around the clock to assist you</p>
@@ -270,7 +266,7 @@ const CheetahXHome = () => {
 
                     <div className="feature-card">
                         <div className="feature-icon">
-                            <img src="/payment-icon.svg" alt="Payments" />
+                            <img src="https://i.ibb.co/k2JsJGgV/atm-card.png" alt="Payments" />
                         </div>
                         <h3>300+ Payment Methods</h3>
                         <p>From bank transfers to mobile money, gift cards and more</p>
@@ -345,35 +341,35 @@ const CheetahXHome = () => {
 
                 <div className="assets-grid">
                     <div className="asset-card">
-                        <img src="/btc-icon.svg" alt="Bitcoin" />
+                        <img src="https://i.ibb.co/21d9TgJT/bitcoin-btc-logo.png" alt="Bitcoin" />
                         <span>Bitcoin (BTC)</span>
                     </div>
                     <div className="asset-card">
-                        <img src="/eth-icon.svg" alt="Ethereum" />
+                        <img src="https://i.ibb.co/hFJ0yD0m/ethereum-eth-logo.png" alt="Ethereum" />
                         <span>Ethereum (ETH)</span>
                     </div>
                     <div className="asset-card">
-                        <img src="/usdt-icon.svg" alt="Tether" />
+                        <img src="https://i.ibb.co/PvYNfpQG/tether-USDT-logo.png" alt="Tether" />
                         <span>Tether (USDT)</span>
                     </div>
                     <div className="asset-card">
-                        <img src="/xrp-icon.svg" alt="XRP" />
+                        <img src="https://i.ibb.co/pvJgTnqq/xrp-xrp-logo.png" alt="XRP" />
                         <span>XRP (XRP)</span>
                     </div>
                     <div className="asset-card">
-                        <img src="/sol-icon.svg" alt="Solana" />
+                        <img src="https://i.ibb.co/1fLYWJXf/solana-sol-logo.png" alt="Solana" />
                         <span>Solana (SOL)</span>
                     </div>
                     <div className="asset-card">
-                        <img src="/ada-icon.svg" alt="Cardano" />
+                        <img src="https://i.ibb.co/LhCpsscs/cardano-ada-logo.png" alt="Cardano" />
                         <span>Cardano (ADA)</span>
                     </div>
                     <div className="asset-card">
-                        <img src="/doge-icon.svg" alt="Dogecoin" />
+                        <img src="https://i.ibb.co/pjtTr3WX/dogecoin-doge-logo.png" alt="Dogecoin" />
                         <span>Dogecoin (DOGE)</span>
                     </div>
                     <div className="asset-card">
-                        <img src="/dot-icon.svg" alt="Polkadot" />
+                        <img src="https://i.ibb.co/RpQ2y3YB/polkadot-new-dot-logo.png" alt="Polkadot" />
                         <span>Polkadot (DOT)</span>
                     </div>
                     <div className="asset-card view-more">
@@ -397,7 +393,7 @@ const CheetahXHome = () => {
                             The escrow system gives me peace of mind when trading large amounts."
                         </p>
                         <div className="testimonial-author">
-                            <img src="/user1.jpg" alt="User" />
+                            <img src="https://i.ibb.co/RGJcTPrZ/User-icon-2-svg.png" alt="User" />
                             <div>
                                 <h4>Michael T.</h4>
                                 <span>Professional Trader</span>
@@ -412,7 +408,7 @@ const CheetahXHome = () => {
                             The customer support team walked me through my first trade."
                         </p>
                         <div className="testimonial-author">
-                            <img src="/user2.jpg" alt="User" />
+                            <img src="https://i.ibb.co/RGJcTPrZ/User-icon-2-svg.png" alt="User" />
                             <div>
                                 <h4>Sarah K.</h4>
                                 <span>First-time Buyer</span>
@@ -427,7 +423,7 @@ const CheetahXHome = () => {
                             even for less popular altcoins. The mobile app is super convenient too."
                         </p>
                         <div className="testimonial-author">
-                            <img src="/user3.jpg" alt="User" />
+                            <img src="https://i.ibb.co/RGJcTPrZ/User-icon-2-svg.png" alt="User" />
                             <div>
                                 <h4>David L.</h4>
                                 <span>Altcoin Seller</span>

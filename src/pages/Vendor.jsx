@@ -1,179 +1,200 @@
-import React, { useState } from "react";
-import axios from "axios";
-import snsWebSdk from "@sumsub/websdk";
-import { useNavigate } from "react-router-dom";
-import "../styles/Vendor.css";
+import React, { useState, useEffect } from 'react';
+import axios from 'axios';
+import '../styles/Vendor.css';
 
-const VendorApplication = () => {
-  const [formData, setFormData] = useState({
-    email: "",
-    phone: "",
-    user_id: "",
-  });
-
-  const [message, setMessage] = useState({ text: "", type: "" });
+const VendorVerification = ({ userId }) => {
   const [loading, setLoading] = useState(false);
-  const [accessToken, setAccessToken] = useState(null);
-  const navigate = useNavigate();
+  const [error, setError] = useState(null);
+  const [success, setSuccess] = useState(false);
+  const [formData, setFormData] = useState({
+    email: '',
+    phone: '',
+    termsAccepted: false
+  });
+  const [formErrors, setFormErrors] = useState({});
+  const [shake, setShake] = useState(false);
 
-  // Handle form data changes
-  const handleInputChange = (e) => {
-    const { name, value } = e.target;
-    setFormData((prev) => ({ ...prev, [name]: value }));
+  useEffect(() => {
+    if (error) {
+      setShake(true);
+      const timer = setTimeout(() => setShake(false), 500);
+      return () => clearTimeout(timer);
+    }
+  }, [error]);
+
+  const handleChange = (e) => {
+    const { name, value, type, checked } = e.target;
+    setFormData(prev => ({
+      ...prev,
+      [name]: type === 'checkbox' ? checked : value
+    }));
   };
 
-  // Handle form submission to start KYC
-  const handleSubmit = async (e) => {
-    e.preventDefault();
+  const validateForm = () => {
+    const errors = {};
+    if (!formData.email) errors.email = 'Email is required';
+    else if (!/^\S+@\S+\.\S+$/.test(formData.email)) errors.email = 'Email is invalid';
+    
+    if (!formData.phone) errors.phone = 'Phone number is required';
+    else if (!/^[\d\s\+\-\(\)]{10,}$/.test(formData.phone)) errors.phone = 'Phone number is invalid';
+    
+    if (!formData.termsAccepted) errors.termsAccepted = 'You must accept the terms';
+    
+    setFormErrors(errors);
+    return Object.keys(errors).length === 0;
+  };
 
-    // Clear previous messages
-    setMessage({ text: "", type: "" });
-
-    // Form validation
-    if (!formData.email || !formData.phone || !formData.user_id) {
-      setMessage({ text: "All fields are required!", type: "error" });
-      return;
-    }
-
-    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) {
-      setMessage({ text: "Please enter a valid email.", type: "error" });
-      return;
-    }
-
+  const startVerification = async (regenerate = false) => {
+    if (!validateForm()) return;
+    
     setLoading(true);
-    setMessage({ text: "Starting KYC verification...", type: "info" });
-
+    setError(null);
+    setSuccess(false);
+    
     try {
-      // Send form data to backend for KYC initiation
-      const response = await axios.post(
-        "http://127.0.0.1:8000/kyc/start/",
-        formData,
-        {
-          headers: {
-            "Content-Type": "application/json",
-            "X-CSRFToken": getCookie("csrftoken"),
-          },
-          timeout: 15000,
-        }
-      );
+      const endpoint = regenerate 
+        ? 'http://localhost:3001/api/regenerate-sumsub-link' 
+        : 'http://localhost:3001/api/generate-sumsub-link';
+      
+      const response = await axios.post(endpoint, {
+        userId,
+        levelName: 'kyc_verification'
+      });
 
-      if (response.data.accessToken) {
-        setAccessToken(response.data.accessToken);
-        setMessage({ text: "Redirecting to KYC...", type: "success" });
-        launchWebSdk(response.data.accessToken);
-      } else {
-        setMessage({ text: "KYC initiation failed.", type: "error" });
-      }
-    } catch (error) {
-      handleError(error);
+      setSuccess(true);
+      
+      // Open SumSub in a new tab after a brief delay for better UX
+      setTimeout(() => {
+        window.open(response.data.url, '_blank', 'noopener,noreferrer');
+      }, 1000);
+      
+    } catch (err) {
+      setError(err.response?.data?.error || err.message || 'Verification failed');
     } finally {
       setLoading(false);
     }
   };
 
-  // Handle errors during the KYC process
-  const handleError = (error) => {
-    let errorMessage = "An error occurred during KYC initiation.";
-    if (error.response) {
-      errorMessage = error.response.data?.error || `Server error (${error.response.status})`;
-    } else if (error.request) {
-      errorMessage = "No response from the server. Check your connection.";
-    } else {
-      errorMessage = error.message;
-    }
-    setMessage({ text: errorMessage, type: "error" });
-  };
-
-  // Helper function to get the CSRF token
-  function getCookie(name) {
-    const cookie = document.cookie.split(";").find((cookie) => cookie.trim().startsWith(`${name}=`));
-    return cookie ? decodeURIComponent(cookie.split("=")[1]) : null;
-  }
-
-  // Initialize the Sumsub Web SDK
-  function launchWebSdk(accessToken) {
-    const snsWebSdkInstance = snsWebSdk.init(accessToken, getNewAccessToken)
-      .withConf({ lang: "en" })
-      .on("onError", (error) => {
-        console.error("Sumsub SDK Error:", error);
-      })
-      .onMessage((type, payload) => {
-        console.log("Sumsub SDK Message:", type, payload);
-      })
-      .build();
-
-    snsWebSdkInstance.launch("#sumsub-websdk-container");
-  }
-
-  // Get a new access token when necessary
-  function getNewAccessToken() {
-    // Implement token renewal logic if needed
-    return Promise.resolve("new_access_token"); // Example, replace with actual logic
-  }
-
   return (
-    <div className="vendor-container">
-      <h2>Vendor Application</h2>
-
-      {message.text && <p className={`message ${message.type}`}>{message.text}</p>}
-
-      <form className="vendor-form" onSubmit={handleSubmit}>
-        <label>Email:</label>
-        <input
-          type="email"
-          name="email"
-          value={formData.email}
-          onChange={handleInputChange}
-          required
-        />
-
-        <label>Phone Number:</label>
-        <input
-          type="tel"
-          name="phone"
-          value={formData.phone}
-          onChange={handleInputChange}
-          required
-        />
-
-        <label>User ID:</label>
-        <input
-          type="text"
-          name="user_id"
-          value={formData.user_id}
-          onChange={handleInputChange}
-          required
-        />
-
-        <button type="submit" className="submit-btn" disabled={loading}>
-          {loading ? "Processing..." : "Start KYC Verification"}
-        </button>
-
-        <button
-          type="button"
-          className="navigate-btn"
-          onClick={() => navigate("/TermsAndCondition")}
-          style={{
-            marginTop: "1rem",
-            backgroundColor: "#007bff",
-            color: "#fff",
-            padding: "10px 20px",
-            border: "none",
-            cursor: "pointer",
-            borderRadius: "5px",
-          }}
-        >
-          Go to P2P Posting
-        </button>
-      </form>
-
-      {/* Sumsub Web SDK Container */}
-      <div
-        id="sumsub-websdk-container"
-        style={{ width: "100%", height: "600px", marginTop: "2rem" }}
-      ></div>
+    <div className="verification-container">
+      <div className={`verification-card ${shake ? 'shake' : ''}`}>
+        <div className="verification-header">
+          <h2>Vendor Identity Verification</h2>
+          <p>Complete your verification to start selling on our platform</p>
+        </div>
+        
+        <div className="verification-progress">
+          <div className={`progress-step ${success ? 'completed' : 'active'}`}>
+            <div className="step-number">1</div>
+            <div className="step-label">Enter Details</div>
+          </div>
+          <div className={`progress-step ${success ? 'active' : ''}`}>
+            <div className="step-number">2</div>
+            <div className="step-label">Verify Identity</div>
+          </div>
+        </div>
+        
+        {!success ? (
+          <div className="verification-form">
+            <div className={`form-group ${formErrors.email ? 'error' : ''}`}>
+              <label htmlFor="email">Email Address</label>
+              <input
+                type="email"
+                id="email"
+                name="email"
+                value={formData.email}
+                onChange={handleChange}
+                placeholder="your@email.com"
+                disabled={loading}
+              />
+              {formErrors.email && <span className="error-message">{formErrors.email}</span>}
+            </div>
+            
+            <div className={`form-group ${formErrors.phone ? 'error' : ''}`}>
+              <label htmlFor="phone">Phone Number</label>
+              <input
+                type="tel"
+                id="phone"
+                name="phone"
+                value={formData.phone}
+                onChange={handleChange}
+                placeholder="+1 (123) 456-7890"
+                disabled={loading}
+              />
+              {formErrors.phone && <span className="error-message">{formErrors.phone}</span>}
+            </div>
+            
+            <div className={`form-group checkbox-group ${formErrors.termsAccepted ? 'error' : ''}`}>
+              <input
+                type="checkbox"
+                id="termsAccepted"
+                name="termsAccepted"
+                checked={formData.termsAccepted}
+                onChange={handleChange}
+                disabled={loading}
+              />
+              <label htmlFor="termsAccepted">
+                I accept the <a href="/terms" target="_blank" rel="noopener noreferrer">Terms of Service</a> and 
+                <a href="/privacy" target="_blank" rel="noopener noreferrer">Privacy Policy</a>
+              </label>
+              {formErrors.termsAccepted && <span className="error-message">{formErrors.termsAccepted}</span>}
+            </div>
+            
+            <div className="form-actions">
+              <button
+                className="primary-button"
+                onClick={() => startVerification(false)}
+                disabled={loading}
+              >
+                {loading ? (
+                  <>
+                    <span className="spinner"></span>
+                    Processing...
+                  </>
+                ) : 'Start Verification'}
+              </button>
+              
+              <button
+                className="secondary-button"
+                onClick={() => startVerification(true)}
+                disabled={loading}
+              >
+                Restart Verification
+              </button>
+            </div>
+          </div>
+        ) : (
+          <div className="verification-success">
+            <div className="success-icon">
+              <svg viewBox="0 0 24 24">
+                <path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41L9 16.17z"/>
+              </svg>
+            </div>
+            <h3>Verification Started Successfully!</h3>
+            <p>Your verification window should open automatically. If it doesn't, please check your pop-up blocker.</p>
+            <button 
+              className="primary-button"
+              onClick={() => startVerification(false)}
+            >
+              Reopen Verification
+            </button>
+          </div>
+        )}
+        
+        {error && (
+          <div className="error-message-container">
+            <div className="error-icon">!</div>
+            <div>{error}</div>
+          </div>
+        )}
+      </div>
+      
+      <div className="verification-help">
+        <h4>Need help with verification?</h4>
+        <p>Contact our support team at <a href="mailto:support@vendors.com">support@vendors.com</a></p>
+      </div>
     </div>
   );
 };
 
-export default VendorApplication;
+export default VendorVerification;
