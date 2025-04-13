@@ -770,33 +770,6 @@ const FiatP2P = () => {
                 </div>
             )}
 
-            <header className="fiat-p2p-header">
-                <div className="header-content">
-                    <h1>
-                        <BsArrowLeftRight className="exchange-icon" />
-                        P2P Trading Platform
-                    </h1>
-
-                    <div className="header-actions">
-                        <button className="tutorial-btn" onClick={startTutorial}>
-                            How It Works
-                        </button>
-
-                        <div className="notification-bell">
-                            <FaBell />
-                            {state.notificationCount > 0 && (
-                                <span className="notification-count">{state.notificationCount}</span>
-                            )}
-                        </div>
-
-                        <div className="user-status">
-                            <div className="status-indicator online" />
-                            <span>Verified Trader</span>
-                        </div>
-                    </div>
-                </div>
-            </header>
-
             <div className="market-stats-bar">
                 <div className="stats-container">
                     <div className="stat">

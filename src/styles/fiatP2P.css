@@ -47,8 +47,7 @@
   }
   
   .tutorial-btn {
-    background: rgba(255, 255, 255, 0.1);
-    border: 1px solid rgba(255, 255, 255, 0.2);
+    background: #000000;
     color: white;
     padding: 0.5rem 1rem;
     border-radius: 4px;
@@ -56,9 +55,6 @@
     transition: all 0.3s ease;
   }
   
-  .tutorial-btn:hover {
-    background: rgba(255, 255, 255, 0.2);
-  }
   
   .notification-bell {
     position: relative;

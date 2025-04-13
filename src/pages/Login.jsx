@@ -40,50 +40,51 @@ const Login = () => {
         setIsLoading(true);
     
         try {
-            // Create FormData object to match Django's expected format
+            // Create form data with current state values
             const formData = new FormData();
             formData.append('email', email);
             formData.append('password', password);
-            formData.append('trade_type', tradeType);
-            
+            formData.append('trade_type', tradeType); // Use current tradeType directly
     
+            // Make login request
             const response = await axios.post(
                 "http://localhost:8000/api/auth/login/",
                 formData,
                 {
                     headers: {
-                        'Content-Type': 'multipart/form-data', // Changed from application/json
+                        'Content-Type': 'multipart/form-data',
                         'Accept': 'application/json'
                     },
-                    withCredentials: true // Important for session/cookies
+                    withCredentials: true
                 }
             );
     
-            console.log("Full response:", response); // Debug entire response
-    
-            if (response.data.accessToken) {
-                // Store tokens and user data
-                localStorage.setItem("accessToken", response.data.accessToken);
-                localStorage.setItem("refreshToken", response.data.refreshToken);
-                
-                // Verify and log user data
-                console.log("User data received:", response.data.user);
-                
-                // Update auth context
-                await authLogin({
-                    token: response.data.accessToken,
-                    user: response.data.user
-                });
-    
-                // Debug auth state
-                console.log("Auth context updated, redirecting...");
-                
-                // Redirect
-                navigate(tradeType === "crypto" ? "/fiat-p2p" : "/market");
+            // Verify we have the expected response data
+            if (!response.data?.accessToken) {
+                throw new Error("Authentication failed: No token received");
             }
+    
+            // Store tokens
+            localStorage.setItem("accessToken", response.data.accessToken);
+            localStorage.setItem("refreshToken", response.data.refreshToken);
+    
+            // Update auth context and wait for it to complete
+            await authLogin({
+                token: response.data.accessToken,
+                user: response.data.user
+            });
+    
+            // Debug logging
+            console.log("Login successful, tradeType:", tradeType);
+            console.log("Redirecting to:", tradeType === "crypto" ? "/market" : "/fiat-p2p");
+    
+            // Perform navigation after state updates
+            setTimeout(() => {
+                navigate(tradeType === "crypto" ? "/market" : "/fiat-p2p");
+            }, 0);
+    
         } catch (err) {
-            console.error("Full error:", err);
-            console.error("Error response data:", err.response?.data);
+            console.error("Login error:", err);
             
             let errorMessage = "Login failed. Please try again.";
             
@@ -95,19 +96,29 @@ const Login = () => {
                     errorMessage = err.response.data.detail;
                 }
                 
+                // Handle email verification case
                 if (err.response.status === 403) {
                     navigate("/verify-email", { state: { email } });
                     return;
                 }
+                
+                // Handle account not found
+                if (err.response.status === 404) {
+                    errorMessage = "Account not found. Please check your credentials or register.";
+                }
+            } else if (err.message) {
+                errorMessage = err.message;
             }
             
             setError(errorMessage);
-            triggerError(errorMessage);
+            setShake(true);
+            setTimeout(() => setShake(false), 500);
         } finally {
             setIsLoading(false);
         }
     };
 
+    
     const triggerError = (message) => {
         setShake(true);
         setTimeout(() => setShake(false), 500);

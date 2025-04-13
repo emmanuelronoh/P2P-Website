@@ -1,20 +1,23 @@
-
-import { useState, useEffect, useRef, useCallback } from "react";
-import { 
-  BrowserRouter as Router, 
-  Routes, 
-  Route 
+import { useState, useEffect } from "react";
+import {
+  BrowserRouter as Router,
+  Routes,
+  Route,
+  Outlet
 } from "react-router-dom";
-import { Link, useNavigate, useLocation } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import { useAuth, AuthProvider } from './contexts/AuthContext';
-import axios from "axios";
 import Home from "./pages/Home";
+import HomeFiat from "./pages/Home-fiat";
+import NavbarP2P from "./components/NavbarP2P";
 import Dashboard from "./pages/Dashboard";
+import DashboardFiatPage from "./pages/DashboadFiat";
 import Register from "./pages/Register";
 import Login from "./pages/Login";
 import Footer from "./pages/Footer";
 import "./styles/theme.css";
-import Messages from "./pages/Messages.jsx";
+import Messages from "./pages/Messages";
+import MessagesP2p from "./pages/Messages-p2p";
 import Wallet from "./pages/Wallet";
 import Vendor from "./pages/Vendor";
 import Amount from "./pages/Amount";
@@ -28,6 +31,7 @@ import Tutorials from "./pages/Tutorials";
 import Faq from "./pages/Faq-page";
 import Profile from "./pages/Profile";
 import Notifications from "./pages/Notifications";
+import NotificationsPage from "./pages/NotificationsFiat";
 import SellCrypto from "./pages/SellCrypto";
 import ProfileDetails from "./pages/ProfileDetails";
 import Market from "./pages/Market";
@@ -38,11 +42,6 @@ import DashboardVendors from "./components/VendorDashboard/DashboardVendors";
 import Navbar from "./components/Navbar";
 import "uikit/dist/css/uikit.min.css";
 import ResetPassword from "./components/ResetPassword";
-
-// Create axios instance with interceptors
-const api = axios.create({
-  baseURL: "http://127.0.0.1:8000/api/",
-});
 
 function AppWrapper() {
   const [theme, setTheme] = useState(localStorage.getItem("theme") || "light");
@@ -63,13 +62,43 @@ function AppWrapper() {
   );
 }
 
+// Layout component for main routes with standard Navbar and Footer
+function MainLayout({ theme, toggleTheme }) {
+  return (
+    <>
+      <Navbar theme={theme} toggleTheme={toggleTheme} />
+      <div className="app">
+        <Outlet />
+      </div>
+      <Footer />
+    </>
+  );
+}
+
+// Layout component for P2P routes with NavbarP2P and Footer
+function P2PLayout({ theme, toggleTheme }) {
+  return (
+    <>
+      <NavbarP2P theme={theme} toggleTheme={toggleTheme} />
+      <div className="app">
+        <Outlet />
+      </div>
+      <Footer />
+    </>
+  );
+}
+
+// Layout component for full-page routes (without Navbar/Footer)
+function FullPageLayout() {
+  return (
+    <div className="full-page-layout">
+      <Outlet />
+    </div>
+  );
+}
+
 function AppInner({ theme, toggleTheme }) {
-  const { 
-    user, 
-    isAuthenticated, 
-    logout,
-    loading: authLoading 
-  } = useAuth();
+  const { loading: authLoading } = useAuth();
 
   if (authLoading) {
     return (
@@ -81,38 +110,37 @@ function AppInner({ theme, toggleTheme }) {
 
   return (
     <Router>
-      <Navbar theme={theme} toggleTheme={toggleTheme} />
-      
-      <div className="app">
-        <Routes>
+      <Routes>
+        {/* Main routes with standard Navbar and Footer */}
+        <Route element={<MainLayout theme={theme} toggleTheme={toggleTheme} />}>
           <Route path="/" element={<Home />} />
-          <Route 
-            path="/dashboard" 
+          <Route
+            path="/dashboard"
             element={
               <PrivateRoute>
                 <Dashboard />
               </PrivateRoute>
-            } 
+            }
           />
           <Route path="/register" element={<Register />} />
-          <Route 
-            path="/login" 
+          <Route
+            path="/login"
             element={
               <PublicOnlyRoute>
                 <Login />
               </PublicOnlyRoute>
-            } 
+            }
           />
           <Route path="/verify-otp" element={<VerifyOTP />} />
           <Route path="/forgot-password" element={<ForgotPassword />} />
           <Route path="/reset-password/:uidb64/:token" element={<ResetPassword />} />
-          <Route 
-            path="/wallet" 
+          <Route
+            path="/wallet"
             element={
               <PrivateRoute>
                 <Wallet />
               </PrivateRoute>
-            } 
+            }
           />
           <Route path="/market" element={<Market />} />
           <Route path="/profile/:username" element={<Profile />} />
@@ -121,18 +149,33 @@ function AppInner({ theme, toggleTheme }) {
           <Route path="/support" element={<Support />} />
           <Route path="/amount" element={<Amount />} />
           <Route path="/messages" element={<Messages />} />
+          <Route path="/messages-p2p" element={<MessagesP2p />} />
           <Route path="/tutorials" element={<Tutorials />} />
           <Route path="/become-vendor" element={<Vendor />} />
           <Route path="/profile-details/:username" element={<ProfileDetails />} />
           <Route path="/TermsAndCondition" element={<TermsAndCondition />} />
           <Route path="/CryptoListing" element={<CryptoListing />} />
           <Route path="/faq" element={<Faq />} />
-          <Route path="/fiat-p2p" element={<FiatP2P />} />
           <Route path="/DashboardVendors" element={<DashboardVendors />} />
-        </Routes>
-      </div>
+        </Route>
 
-      <Footer />
+        {/* P2P routes with NavbarP2P and Footer */}
+        <Route element={<P2PLayout theme={theme} toggleTheme={toggleTheme} />}>
+          <Route path="/fiat-p2p" element={<FiatP2P />} />
+          <Route path="/home-fiat" element={<HomeFiat />} /> {/* ✅ Add this here */}
+          <Route path="/notifications-p2p" element={<NotificationsPage />} />
+          <Route path="/dashboard-fiat" element={<DashboardFiatPage />} />
+          <Route path="/become-vendor-fiat" element={<Vendor />} />
+          <Route path="/faq-fiat" element={<Faq />} />
+          <Route path="/support-fiat" element={<Support />} />
+          <Route path="/tutorials-fiat" element={<Tutorials />} />
+        </Route>
+
+        {/* Full-page routes without Navbar/Footer */}
+        <Route element={<FullPageLayout />}>
+          {/* Add any full-page routes here */}
+        </Route>
+      </Routes>
     </Router>
   );
 }
