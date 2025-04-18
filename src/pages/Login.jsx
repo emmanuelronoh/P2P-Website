@@ -67,6 +67,9 @@ const Login = () => {
             // Store tokens
             localStorage.setItem("accessToken", response.data.accessToken);
             localStorage.setItem("refreshToken", response.data.refreshToken);
+
+            console.log("FULL RESPONSE:", response);
+
     
             // Update auth context and wait for it to complete
             await authLogin({

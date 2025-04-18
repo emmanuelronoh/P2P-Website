@@ -5,7 +5,7 @@ const setupWebSocket = (onMessageReceived) => {
   
   client.onopen = () => {
     console.log('WebSocket Client Connected');
-    const token = localStorage.getItem('access_token');
+    const token = localStorage.getItem('accessToken');
     if (token) {
       client.send(JSON.stringify({
         type: 'authorization',

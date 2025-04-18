@@ -1,18 +1,19 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useMemo, useCallback } from "react";
 import { useLocation } from "react-router-dom";
 import EmojiPicker from "emoji-picker-react";
+import { debounce } from 'lodash';
 import {
   getChatRooms,
   createChatRoom,
   getMessages,
-  sendMessage,
+  sendMessage as apiSendMessage,
   uploadAttachment
 } from "./ChatApi";
 import "../styles/Messages.css";
 
 const Messages = () => {
   const location = useLocation();
-  const { trader, tradeId, tradeType = "", crypto = "", amount = 0 } = location.state || {};
+  const { trader, tradeId, tradeType, crypto, amount } = location.state || {};
   const messagesEndRef = useRef(null);
   const fileInputRef = useRef(null);
 
@@ -24,292 +25,57 @@ const Messages = () => {
   const [showEmojiPicker, setShowEmojiPicker] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
 
-  // Fetch chat rooms on component mount
-  useEffect(() => {
-    const fetchChatRooms = async () => {
-      try {
-        const chatRooms = await getChatRooms();
-        const formattedChats = chatRooms.map(room => ({
-          id: room.id,
-          trader: room.seller.id === localStorage.getItem('user_id') ? room.buyer.username : room.seller.username,
-          avatar: room.seller.id === localStorage.getItem('user_id')
-            ? room.buyer.profile_picture
-            : room.seller.profile_picture,
-          status: "online", // You'll need to implement presence tracking
-          messages: room.messages.map(msg => ({
-            text: msg.content,
-            sender: msg.sender.id === localStorage.getItem('user_id') ? "me" : "them",
-            status: msg.read ? "read" : "delivered",
-            timestamp: new Date(msg.timestamp),
-            attachments: msg.attachments
-          })),
-          unread: room.messages.some(msg =>
-            msg.sender.id !== localStorage.getItem('user_id') && !msg.read
-          ),
-          lastActive: new Date(room.updated_at)
-        }));
-
-        setChats(formattedChats);
-
-        // If coming from trade page, select or create the chat
-        if (trader && tradeId) {
-          const existingChat = formattedChats.find(chat =>
-            chat.trader === trader.name
-          );
-
-          if (existingChat) {
-            setSelectedChat(existingChat);
-          } else {
-            // Create new chat room
-            const newChatRoom = await createChatRoom(
-              tradeId,
-              trader.id
-            );
-
-            const newChat = {
-              id: newChatRoom.id,
-              trader: trader.name,
-              avatar: trader.avatar,
-              status: "online",
-              messages: [{
-                text: `Hello! I want to ${tradeType.toLowerCase()} ${amount} ${crypto} for KES ${amount}.`,
-                sender: "me",
-                status: "sent",
-                timestamp: new Date()
-              }],
-              unread: false,
-              lastActive: new Date()
-            };
-
-            setChats(prev => [...prev, newChat]);
-            setSelectedChat(newChat);
-          }
-        }
-      } catch (error) {
-        console.error("Error fetching chats:", error);
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
-    fetchChatRooms();
-  }, [trader, tradeId, tradeType, crypto, amount]);
-
-  // Fetch messages when a chat is selected
-  useEffect(() => {
-    if (selectedChat) {
-      const fetchChatMessages = async () => {
-        try {
-          const messages = await getMessages(selectedChat.id);
-          const formattedMessages = messages.map(msg => ({
-            text: msg.content,
-            sender: msg.sender.id === localStorage.getItem('user_id') ? "me" : "them",
-            status: msg.read ? "read" : "delivered",
-            timestamp: new Date(msg.timestamp),
-            attachments: msg.attachments
-          }));
-
-          setSelectedChat(prev => ({
-            ...prev,
-            messages: formattedMessages
-          }));
-
-          // Update the chat in the chats list
-          setChats(prevChats =>
-            prevChats.map(chat =>
-              chat.id === selectedChat.id
-                ? { ...chat, messages: formattedMessages, unread: false }
-                : chat
-            )
-          );
-        } catch (error) {
-          console.error("Error fetching messages:", error);
-        }
-      };
-
-      fetchChatMessages();
-    }
-  }, [selectedChat]);
-
-  // Auto-scroll to bottom of messages
-  const scrollToBottom = () => {
-    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
-  };
-
-  useEffect(() => {
-    scrollToBottom();
-  }, [selectedChat, isTyping]);
-
-  const handleEmojiClick = (emojiData) => {
-    setNewMessage(prev => prev + emojiData.emoji);
-    setShowEmojiPicker(false);
-  };
-
-  const handleFileChange = async (e) => {
-    const file = e.target.files[0];
-    if (!file || !selectedChat) return;
-
-    // Create a temporary message with loading state
-    const tempMessage = {
-      text: file.name,
-      sender: "me",
-      status: "sending",
-      timestamp: new Date(),
-      file: {
-        name: file.name,
-        type: file.type,
-        size: file.size,
-        preview: file.type.startsWith('image/') ? URL.createObjectURL(file) : null
-      }
-    };
-
-    // Update state with temporary message
-    setSelectedChat(prev => ({
-      ...prev,
-      messages: [...prev.messages, tempMessage]
-    }));
-
-    try {
-      // Upload the file to the backend
-      const lastMessage = selectedChat.messages[selectedChat.messages.length - 1];
-      const response = await uploadAttachment(lastMessage.id, file);
-
-      // Update the message with the server response
-      const updatedMessage = {
-        ...tempMessage,
-        status: "sent",
-        file: {
-          ...tempMessage.file,
-          url: response.file.url // URL from the server
-        }
-      };
-
-      setSelectedChat(prev => ({
-        ...prev,
-        messages: prev.messages.map(msg =>
-          msg.timestamp === tempMessage.timestamp ? updatedMessage : msg
-        )
-      }));
-
-      // Simulate response from the other user
-      setIsTyping(true);
-      setTimeout(async () => {
-        const replyMessage = {
-          text: getRandomFileResponse(file.type),
-          sender: "them",
-          status: "delivered",
-          timestamp: new Date()
-        };
-
-        // In a real app, this would come from a WebSocket or polling
-        setSelectedChat(prev => ({
-          ...prev,
-          messages: [...prev.messages, replyMessage]
-        }));
-
-        setIsTyping(false);
-      }, 2000 + Math.random() * 3000);
-    } catch (error) {
-      console.error("Error uploading file:", error);
-      // Update the message with error state
-      setSelectedChat(prev => ({
-        ...prev,
-        messages: prev.messages.map(msg =>
-          msg.timestamp === tempMessage.timestamp
-            ? { ...msg, status: "error" }
-            : msg
-        )
-      }));
-    }
-  };
-
-  const sendMessage = async () => {
-    if (!newMessage.trim() || !selectedChat) return;
-
-    const messageToSend = {
-      text: newMessage,
-      sender: "me",
-      status: "sending",
-      timestamp: new Date()
-    };
-
-    // Optimistically update UI
-    setSelectedChat(prev => ({
-      ...prev,
-      messages: [...prev.messages, messageToSend]
-    }));
-    setNewMessage("");
-    setShowEmojiPicker(false);
-
-    try {
-      // Send message to backend
-      const response = await sendMessage(selectedChat.id, newMessage);
-
-      // Update message with server response
-      setSelectedChat(prev => ({
-        ...prev,
-        messages: prev.messages.map(msg =>
-          msg.timestamp === messageToSend.timestamp
-            ? { ...msg, id: response.id, status: "sent" }
-            : msg
-        )
-      }));
-
-      // Simulate typing indicator and reply
-      if (Math.random() > 0.3) {
-        setIsTyping(true);
-        setTimeout(async () => {
-          const replyMessage = {
-            text: getRandomReply(),
-            sender: "them",
-            status: "delivered",
-            timestamp: new Date()
-          };
-
-          setSelectedChat(prev => ({
-            ...prev,
-            messages: [...prev.messages, replyMessage]
-          }));
-
-          setIsTyping(false);
-        }, 2000 + Math.random() * 3000);
-      }
-    } catch (error) {
-      console.error("Error sending message:", error);
-      // Update message with error state
-      setSelectedChat(prev => ({
-        ...prev,
-        messages: prev.messages.map(msg =>
-          msg.timestamp === messageToSend.timestamp
-            ? { ...msg, status: "error" }
-            : msg
-        )
-      }));
-    }
-  };
-
-  const getRandomReply = () => {
+  // Utility functions
+  const getRandomReply = useCallback(() => {
     const replies = [
-      "Sounds good to me!",
+      "Sounds good!",
       "Let me think about that...",
-      "Can we negotiate the price?",
-      "I'll get back to you shortly.",
-      "Perfect! When can we meet?",
-      "Do you accept M-Pesa?",
-      "What's your best offer?",
-      "I'm interested, let's proceed.",
-      "Can we do half now, half later?",
-      "Are you available tomorrow?"
+      "Can we discuss this further?",
+      "I'll get back to you soon",
+      "That works for me!",
+      "Can we negotiate the terms?",
+      "Thanks for your message!",
+      "Let me check my schedule",
+      "I'll confirm shortly",
+      "Can we talk about this later?"
     ];
     return replies[Math.floor(Math.random() * replies.length)];
-  };
+  }, []);
 
-  const formatTime = (date) => {
+  const getRandomFileResponse = useCallback((fileType) => {
+    if (fileType.startsWith('image/')) {
+      return "Nice picture!";
+    }
+    return "Thanks for the file!";
+  }, []);
+
+  const simulateReply = useCallback(() => {
+    setIsTyping(true);
+
+    setTimeout(() => {
+      const replyMessage = {
+        id: `temp-reply-${Date.now()}`,
+        text: getRandomReply(),
+        sender: "them",
+        status: "delivered",
+        timestamp: new Date()
+      };
+
+      setSelectedChat(prev => ({
+        ...prev,
+        messages: [...(prev.messages || []), replyMessage]
+      }));
+
+      setIsTyping(false);
+    }, 2000 + Math.random() * 3000);
+  }, [getRandomReply]);
+
+  const formatTime = useCallback((date) => {
     if (!date) return "";
     return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-  };
+  }, []);
 
-  const formatDate = (date) => {
+  const formatDate = useCallback((date) => {
     if (!date) return "";
     const now = new Date();
     const diffDays = Math.floor((now - date) / (1000 * 60 * 60 * 24));
@@ -323,9 +89,9 @@ const Messages = () => {
     } else {
       return date.toLocaleDateString([], { month: 'short', day: 'numeric' });
     }
-  };
+  }, []);
 
-  const getActiveStatus = (date) => {
+  const getActiveStatus = useCallback((date) => {
     if (!date) return "Long time ago";
     const now = new Date();
     const diffMinutes = Math.floor((now - date) / (1000 * 60));
@@ -334,16 +100,336 @@ const Messages = () => {
     if (diffMinutes < 60) return `Active ${diffMinutes} min ago`;
     if (diffMinutes < 1440) return `Active ${Math.floor(diffMinutes / 60)} hours ago`;
     return `Active ${Math.floor(diffMinutes / 1440)} days ago`;
-  };
+  }, []);
 
-  const filteredChats = chats.filter(chat =>
-    chat.trader.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    chat.messages.some(msg =>
-      msg.text.toLowerCase().includes(searchTerm.toLowerCase())
-    )
-  );
+  // Fetch chat rooms on component mount
+  useEffect(() => {
+    const fetchChatRooms = async () => {
+      try {
+        const chatRooms = await getChatRooms();
 
-  const renderMessageContent = (msg) => {
+        if (!Array.isArray(chatRooms)) {
+          console.error("Invalid chat rooms data:", chatRooms);
+          setChats([]);
+          return;
+        }
+
+        const currentUserId = localStorage.getItem('user_id');
+        const formattedChats = chatRooms
+          .map(room => {
+            try {
+              if (!room || typeof room !== 'object' || !room.id) {
+                console.warn('Invalid room data:', room);
+                return null;
+              }
+
+              const seller = (room.seller && typeof room.seller === 'object') ? room.seller : {};
+              const buyer = (room.buyer && typeof room.buyer === 'object') ? room.buyer : {};
+
+              const isSeller = seller?.id === currentUserId;
+              const otherParty = isSeller ? buyer : seller;
+              const safeOtherParty = (otherParty && typeof otherParty === 'object') ? otherParty : {};
+
+              const messages = (Array.isArray(room.messages) ? room.messages : [])
+                .map(msg => {
+                  if (!msg || typeof msg !== 'object') {
+                    console.warn('Invalid message:', msg);
+                    return {
+                      id: Date.now().toString(),
+                      text: '',
+                      sender: 'them',
+                      status: 'delivered',
+                      timestamp: new Date(),
+                      attachments: []
+                    };
+                  }
+
+                  const sender = (msg.sender && typeof msg.sender === 'object') ? msg.sender : {};
+                  const safeSenderId = sender?.id || '';
+                  const messageId = msg.id || Date.now().toString();
+
+                  return {
+                    id: messageId,
+                    text: typeof msg.content === 'string' ? msg.content : '',
+                    sender: safeSenderId === currentUserId ? "me" : "them",
+                    status: msg.read ? "read" : "delivered",
+                    timestamp: msg.timestamp ? new Date(msg.timestamp) : new Date(),
+                    attachments: Array.isArray(msg.attachments) ? msg.attachments : [],
+                    ...(msg.file && { file: msg.file })
+                  };
+                });
+
+              const finalRoom = {
+                id: room.id,
+                trader: typeof safeOtherParty.username === 'string'
+                  ? safeOtherParty.username
+                  : 'Unknown User',
+                avatar: typeof safeOtherParty.profile_picture === 'string'
+                  ? safeOtherParty.profile_picture
+                  : '',
+                status: "online",
+                messages,
+                unread: messages.some(msg =>
+                  msg && msg.sender === "them" && msg.status !== "read"
+                ),
+                lastActive: room.updated_at
+                  ? new Date(room.updated_at)
+                  : new Date(),
+                _original: room
+              };
+
+              return finalRoom;
+            } catch (error) {
+              console.error("Error processing room:", room, error);
+              return null;
+            }
+          })
+          .filter(room => room !== null);
+
+        setChats(formattedChats);
+
+        if (trader && tradeId) {
+          try {
+            const existingChat = formattedChats.find(chat =>
+              chat.trader === trader.name
+            );
+
+            if (existingChat) {
+              setSelectedChat(existingChat);
+            } else {
+              const newChatRoom = await createChatRoom(
+                tradeId,
+                trader.id
+              );
+
+              if (!newChatRoom?.id) {
+                throw new Error("Failed to create chat room");
+              }
+
+              const newChat = {
+                id: newChatRoom.id,
+                trader: trader.name || 'New Trader',
+                avatar: trader.avatar || '',
+                status: "online",
+                messages: [{
+                  text: `Hello! I want to ${(tradeType || '').toLowerCase()} ${amount || 0} ${crypto || 'crypto'} for KES ${amount || 0}.`,
+                  sender: "me",
+                  status: "sent",
+                  timestamp: new Date()
+                }],
+                unread: false,
+                lastActive: new Date()
+              };
+
+              setChats(prev => [...prev, newChat]);
+              setSelectedChat(newChat);
+            }
+          } catch (error) {
+            console.error("Error handling trade chat:", error);
+          }
+        }
+      } catch (error) {
+        console.error("Error fetching chats:", error);
+        setChats([]);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchChatRooms();
+  }, [trader, tradeId, tradeType, crypto, amount]);
+
+  // Fetch messages when a chat is selected
+  const fetchChatMessages = useCallback(async (abortController) => {
+    if (!selectedChat?.id) return;
+
+    try {
+      const messages = await getMessages(selectedChat.id, {
+        signal: abortController?.signal,
+      });
+
+      const formattedMessages = messages.map((msg) => ({
+        text: msg.content,
+        sender: msg.sender.id === localStorage.getItem('user_id') ? 'me' : 'them',
+        status: msg.read ? 'read' : 'delivered',
+        timestamp: new Date(msg.timestamp),
+        attachments: msg.attachments,
+      }));
+
+      setSelectedChat((prev) => ({
+        ...prev,
+        messages: formattedMessages,
+      }));
+
+      setChats((prevChats) =>
+        prevChats.map((chat) =>
+          chat.id === selectedChat.id
+            ? { ...chat, messages: formattedMessages, unread: false }
+            : chat
+        )
+      );
+    } catch (error) {
+      if (error.name !== 'AbortError') {
+        console.error('Error fetching messages:', error);
+      }
+    }
+  }, [selectedChat?.id]);
+
+  const debouncedFetchMessages = useMemo(() => {
+    return debounce(fetchChatMessages, 500);
+  }, [fetchChatMessages]);
+
+  useEffect(() => {
+    if (selectedChat?.id) {
+      const abortController = new AbortController();
+      debouncedFetchMessages(abortController);
+      
+      return () => {
+        debouncedFetchMessages.cancel();
+        abortController.abort();
+      };
+    }
+  }, [selectedChat?.id, debouncedFetchMessages]);
+
+
+
+  const handleEmojiClick = useCallback((emojiData) => {
+    setNewMessage(prev => prev + emojiData.emoji);
+    setShowEmojiPicker(false);
+  }, []);
+
+  const handleFileChange = useCallback(async (e) => {
+    const file = e.target.files[0];
+    if (!file || !selectedChat) return;
+
+    const tempMessage = {
+      text: file.name,
+      sender: "me",
+      status: "sending",
+      timestamp: new Date(),
+      file: {
+        name: file.name,
+        type: file.type,
+        size: file.size,
+        preview: file.type.startsWith('image/') ? URL.createObjectURL(file) : null
+      }
+    };
+
+    setSelectedChat(prev => ({
+      ...prev,
+      messages: [...prev.messages, tempMessage]
+    }));
+
+    try {
+      const lastMessage = selectedChat.messages[selectedChat.messages.length - 1];
+      const response = await uploadAttachment(lastMessage.id, file);
+
+      const updatedMessage = {
+        ...tempMessage,
+        status: "sent",
+        file: {
+          ...tempMessage.file,
+          url: response.file.url
+        }
+      };
+
+      setSelectedChat(prev => ({
+        ...prev,
+        messages: prev.messages.map(msg =>
+          msg.timestamp === tempMessage.timestamp ? updatedMessage : msg
+        )
+      }));
+
+      setIsTyping(true);
+      setTimeout(async () => {
+        const replyMessage = {
+          text: getRandomFileResponse(file.type),
+          sender: "them",
+          status: "delivered",
+          timestamp: new Date()
+        };
+
+        setSelectedChat(prev => ({
+          ...prev,
+          messages: [...prev.messages, replyMessage]
+        }));
+
+        setIsTyping(false);
+      }, 2000 + Math.random() * 3000);
+    } catch (error) {
+      console.error("Error uploading file:", error);
+      setSelectedChat(prev => ({
+        ...prev,
+        messages: prev.messages.map(msg =>
+          msg.timestamp === tempMessage.timestamp
+            ? { ...msg, status: "error" }
+            : msg
+        )
+      }));
+    }
+  }, [selectedChat, getRandomFileResponse]);
+
+  const sendMessage = useCallback(async () => {
+    if (!newMessage.trim() || !selectedChat?.id) {
+      console.warn("Cannot send message - no content or chat selected");
+      return;
+    }
+
+    const tempId = `temp-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+    const messageToSend = {
+      id: tempId,
+      text: newMessage,
+      sender: "me",
+      status: "sending",
+      timestamp: new Date(),
+      isOptimistic: true
+    };
+
+    try {
+      setSelectedChat(prev => ({
+        ...prev,
+        messages: [...(prev.messages || []), messageToSend]
+      }));
+      setNewMessage("");
+      setShowEmojiPicker(false);
+
+      const response = await apiSendMessage(selectedChat.id, newMessage);
+
+      if (!response?.id) {
+        throw new Error("Invalid response from server");
+      }
+
+      setSelectedChat(prev => ({
+        ...prev,
+        messages: prev.messages.map(msg =>
+          msg.id === tempId
+            ? {
+              ...msg,
+              id: response.id,
+              status: "sent",
+              isOptimistic: undefined
+            }
+            : msg
+        )
+      }));
+
+      if (Math.random() > 0.3) {
+        simulateReply();
+      }
+    } catch (error) {
+      console.error("Message send failed:", error);
+      setSelectedChat(prev => ({
+        ...prev,
+        messages: prev.messages.map(msg =>
+          msg.id === tempId
+            ? { ...msg, status: "error" }
+            : msg
+        )
+      }));
+    }
+  }, [newMessage, selectedChat, simulateReply]);
+
+  const renderMessageContent = useCallback((msg) => {
     if (msg.file || (msg.attachments && msg.attachments.length > 0)) {
       const file = msg.file || msg.attachments[0];
       const isImage = file.type?.startsWith('image/') || file.file_type === 'image';
@@ -373,7 +459,16 @@ const Messages = () => {
       );
     }
     return <p>{msg.text}</p>;
-  };
+  }, []);
+
+  const filteredChats = useMemo(() => {
+    return chats.filter(chat =>
+      chat.trader.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      chat.messages.some(msg =>
+        msg.text.toLowerCase().includes(searchTerm.toLowerCase())
+      )
+    );
+  }, [chats, searchTerm]);
 
   if (isLoading) {
     return <div className="messages-app loading">Loading chats...</div>;
@@ -489,12 +584,14 @@ const Messages = () => {
 
             <div className="message-container">
               <div className="message-list">
-                {selectedChat.messages.map((msg, index) => {
+                {selectedChat?.messages?.filter(Boolean).map((msg, index) => {
+                  if (!msg || typeof msg !== 'object') return null;
+
                   const showDateSeparator = index === 0 ||
                     formatDate(msg.timestamp) !== formatDate(selectedChat.messages[index - 1]?.timestamp);
 
                   return (
-                    <div key={index}>
+                    <div key={msg.id || index}>
                       {showDateSeparator && (
                         <div className="date-separator">
                           <span>{formatDate(msg.timestamp)}</span>
