@@ -1,5 +1,5 @@
 :root {
-    --primary-color: #6c5ce7;
+    --primary-color: #ff8a00;
     --secondary-color: #a29bfe;
     --accent-color: #FF6B00;
     --text-color: #2d3436;
@@ -87,7 +87,7 @@
   .logo-text {
     font-weight: 900;
     font-size: 1.7rem;
-    color: var(--primary-color);
+    color: var(--primary-color) !important;
   }
   
   .mobile-menu-btn {

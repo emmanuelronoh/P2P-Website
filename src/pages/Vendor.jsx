@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import '../styles/Vendor.css';
 
-const VendorVerification = ({ userId }) => {
+const VendorVerification = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const [success, setSuccess] = useState(false);
@@ -57,7 +57,7 @@ const VendorVerification = ({ userId }) => {
         : 'http://localhost:3001/api/generate-sumsub-link';
       
       const response = await axios.post(endpoint, {
-        userId,
+        userId: formData.email, // Using email as userId
         levelName: 'kyc_verification'
       });
 

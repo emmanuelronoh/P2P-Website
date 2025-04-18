@@ -15,195 +15,84 @@ import { BsGraphUp, BsGraphDown } from "react-icons/bs";
 import debounce from "lodash.debounce";
 import "../styles/market.css";
 
-export const tradersData = [
-  { 
-    id: 1, 
-    name: "RealNinja", 
-    rating: 5, 
-    trades: 2200, 
-    tradeType: "Buy", 
-    crypto: "Ethereum - ETH", 
-    paymentMethod: "M-PESA", 
-    location: "Kenya", 
-    price: "USDT305,664.73", 
-    priceIncrease: "17% above market", 
-    minLimit: "USDT20,000", 
-    maxLimit: "USDT900,000",
-    memberSince: "May 26, 2020",
-    lastOnline: "An hour ago",
-    timezone: "Australia/Sydney",
-    languages: "English, Français, Português, Español, Castellano",
-    blockedBy: 5,
-    trustedBy: 118,
-    feedback: [
-      { user: "CryptoTrader22", comment: "Fast and reliable trader!", rating: 5 },
-      { user: "BitcoinLover", comment: "Good communication, would trade again", rating: 4 },
-      { user: "ETHHolder", comment: "Smooth transaction, no issues", rating: 5 }
-    ]
-  },
-  { 
-    id: 2, 
-    name: "arielsluke", 
-    rating: 4.94, 
-    trades: 1700, 
-    tradeType: "Sell", 
-    crypto: "Ethereum - ETH", 
-    paymentMethod: "M-PESA", 
-    location: "Kenya", 
-    price: "USDT271,701.98", 
-    priceIncrease: "4% above market", 
-    minLimit: "USDT15,000", 
-    maxLimit: "USDT500,000",
-    memberSince: "March 15, 2021",
-    lastOnline: "30 minutes ago",
-    timezone: "Africa/Nairobi",
-    languages: "English, Swahili",
-    blockedBy: 2,
-    trustedBy: 95,
-    feedback: [
-      { user: "Crypt0Fan", comment: "Quick response time", rating: 5 },
-      { user: "DigitalNomad", comment: "Perfect trade, thanks!", rating: 5 }
-    ]
-  }
-  // Add more traders as needed
-];
+const API_BASE_URL = "http://localhost:8000/fiat";
 
-
-// Mock API service (in a real app, this would be actual API calls)
+// API service for real backend calls
 const TradingService = {
   fetchTraders: async (filters) => {
-    // Simulate API delay
-    await new Promise(resolve => setTimeout(resolve, 300));
-    
-    const mockData = [
-      { 
-        id: 1, 
-        name: "RealNinja", 
-        rating: 5, 
-        trades: 2200, 
-        completionRate: 99.8,
-        tradeType: "Buy", 
-        crypto: "Ethereum - ETH", 
-        cryptoAmount: 0.5,
-        paymentMethod: "M-PESA", 
-        paymentDetails: "Fast transactions, ID required",
-        location: "Kenya", 
-        price: "USDT305,664.73", 
-        priceIncrease: "17% above market", 
-        minLimit: "USDT20,000", 
-        maxLimit: "USDT900,000",
-        lastActive: "2 minutes ago",
-        terms: "Payment must be completed within 15 minutes",
-        kycVerified: true,
-        premium: true,
-        online: true
-      },
-      { 
-        id: 2, 
-        name: "arielsluke", 
-        rating: 4.94, 
-        trades: 1700, 
-        completionRate: 98.5,
-        tradeType: "Sell", 
-        crypto: "Ethereum - ETH", 
-        cryptoAmount: 1.2,
-        paymentMethod: "M-PESA", 
-        paymentDetails: "Bank transfer also accepted",
-        location: "Kenya", 
-        price: "USDT271,701.98", 
-        priceIncrease: "4% above market", 
-        minLimit: "USDT15,000", 
-        maxLimit: "USDT500,000",
-        lastActive: "5 minutes ago",
-        terms: "No refunds after crypto sent",
-        kycVerified: true,
-        premium: false,
-        online: true
-      },
-      { 
-        id: 3, 
-        name: "CryptoKing", 
-        rating: 4.89, 
-        trades: 3500, 
-        completionRate: 99.2,
-        tradeType: "Buy", 
-        crypto: "Bitcoin - BTC", 
-        cryptoAmount: 0.1,
-        paymentMethod: "Bank Transfer", 
-        paymentDetails: "SWIFT transfers only",
-        location: "USA", 
-        price: "$38,456.12", 
-        priceIncrease: "5% above market", 
-        minLimit: "$1,000", 
-        maxLimit: "$50,000",
-        lastActive: "10 minutes ago",
-        terms: "Must provide ID for large trades",
-        kycVerified: true,
-        premium: true,
-        online: false
-      },
-      { 
-        id: 4, 
-        name: "BitcoinQueen", 
-        rating: 4.97, 
-        trades: 4200, 
-        completionRate: 99.9,
-        tradeType: "Sell", 
-        crypto: "USDT - Tether", 
-        cryptoAmount: 5000,
-        paymentMethod: "PayPal", 
-        paymentDetails: "Friends and Family only",
-        location: "UK", 
-        price: "£0.78 per USDT", 
-        priceIncrease: "2% above market", 
-        minLimit: "£100", 
-        maxLimit: "£5,000",
-        lastActive: "1 hour ago",
-        terms: "No chargebacks allowed",
-        kycVerified: true,
-        premium: true,
-        online: true
-      },
-      { 
-        id: 5, 
-        name: "SafeTrader", 
-        rating: 4.91, 
-        trades: 1800, 
-        completionRate: 97.8,
-        tradeType: "Buy", 
-        crypto: "Ethereum - ETH", 
-        cryptoAmount: 0.8,
-        paymentMethod: "M-PESA", 
-        paymentDetails: "Must send exact amount",
-        location: "Kenya", 
-        price: "USDT298,543.21", 
-        priceIncrease: "14% above market", 
-        minLimit: "USDT10,000", 
-        maxLimit: "USDT800,000",
-        lastActive: "30 minutes ago",
-        terms: "Escrow protection enabled",
-        kycVerified: true,
-        premium: false,
-        online: true
-      }
-    ];
+    try {
+      const response = await fetch(`${API_BASE_URL}/traders`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(filters),
+      });
 
-    return mockData.filter(trader => {
-      return (
-        trader.tradeType === filters.tradeType &&
-        trader.crypto === filters.crypto &&
-        (filters.paymentMethod === "Any" || trader.paymentMethod === filters.paymentMethod) &&
-        trader.location === filters.location
-      );
-    });
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
+      const data = await response.json();
+      return data;
+    } catch (error) {
+      console.error("Error fetching traders:", error);
+      throw error;
+    }
+  },
+
+  fetchMarketPrice: async (crypto, tradeType) => {
+    try {
+      const token = localStorage.getItem('accessToken'); // Get auth token
+  
+      const response = await fetch(`http://localhost:8000/fiat/market/`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${token}`
+        },
+        body: JSON.stringify({ 
+          crypto: crypto.toUpperCase(),
+          tradeType 
+        }),
+      });
+  
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || `HTTP error! status: ${response.status}`);
+      }
+  
+      const data = await response.json();
+  
+      // ✅ Ensure this function always returns a string (price or error)
+      return data.price || "Price unavailable";
+    } catch (error) {
+      console.error("❌ Full error:", error.message);
+      return `Error: ${error.message}`; // ✅ Return string, not object
+    }
+  },  
+
+  fetchTraderDetails: async (traderId) => {
+    try {
+      const response = await fetch(`${API_BASE_URL}/trader/${traderId}`);
+      
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
+      const data = await response.json();
+      return data;
+    } catch (error) {
+      console.error("Error fetching trader details:", error);
+      throw error;
+    }
   }
 };
-
 
 const Market = () => {
   const [filters, setFilters] = useState({
     tradeType: "Sell",
-    crypto: "Ethereum - ETH",
+    crypto: "ETH",
     paymentMethod: "Any",
     location: "Kenya",
     sortBy: "bestPrice"
@@ -212,6 +101,7 @@ const Market = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const [searchQuery, setSearchQuery] = useState("");
+  const [marketPrice, setMarketPrice] = useState("Loading...");
   const navigate = useNavigate();
 
   // Fetch traders with debouncing
@@ -222,6 +112,13 @@ const Market = () => {
         const data = await TradingService.fetchTraders(filters);
         setTraders(data);
         setError(null);
+        
+        // Fetch market price whenever we fetch traders
+        const price = await TradingService.fetchMarketPrice(
+          filters.crypto.split(" - ")[0], 
+          filters.tradeType
+        );
+        setMarketPrice(price);
       } catch (err) {
         setError("Failed to load traders. Please try again later.");
         console.error("Error fetching traders:", err);
@@ -260,7 +157,7 @@ const Market = () => {
       case "highestRating":
         return tradersCopy.sort((a, b) => b.rating - a.rating);
       case "newest":
-        return tradersCopy.sort((a, b) => b.id - a.id);
+        return tradersCopy.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
       default:
         return tradersCopy;
     }
@@ -333,16 +230,17 @@ const Market = () => {
           <div className="filter-group">
             <label>Cryptocurrency</label>
             <select
-              value={filters.crypto}
-              onChange={(e) => handleFilterChange("crypto", e.target.value)}
-              className="market-select"
-            >
-              <option value="Ethereum - ETH">Ethereum (ETH)</option>
-              <option value="Bitcoin - BTC">Bitcoin (BTC)</option>
-              <option value="USDT - Tether">Tether (USDT)</option>
-              <option value="BNB - Binance Coin">Binance Coin (BNB)</option>
-              <option value="SOL - Solana">Solana (SOL)</option>
-            </select>
+  value={filters.crypto}
+  onChange={(e) => handleFilterChange("crypto", e.target.value)}
+  className="market-select"
+>
+  <option value="ETH">Ethereum (ETH)</option>
+  <option value="BTC">Bitcoin (BTC)</option>
+  <option value="USDT">Tether (USDT)</option>
+  <option value="BNB">Binance Coin (BNB)</option>
+  <option value="SOL">Solana (SOL)</option>
+</select>
+
           </div>
 
           <div className="filter-group">
@@ -432,7 +330,7 @@ const Market = () => {
                 <BsGraphUp className="trend-icon up" />
               )}
               <span>
-                Market {filters.tradeType === "Buy" ? "buy" : "sell"} price: {sortedTraders[0]?.price || "N/A"}
+                Market {filters.tradeType === "Buy" ? "buy" : "sell"} price: {marketPrice}
               </span>
             </div>
           </div>
@@ -443,7 +341,7 @@ const Market = () => {
                 <div key={trader.id} className={`trader-card ${trader.premium ? "premium" : ""}`}>
                   <div className="trader-main-info">
                     <div className="trader-avatar">
-                      <div className={`avatar ${trader.online ? "online" : "offline"}`}>
+                      <div className={`avatar-market ${trader.online ? "online" : "offline"}`}>
                         {trader.name.charAt(0)}
                       </div>
                       <div className="trader-status">
@@ -553,4 +451,3 @@ const Market = () => {
 };
 
 export default Market;
-

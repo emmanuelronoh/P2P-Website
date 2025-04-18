@@ -70,8 +70,9 @@ const Profile = () => {
       });
       return response.ok;
     } catch (error) {
+      console.error("Token validation failed:", error);
       return false;
-    }
+    }    
   };
 
   const fetchTraderProfile = async (username, token) => {

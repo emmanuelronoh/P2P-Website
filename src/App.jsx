@@ -21,7 +21,7 @@ import MessagesP2p from "./pages/Messages-p2p";
 import Wallet from "./pages/Wallet";
 import Vendor from "./pages/Vendor";
 import Amount from "./pages/Amount";
-import Chat from "./pages/Chat";
+import Chat from "./pages/ChatApi";
 import Trades from "./pages/Trades";
 import VerifyOTP from "./components/VerifyOTP";
 import FiatP2P from "./components/FiatP2P";
@@ -144,12 +144,10 @@ function AppInner({ theme, toggleTheme }) {
           />
           <Route path="/market" element={<Market />} />
           <Route path="/profile/:username" element={<Profile />} />
-          <Route path="/chat" element={<Chat />} />
           <Route path="/notifications" element={<Notifications />} />
           <Route path="/support" element={<Support />} />
           <Route path="/amount" element={<Amount />} />
           <Route path="/messages" element={<Messages />} />
-          <Route path="/messages-p2p" element={<MessagesP2p />} />
           <Route path="/tutorials" element={<Tutorials />} />
           <Route path="/become-vendor" element={<Vendor />} />
           <Route path="/profile-details/:username" element={<ProfileDetails />} />
@@ -157,11 +155,13 @@ function AppInner({ theme, toggleTheme }) {
           <Route path="/CryptoListing" element={<CryptoListing />} />
           <Route path="/faq" element={<Faq />} />
           <Route path="/DashboardVendors" element={<DashboardVendors />} />
+          <Route path="/chat-room-fiat-crypto" element={<MessagesP2p />} />
         </Route>
 
         {/* P2P routes with NavbarP2P and Footer */}
         <Route element={<P2PLayout theme={theme} toggleTheme={toggleTheme} />}>
           <Route path="/fiat-p2p" element={<FiatP2P />} />
+          <Route path="/chat" element={<Chat />} />
           <Route path="/home-fiat" element={<HomeFiat />} /> {/* ✅ Add this here */}
           <Route path="/notifications-p2p" element={<NotificationsPage />} />
           <Route path="/dashboard-fiat" element={<DashboardFiatPage />} />
@@ -169,6 +169,9 @@ function AppInner({ theme, toggleTheme }) {
           <Route path="/faq-fiat" element={<Faq />} />
           <Route path="/support-fiat" element={<Support />} />
           <Route path="/tutorials-fiat" element={<Tutorials />} />
+          <Route path="/profile-details-user/:username" element={<ProfileDetails />} />
+          <Route path="/messages-p2p" element={<MessagesP2p />} />
+          <Route path="/chat-room-fiat" element={<MessagesP2p />} />
         </Route>
 
         {/* Full-page routes without Navbar/Footer */}
@@ -199,7 +202,7 @@ function PublicOnlyRoute({ children }) {
 
   useEffect(() => {
     if (isAuthenticated) {
-      navigate("/dashboard", { replace: true });
+      navigate("/market", { replace: true });
     }
   }, [isAuthenticated, navigate]);
 

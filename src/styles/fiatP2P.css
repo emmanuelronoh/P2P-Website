@@ -47,7 +47,7 @@
   }
   
   .tutorial-btn {
-    background: #000000;
+    background: #2962ff;
     color: white;
     padding: 0.5rem 1rem;
     border-radius: 4px;
@@ -95,26 +95,36 @@
     box-shadow: 0 0 5px #2ecc71;
   }
   
-  /* Market Stats Bar */
   .market-stats-bar {
-    background: #2c3e50;
-    color: white;
+    background-color: #2962ff;
+    color: #fbf8f8;
     padding: 0.8rem 0;
     font-size: 0.9rem;
+    overflow: hidden;
+    white-space: nowrap;
+  }
+  
+  .ticker-wrapper {
+    overflow: hidden;
+    position: relative;
+  }
+  
+  .ticker {
+    display: flex;
+    width: max-content;
+    animation: scroll-loop 30s linear infinite;
   }
   
   .stats-container {
     display: flex;
-    justify-content: space-around;
-    max-width: 1400px;
-    margin: 0 auto;
-    width: 100%;
+    gap: 4rem;
   }
   
   .stat {
     display: flex;
     align-items: center;
     gap: 8px;
+    white-space: nowrap;
   }
   
   .stat strong {
@@ -128,6 +138,16 @@
   .stat .negative {
     color: #e74c3c;
   }
+  
+  @keyframes scroll-loop {
+    0% {
+      transform: translateX(0%);
+    }
+    100% {
+      transform: translateX(-50%);
+    }
+  }
+  
   
   /* Main Content */
   .fiat-p2p-content {
@@ -578,7 +598,7 @@
   
   .trade-button {
     flex: 1;
-    background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
+    background: linear-gradient( #2962ff);
     color: white;
     border: none;
     padding: 0.8rem;
@@ -749,7 +769,7 @@
   
   /* Security Banner */
   .security-banner {
-    background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
+    background: linear-gradient(#2962ff);
     color: white;
     padding: 1.5rem 2rem;
     margin-top: 2rem;
@@ -793,6 +813,45 @@
   .learn-more-btn:hover {
     background: rgba(255, 255, 255, 0.2);
   }
+
+  /* Add to your CSS file */
+.typing-indicator {
+  background-color: #f1f1f1;
+  color: #666;
+  padding: 8px 12px;
+  border-radius: 18px;
+  margin: 5px 0;
+  max-width: 70%;
+  align-self: flex-start;
+}
+
+.typing-dots {
+  display: inline-flex;
+}
+
+.typing-dots span {
+  animation: typingAnimation 1.4s infinite both;
+  margin-left: 2px;
+}
+
+.typing-dots span:nth-child(2) {
+  animation-delay: 0.2s;
+}
+
+.typing-dots span:nth-child(3) {
+  animation-delay: 0.4s;
+}
+
+@keyframes typingAnimation {
+  0%, 60%, 100% { opacity: 0.4; }
+  30% { opacity: 1; }
+}
+
+.read-status {
+  margin-left: 5px;
+  color: #999;
+  font-size: 0.8em;
+}
   
   /* Modals */
   .tutorial-modal,

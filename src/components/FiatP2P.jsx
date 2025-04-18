@@ -5,254 +5,431 @@ import { MdPayment, MdAccountBalance, MdAttachMoney } from 'react-icons/md';
 import { RiRefund2Fill } from 'react-icons/ri';
 import { BsArrowLeftRight, BsThreeDotsVertical } from 'react-icons/bs';
 import '../styles/fiatP2P.css';
+import axios from 'axios';
+import { useAuth, loadData } from '../contexts/AuthContext';
+
 
 const FiatP2P = () => {
-  const navigate = useNavigate();
-  const [state, setState] = useState({
-    userBalance: {
-      fiat: 12500.75,
-      crypto: 2.4567,
-      currency: 'USD',
-      cryptoCurrency: 'Ksh'  // Initialize cryptoCurrency here
-    },
-    activeTab: 'buy',
-    orders: [],
-    userOrders: [],
-    paymentMethods: [],
-    selectedPayment: '',
-    amount: '',
-    price: '',
-    filter: {
-      currency: 'USD',
-      paymentMethod: 'all',
-      amountRange: [0, 10000],
-      sortBy: 'price',
-      sortOrder: 'asc'
-    },
-    showAdvancedFilters: false,
-    notificationCount: 3,
-    tradeInProgress: null,
-    chatOpen: false,
-    currentChat: null,
-    messages: [],
-    newMessage: '',
-    twoFactorAuth: true,
-    kycVerified: true,
-    showOrderDetails: null,
-    priceTrends: {},
-    marketStats: {},
-    securityDeposit: 0,
-    selectedOrderType: 'limit',
-    orderExpiry: '24h',
-    termsAccepted: false,
-    showTutorial: false,
-    activeStep: 0
-  });
+    const { isAuthenticated, loading: authLoading, logout } = useAuth();
+    const navigate = useNavigate();
+    const [state, setState] = useState({
+        userBalance: {
+            fiat: 12500.75,
+            crypto: 2.4567,
+            currency: 'USD',
+            cryptoCurrency: 'Ksh'
+        },
+        activeTab: 'buy',
+        orders: [],
+        userOrders: [],
+        paymentMethods: [],
+        selectedPayment: '',
+        amount: '',
+        price: '',
+        filter: {
+            currency: 'USD',
+            paymentMethod: 'all',
+            amountRange: [0, 10000],
+            sortBy: 'price',
+            sortOrder: 'asc'
+        },
+        showAdvancedFilters: false,
+        notificationCount: 3,
+        tradeInProgress: null,
+        chatOpen: false,
+        currentChat: null,
+        messages: [],
+        newMessage: '',
+        twoFactorAuth: true,
+        kycVerified: true,
+        showOrderDetails: null,
+        priceTrends: {},
+        marketStats: {},
+        securityDeposit: 0,
+        selectedOrderType: 'limit',
+        orderExpiry: '24h',
+        termsAccepted: false,
+        showTutorial: false,
+        activeStep: 0
+    });
+    // Add these new state variables
+    const [socket, setSocket] = useState(null);
+    const [isTyping, setIsTyping] = useState(false);
+    const [typingUser, setTypingUser] = useState('');
+    const [unreadMessages, setUnreadMessages] = useState({});
 
-    const messagesEndRef = useRef(null);
-    const orderFormRef = useRef(null);
-
-    // Mock data initialization with more comprehensive data
     useEffect(() => {
-        // Simulate API calls with more realistic data
-        const loadData = async () => {
-            // Simulate loading delay
-            await new Promise(resolve => setTimeout(resolve, 500));
+        if (!isAuthenticated || !state.currentChat?.id) return;
 
-            const mockOrders = [
-                {
-                    id: 1,
-                    type: 'sell',
-                    user: 'TrustedTrader',
-                    avatar: 'TT',
-                    amount: 2500,
-                    available: 2500,
-                    price: 1.015,
-                    currency: 'USD',
-                    cryptoCurrency: 'Ksh',
-                    paymentMethods: ['Bank Transfer', 'PayPal', 'Wise'],
-                    limit: '100-2500 USD',
-                    rating: 4.9,
-                    trades: 342,
-                    completionRate: 99.5,
-                    avgReleaseTime: '15 min',
-                    verificationLevel: 3,
-                    terms: 'I only accept payments from verified accounts. Payment must be made within 15 minutes.',
-                    online: true,
-                    minAmount: 100
-                },
-                {
-                    id: 2,
-                    type: 'sell',
-                    user: 'FastExchange',
-                    avatar: 'FE',
-                    amount: 1800,
-                    available: 1200,
-                    price: 1.02,
-                    currency: 'USD',
-                    cryptoCurrency: 'Ksh',
-                    paymentMethods: ['Revolut', 'Cash App'],
-                    limit: '50-2000 USD',
-                    rating: 4.7,
-                    trades: 187,
-                    completionRate: 97.2,
-                    avgReleaseTime: '8 min',
-                    verificationLevel: 2,
-                    terms: 'No third-party payments. Must send payment receipt immediately.',
-                    online: true,
-                    minAmount: 50
-                },
-                {
-                    id: 3,
-                    type: 'buy',
-                    user: 'CryptoBuyerPro',
-                    avatar: 'CB',
-                    amount: 3500,
-                    available: 3500,
-                    price: 0.985,
-                    currency: 'USD',
-                    cryptoCurrency: 'Ksh',
-                    paymentMethods: ['Bank Transfer', 'Zelle'],
-                    limit: '200-3500 USD',
-                    rating: 4.8,
-                    trades: 256,
-                    completionRate: 98.8,
-                    avgReleaseTime: '12 min',
-                    verificationLevel: 3,
-                    terms: 'I will pay immediately upon confirmation. No chargebacks.',
-                    online: false,
-                    lastOnline: '5 min ago',
-                    minAmount: 200
-                },
-                {
-                    id: 4,
-                    type: 'buy',
-                    user: 'MarketMaker',
-                    avatar: 'MM',
-                    amount: 10000,
-                    available: 7500,
-                    price: 0.992,
-                    currency: 'EUR',
-                    cryptoCurrency: 'Ksh',
-                    paymentMethods: ['SEPA', 'Revolut', 'Wise'],
-                    limit: '500-10000 EUR',
-                    rating: 4.95,
-                    trades: 512,
-                    completionRate: 99.8,
-                    avgReleaseTime: '10 min',
-                    verificationLevel: 3,
-                    terms: 'Large volume specialist. KYC required for trades >2000 EUR.',
-                    online: true,
-                    minAmount: 500
+        const token = localStorage.getItem('accessToken');
+        const wsUrl = `ws://localhost:8001/ws/chat/${state.currentChat.id}/?token=${token}`;
+
+        const newSocket = new WebSocket(wsUrl);
+
+        newSocket.onopen = () => {
+            console.log('WebSocket connected');
+            setSocket(newSocket);
+        };
+
+        newSocket.onmessage = (e) => {
+            const data = JSON.parse(e.data);
+            handleWebSocketMessage(data);
+        };
+
+        newSocket.onerror = (error) => {
+            console.error('WebSocket error:', error);
+        };
+
+        newSocket.onclose = () => {
+            console.log('WebSocket disconnected');
+            // Attempt to reconnect after a delay
+            setTimeout(() => {
+                if (!socket) {
+                    setSocket(new WebSocket(wsUrl));
                 }
-            ];
+            }, 5000);
+        };
 
-            const mockPaymentMethods = [
-                { id: 'bank', name: 'Bank Transfer', icon: <MdAccountBalance />, processingTime: '1-3 business days', fee: 0 },
-                { id: 'paypal', name: 'PayPal', icon: <MdPayment />, processingTime: 'Instant', fee: 0.029, minAmount: 20 },
-                { id: 'wise', name: 'Wise', icon: <MdPayment />, processingTime: 'Instant', fee: 0.005, minAmount: 10 },
-                { id: 'revolut', name: 'Revolut', icon: <MdPayment />, processingTime: 'Instant', fee: 0, minAmount: 1 },
-                { id: 'zelle', name: 'Zelle', icon: <MdPayment />, processingTime: 'Instant', fee: 0, minAmount: 10 },
-                { id: 'sepa', name: 'SEPA', icon: <MdAccountBalance />, processingTime: '1 business day', fee: 0, minAmount: 50 },
-                { id: 'cashapp', name: 'Cash App', icon: <MdPayment />, processingTime: 'Instant', fee: 0.015, minAmount: 5 }
-            ];
+        return () => {
+            if (newSocket.readyState === WebSocket.OPEN) {
+                newSocket.close();
+            }
+        };
+    }, [isAuthenticated, state.currentChat?.id]);
 
-            const mockUserOrders = [
-                {
-                    id: 101,
-                    type: 'buy',
-                    amount: 200,
-                    filled: 200,
-                    price: 1.02,
-                    currency: 'USD',
-                    cryptoCurrency: 'Ksh',
-                    status: 'completed',
-                    counterparty: 'SellerPro',
-                    date: '2023-05-15 14:30',
-                    paymentMethod: 'Bank Transfer',
-                    escrow: true,
-                    dispute: false
-                },
-                {
-                    id: 102,
-                    type: 'sell',
-                    amount: 350,
-                    filled: 350,
-                    price: 1.01,
-                    currency: 'USD',
-                    cryptoCurrency: 'Ksh',
-                    status: 'completed',
-                    counterparty: 'NewBuyer',
-                    date: '2023-05-16 09:45',
-                    paymentMethod: 'PayPal',
-                    escrow: true,
-                    dispute: false
-                },
-                {
-                    id: 103,
-                    type: 'buy',
-                    amount: 500,
-                    filled: 320,
-                    price: 1.015,
-                    currency: 'USD',
-                    cryptoCurrency: 'Ksh',
-                    status: 'partially_filled',
-                    counterparty: 'Multiple',
-                    date: '2023-05-17 16:20',
-                    paymentMethod: 'Wise',
-                    escrow: true,
-                    dispute: false
-                },
-                {
-                    id: 104,
-                    type: 'sell',
-                    amount: 750,
-                    filled: 0,
-                    price: 0.995,
-                    currency: 'USD',
-                    cryptoCurrency: 'Ksh',
-                    status: 'pending',
-                    counterparty: '',
-                    date: '2023-05-18 11:15',
-                    paymentMethod: 'Bank Transfer',
-                    escrow: false,
-                    dispute: false
-                }
-            ];
+    const handleTyping = () => {
+        if (!socket || !state.currentChat?.id) return;
 
-            const priceTrends = {
-                Ksh_USD: {
-                    labels: ['1h', '6h', '12h', '24h', '3d', '1w'],
-                    data: [1.012, 1.015, 1.013, 1.017, 1.02, 1.018],
-                    change: 0.005
-                },
-                Ksh_EUR: {
-                    labels: ['1h', '6h', '12h', '24h', '3d', '1w'],
-                    data: [0.952, 0.948, 0.945, 0.95, 0.947, 0.943],
-                    change: -0.003
-                }
+        try {
+            const typingData = {
+                type: 'typing',
+                chat_room_id: state.currentChat.id,
+                is_typing: true
             };
 
-            const marketStats = {
-                totalTrades24h: 12458,
-                totalVolume24h: 12450000,
-                avgPrice: 1.0165,
-                activeTraders: 3421
+            socket.send(JSON.stringify(typingData));
+
+            // Set a timeout to send 'stopped typing' after 3 seconds of inactivity
+            clearTimeout(typingTimeout.current);
+            typingTimeout.current = setTimeout(() => {
+                if (socket.readyState === WebSocket.OPEN) {
+                    const stopTypingData = {
+                        type: 'typing',
+                        chat_room_id: state.currentChat.id,
+                        is_typing: false
+                    };
+                    socket.send(JSON.stringify(stopTypingData));
+                }
+            }, 3000);
+        } catch (error) {
+            console.error('Error sending typing indicator:', error);
+        }
+    };
+
+    // Add this near your other useRef declarations
+    const typingTimeout = useRef(null);
+
+    // Also make sure to clear the timeout when component unmounts
+    useEffect(() => {
+        return () => {
+            if (typingTimeout.current) {
+                clearTimeout(typingTimeout.current);
+            }
+        };
+    }, []);
+
+    const sendMessage = async () => {
+        if (!state.newMessage.trim() || !socket || !state.currentChat) return;
+
+        try {
+            const messageData = {
+                type: 'chat_message',
+                chat_room_id: state.currentChat.id,
+                message: state.newMessage.trim()
+            };
+
+            // Optimistically add to UI
+            const newMsg = {
+                id: `temp-${Date.now()}`,
+                sender: 'me',
+                text: state.newMessage.trim(),
+                time: new Date().toISOString(),
+                read: false
             };
 
             setState(prev => ({
                 ...prev,
-                orders: mockOrders,
-                paymentMethods: mockPaymentMethods,
-                userOrders: mockUserOrders,
-                priceTrends,
-                marketStats,
-                securityDeposit: 200
+                messages: [...prev.messages, newMsg],
+                newMessage: ''
             }));
+
+            // Send via WebSocket
+            socket.send(JSON.stringify(messageData));
+
+        } catch (error) {
+            console.error('Error sending message:', error);
+            // Remove optimistic message if failed
+            setState(prev => ({
+                ...prev,
+                messages: prev.messages.filter(msg => msg.id !== newMsg.id)
+            }));
+        }
+    };
+
+    const handleTrade = async (order) => {
+        if (!state.kycVerified && order.verificationLevel > 1) {
+            alert('This trader requires KYC verification to trade. Please complete your verification first.');
+            return;
+        }
+
+        try {
+            const token = localStorage.getItem('accessToken');
+
+            // Create or get existing chat room
+            const response = await axios.post(
+                'http://localhost:8000/chat-room/',
+                {
+                    trade_id: order.id,
+                    seller_id: order.userId,
+                    trade_type: state.activeTab
+                },
+                {
+                    headers: {
+                        'Authorization': `Bearer ${token}`,
+                        'Content-Type': 'application/json'
+                    }
+                }
+            );
+
+            const chatRoom = response.data;
+
+            // Navigate to messages page with the chat room ID
+            navigate(`/chat-room-fiat?chatId=${chatRoom.id}`);
+
+        } catch (error) {
+            console.error('Error initiating chat:', error);
+            if (error.response?.status === 400 && error.response?.data?.chat_room_id) {
+                // Chat room already exists - navigate to it
+                navigate(`/chat-room-fiat?chatId=${error.response.data.chat_room_id}`);
+            } else {
+                alert(`Failed to start chat: ${error.response?.data?.error || error.message}`);
+            }
+        }
+    };
+
+    const connectToExistingChat = async (chatRoomId, order) => {
+        try {
+            const token = localStorage.getItem('accessToken');
+
+            // Get chat room details
+            const response = await axios.get(
+                `http://localhost:8000/chat-room/${chatRoomId}/`,
+                {
+                    headers: {
+                        'Authorization': `Bearer ${token}`
+                    }
+                }
+            );
+
+            const chatRoom = response.data;
+
+            // Connect to WebSocket
+            const wsProtocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+            const wsUrl = `ws://localhost:8001/ws/chat/${chatRoomId}/`;
+            const newSocket = new WebSocket(wsUrl);
+
+            newSocket.onopen = () => {
+                console.log('WebSocket connected to existing chat');
+                setSocket(newSocket);
+
+                newSocket.onmessage = (e) => {
+                    const data = JSON.parse(e.data);
+                    handleWebSocketMessage(data);
+                };
+
+                loadMessages(chatRoomId);
+            };
+
+            setState(prev => ({
+                ...prev,
+                chatOpen: true,
+                currentChat: {
+                    id: chatRoomId,
+                    counterparty: order.user,
+                    orderId: order.id
+                },
+                messages: [],
+                socket: newSocket
+            }));
+
+        } catch (error) {
+            console.error('Error connecting to existing chat:', error);
+            alert('Failed to connect to existing chat. Please try again.');
+        }
+    };
+
+    const handleWebSocketMessage = (data) => {
+        if (!data) return;
+
+        try {
+            switch (data.type) {
+                case 'chat_message':
+                    setState(prev => ({
+                        ...prev,
+                        messages: [...prev.messages, {
+                            id: data.message?.id || Date.now(),
+                            sender: data.sender === state.userId ? 'me' : 'them',
+                            text: data.message?.content || data.message?.text || '',
+                            time: data.message?.timestamp || new Date().toISOString(),
+                            read: true
+                        }]
+                    }));
+                    break;
+
+                case 'typing':
+                    setIsTyping(data.is_typing);
+                    setTypingUser(data.user || '');
+                    break;
+
+                case 'error':
+                    console.error('WebSocket error:', data.message);
+                    break;
+
+                default:
+                    console.log('Unknown message type:', data);
+            }
+        } catch (error) {
+            console.error('Error handling WebSocket message:', error);
+        }
+    };
+
+    const loadMessages = async (chatRoomId) => {
+        try {
+            const token = localStorage.getItem('accessToken');
+            const response = await axios.get(
+                `http://localhost:8000/chat-room/${chatRoomId}/messages/`,
+                {
+                    headers: {
+                        'Authorization': `Bearer ${token}`
+                    }
+                }
+            );
+
+            setState(prev => ({
+                ...prev,
+                messages: response.data.map(msg => ({
+                    id: msg.id,
+                    sender: msg.sender.id === state.userId ? 'me' : 'them',
+                    text: msg.content,
+                    time: msg.timestamp,
+                    read: msg.read
+                }))
+            }));
+        } catch (error) {
+            console.error('Error loading messages:', error);
+        }
+    };
+
+    const messagesEndRef = useRef(null);
+    const orderFormRef = useRef(null);
+
+
+
+    useEffect(() => {
+        const loadData = async () => {
+            if (authLoading || !isAuthenticated) return;
+
+            try {
+                const token = localStorage.getItem('accessToken');
+
+                if (!token) {
+                    navigate('/login');
+                    return;
+                }
+
+                const headers = {
+                    Authorization: `Bearer ${token}`,
+                    'Content-Type': 'application/json'
+                };
+
+                const [ordersResponse, paymentMethodsResponse, userOrdersResponse, priceTrendsResponse, marketStatsResponse] =
+                    await Promise.all([
+                        axios.get('http://localhost:8000/escrow/orders/', { headers }),
+                        axios.get('http://localhost:8000/escrow/payment-methods/', { headers }),
+                        axios.get('http://localhost:8000/escrow/user-orders/', { headers }),
+                        axios.get('http://localhost:8000/escrow/price-trends/', { headers }),
+                        axios.get('http://localhost:8000/escrow/market-stats/', { headers })
+                    ]);
+
+
+                const transformedOrders = ordersResponse.data.map(order => {
+                    let userDisplay;
+                    let userId;
+
+                    if (typeof order.user === 'object') {
+                        userDisplay = order.user.username || order.user.email || String(order.user.id);
+                        userId = order.user.id;  // Capture the user ID
+                    } else {
+                        userDisplay = order.user || 'Unknown';
+                        userId = null;
+                    }
+
+
+                    // Handle payment methods safely
+                    const paymentMethods = Array.isArray(order.payment_methods)
+                        ? order.payment_methods.map(pm =>
+                            typeof pm === 'object' ? pm.name : String(pm)
+                        )
+                        : [];
+
+                    return {
+                        id: order.id,
+                        userId,
+                        type: order.order_type || 'buy', // Default to 'buy' if missing
+                        user: userDisplay,
+                        amount: parseFloat(order.amount) || 0,
+                        available: parseFloat(order.available) || 0,
+                        price: parseFloat(order.price) || 0,
+                        currency: order.currency || 'USD',
+                        cryptoCurrency: order.crypto_currency || 'BTC',
+                        paymentMethods,
+                        limit: order.min_limit && order.max_limit
+                            ? `${order.min_limit}-${order.max_limit} ${order.currency || 'USD'}`
+                            : 'N/A',
+                        rating: parseFloat(order.rating) || 0,
+                        trades: order.trades_count || 0,
+                        completionRate: parseFloat(order.completion_rate) || 0,
+                        avgReleaseTime: order.avg_release_time || 'N/A',
+                        terms: order.terms || '',
+                        online: Boolean(order.is_online),
+                        verificationLevel: 2 // Default value
+                    };
+                });
+
+                setState(prev => ({
+                    ...prev,
+                    orders: transformedOrders,
+                    paymentMethods: paymentMethodsResponse.data,
+                    userOrders: userOrdersResponse.data,
+                    priceTrends: priceTrendsResponse.data,
+                    marketStats: marketStatsResponse.data,
+                    securityDeposit: 200
+                }));
+
+                // Debug logging
+                console.log('Transformed orders:', transformedOrders);
+                console.log('Raw orders response:', ordersResponse.data);
+            } catch (error) {
+                console.error('Error loading data:', error);
+                if (error.response?.status === 401) {
+                    logout();
+                    navigate('/login');
+                }
+            }
         };
 
         loadData();
-    }, []);
+    }, [navigate, isAuthenticated, authLoading, logout]);
 
     // Auto-scroll chat to bottom
     useEffect(() => {
@@ -267,136 +444,103 @@ const FiatP2P = () => {
         return '0.00';
     };
 
-    // Handle order creation
-    const handleCreateOrder = (e) => {
+    const handleCreateOrder = async (e) => {
         e.preventDefault();
         if (!state.termsAccepted) {
             alert('You must accept the terms and conditions');
             return;
         }
 
-        // In a real app, this would call your backend API
-        console.log('Creating order:', {
-            type: state.activeTab,
-            amount: state.amount,
-            price: state.price,
-            paymentMethod: state.selectedPayment,
-            orderType: state.selectedOrderType,
-            expiry: state.orderExpiry
-        });
-
-        // Simulate order creation
-        const newOrder = {
-            id: Date.now(),
-            type: state.activeTab,
-            amount: parseFloat(state.amount),
-            filled: 0,
-            price: parseFloat(state.price),
-            currency: state.filter.currency,
-            cryptoCurrency: 'Ksh',
-            status: 'pending',
-            counterparty: '',
-            date: new Date().toISOString(),
-            paymentMethod: state.paymentMethods.find(m => m.id === state.selectedPayment)?.name || '',
-            escrow: true,
-            dispute: false
-        };
-
-        setState(prev => ({
-            ...prev,
-            userOrders: [newOrder, ...prev.userOrders],
-            amount: '',
-            price: '',
-            selectedPayment: '',
-            showOrderDetails: newOrder.id
-        }));
-
-        // Scroll to the new order
-        setTimeout(() => {
-            const element = document.getElementById(`order-${newOrder.id}`);
-            if (element) {
-                element.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+        try {
+            const token = localStorage.getItem('accessToken');
+            if (!token) {
+                navigate('/login');
+                return;
             }
-        }, 100);
-    };
 
-    // Initiate trade with an order
-    const handleTrade = (order) => {
-        if (!state.kycVerified && order.verificationLevel > 1) {
-            alert('This trader requires KYC verification to trade. Please complete your verification first.');
-            return;
-        }
+            const orderData = {
+                order_type: state.activeTab,
+                amount: state.amount,
+                price: state.price,
+                currency: state.filter.currency,
+                crypto_currency: state.userBalance.cryptoCurrency,
+                payment_methods: [parseInt(state.selectedPayment)],
+                min_limit: (state.activeTab === 'buy' ? '10.00' : '5.00'),
+                max_limit: '10000.00',
+                terms: state.selectedOrderType === 'limit' ?
+                    `This is a limit order that expires in ${state.orderExpiry}` :
+                    'This is a market order',
+                avg_release_time: '15 minutes'
+            };
 
-        setState(prev => ({
-            ...prev,
-            tradeInProgress: order,
-            chatOpen: true,
-            currentChat: {
-                orderId: order.id,
-                counterparty: order.user,
-                status: 'pending'
-            },
-            messages: [
+            const response = await axios.post(
+                'http://localhost:8000/escrow/orders/',
+                orderData,
                 {
-                    id: 1,
-                    sender: 'system',
-                    text: `Trade initiated for ${order.amount} ${order.currency} at ${order.price} ${order.currency}/${order.cryptoCurrency}`,
-                    time: new Date().toISOString()
-                },
-                {
-                    id: 2,
-                    sender: 'system',
-                    text: `Please communicate with ${order.user} to complete the payment process.`,
-                    time: new Date().toISOString()
+                    headers: {
+                        'Authorization': `Bearer ${token}`,
+                        'Content-Type': 'application/json'
+                    }
                 }
-            ]
-        }));
-    };
+            );
 
-    // Send a chat message
-    const sendMessage = () => {
-        if (!state.newMessage.trim()) return;
+            // Properly transform the backend response to match frontend structure
+            const newOrder = {
+                id: response.data.id,
+                type: response.data.order_type,
+                user: response.data.user?.username || 'You',
+                amount: parseFloat(response.data.amount),
+                available: parseFloat(response.data.available),
+                price: parseFloat(response.data.price),
+                currency: response.data.currency,
+                cryptoCurrency: response.data.crypto_currency,
+                paymentMethods: response.data.payment_methods.map(pm => pm.name),
+                limit: response.data.limit_range || 'N/A',
+                terms: response.data.terms,
+                avgReleaseTime: response.data.avg_release_time,
+                status: 'pending',
+                date: new Date().toISOString()
+            };
 
-        const newMsg = {
-            id: Date.now(),
-            sender: 'me',
-            text: state.newMessage,
-            time: new Date().toISOString()
-        };
+            setState(prev => ({
+                ...prev,
+                orders: [...prev.orders, newOrder],
+                userOrders: [newOrder, ...prev.userOrders],
+                amount: '',
+                price: '',
+                selectedPayment: '',
+                showOrderDetails: newOrder.id
+            }));
 
-        setState(prev => ({
-            ...prev,
-            messages: [...prev.messages, newMsg],
-            newMessage: ''
-        }));
-
-        // Simulate reply after 1-3 seconds
-        if (Math.random() > 0.3) {
-            const replies = [
-                "I've just sent the payment, please check.",
-                "Can you send me your payment details?",
-                "I'll complete the payment within 10 minutes.",
-                "Payment received, releasing crypto now.",
-                "Please confirm you've received the payment."
-            ];
-
+            // Scroll to the new order
             setTimeout(() => {
-                const replyMsg = {
-                    id: Date.now() + 1,
-                    sender: 'them',
-                    text: replies[Math.floor(Math.random() * replies.length)],
-                    time: new Date().toISOString()
-                };
+                const element = document.getElementById(`order-${newOrder.id}`);
+                if (element) {
+                    element.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+                }
+            }, 100);
 
-                setState(prev => ({
-                    ...prev,
-                    messages: [...prev.messages, replyMsg]
-                }));
-            }, 1000 + Math.random() * 2000);
+        } catch (error) {
+            console.error('Error creating order:', error);
+            if (error.response?.status === 401) {
+                logout();
+                navigate('/login');
+            } else {
+                alert(`Failed to create order: ${error.response?.data?.error || error.message}`);
+            }
         }
     };
 
-    // Mark trade as paid
+
+
+    // Initial data load
+    useEffect(() => {
+        if (!authLoading && isAuthenticated) {
+            loadData();
+        }
+    }, []);
+
+
     const markAsPaid = () => {
         setState(prev => ({
             ...prev,
@@ -563,6 +707,7 @@ const FiatP2P = () => {
         }
     ];
 
+
     return (
         <div className="fiat-p2p-container">
             {/* Tutorial Modal */}
@@ -650,6 +795,7 @@ const FiatP2P = () => {
                             )}
                         </div>
 
+
                         <div className="messages-container">
                             {state.messages.map(msg => (
                                 <div
@@ -661,9 +807,26 @@ const FiatP2P = () => {
                                     </div>
                                     <div className="message-time">
                                         {new Date(msg.time).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                                        {msg.sender === 'me' && (
+                                            <span className="read-status">
+                                                {msg.read ? '✓✓' : '✓'}
+                                            </span>
+                                        )}
                                     </div>
                                 </div>
                             ))}
+                            {isTyping && (
+                                <div className="message typing-indicator">
+                                    <div className="typing-content">
+                                        {typingUser} is typing...
+                                        <span className="typing-dots">
+                                            <span>.</span>
+                                            <span>.</span>
+                                            <span>.</span>
+                                        </span>
+                                    </div>
+                                </div>
+                            )}
                             <div ref={messagesEndRef} />
                         </div>
 
@@ -671,14 +834,18 @@ const FiatP2P = () => {
                             <input
                                 type="text"
                                 value={state.newMessage}
-                                onChange={(e) => setState(prev => ({ ...prev, newMessage: e.target.value }))}
-                                placeholder="Type your message..."
+                                onChange={(e) => {
+                                    setState(prev => ({ ...prev, newMessage: e.target.value }));
+                                    handleTyping();
+                                }}
                                 onKeyPress={(e) => e.key === 'Enter' && sendMessage()}
+                                placeholder="Type your message..."
                             />
                             <button onClick={sendMessage} className="send-btn">
                                 Send
                             </button>
                         </div>
+
                     </div>
                 </div>
             )}
@@ -770,46 +937,6 @@ const FiatP2P = () => {
                 </div>
             )}
 
-            <div className="market-stats-bar">
-                <div className="stats-container">
-                    <div className="stat">
-                        <span>24h Volume:</span>
-                        <strong>
-                            {state.marketStats.totalVolume24h ?
-                                `$${(state.marketStats.totalVolume24h / 1000000).toFixed(1)}M` :
-                                'Loading...'}
-                        </strong>
-                    </div>
-                    <div className="stat">
-                        <span>24h Trades:</span>
-                        <strong>
-                            {state.marketStats.totalTrades24h ?
-                                state.marketStats.totalTrades24h.toLocaleString() :
-                                'Loading...'}
-                        </strong>
-                    </div>
-                    <div className="stat">
-                        <span>Avg Price (Ksh/USD):</span>
-                        <strong className={state.priceTrends.Ksh_USD?.change >= 0 ? 'positive' : 'negative'}>
-                            {state.priceTrends.Ksh_USD ?
-                                `${state.priceTrends.Ksh_USD.data[state.priceTrends.Ksh_USD.data.length - 1]} ` :
-                                'Loading...'}
-                            {state.priceTrends.Ksh_USD?.change !== undefined && (
-                                <span>({state.priceTrends.Ksh_USD.change >= 0 ? '+' : ''}{state.priceTrends.Ksh_USD.change})</span>
-                            )}
-                        </strong>
-                    </div>
-                    <div className="stat">
-                        <span>Active Traders:</span>
-                        <strong>
-                            {state.marketStats.activeTraders ?
-                                state.marketStats.activeTraders.toLocaleString() :
-                                'Loading...'}
-                        </strong>
-                    </div>
-                </div>
-            </div>
-
             <div className="fiat-p2p-content">
                 <div className="trading-tabs">
                     <button
@@ -852,7 +979,7 @@ const FiatP2P = () => {
                             {state.selectedOrderType === 'market' && (
                                 <div className="market-price-info">
                                     <span>Current Market Price:</span>
-                                    <strong>{calculateMarketPrice()} {state.filter.currency}/{state.state.cryptoCurrency}</strong>
+                                    <strong>{calculateMarketPrice()} {state.filter.currency}/{state.userBalance.cryptoCurrency}</strong>
                                 </div>
                             )}
 
@@ -1140,7 +1267,25 @@ const FiatP2P = () => {
                                             </div>
                                             <div className="trader-info">
                                                 <div className="trader-name-rating">
-                                                    <span className="trader-name">{order.user}</span>
+                                                    <span
+                                                        className="trader-name"
+                                                        onClick={(e) => {
+                                                            e.stopPropagation();
+                                                            if (order.userId) {
+                                                                navigate(`/profile-details-user/${order.userId}`);
+                                                            }
+                                                        }}
+                                                        style={{
+                                                            cursor: order.userId ? 'pointer' : 'default',
+                                                            color: order.userId ? '#3498db' : 'inherit',
+                                                            textDecoration: 'none',
+                                                            transition: 'color 0.2s'
+                                                        }}
+                                                        onMouseEnter={(e) => order.userId && (e.target.style.textDecoration = 'underline')}
+                                                        onMouseLeave={(e) => order.userId && (e.target.style.textDecoration = 'none')}
+                                                    >
+                                                        {order.user}
+                                                    </span>
                                                     <span className="trader-rating">
                                                         <FaStar /> {order.rating} ({order.trades} trades)
                                                     </span>
@@ -1191,7 +1336,7 @@ const FiatP2P = () => {
                                                 onClick={() => handleTrade(order)}
                                                 className="trade-button"
                                             >
-                                                {state.activeTab === 'buy' ? 'Buy' : 'Sell'} Now
+                                                {state.activeTab === 'buy' ? 'Chat to Buy' : 'Chat to Sell'}
                                             </button>
                                             <button className="more-details-btn">
                                                 <BsThreeDotsVertical />
