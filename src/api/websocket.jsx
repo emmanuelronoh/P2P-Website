@@ -1,30 +1,32 @@
-import { w3cwebsocket as W3CWebSocket } from "websocket";
+// Create a single WebSocket service
+// services/chatSocket.js
+let socket = null;
 
-const setupWebSocket = (onMessageReceived) => {
-  const client = new W3CWebSocket(`ws://localhost:8000/ws/chat/`); // Update with your WebSocket URL
+export const connectSocket = (chatRoomId, onMessage) => {
+  const token = localStorage.getItem('accessToken');
+  const wsUrl = `ws://localhost:8001/ws/chat/${chatRoomId}/?token=${token}`;
   
-  client.onopen = () => {
-    console.log('WebSocket Client Connected');
-    const token = localStorage.getItem('accessToken');
-    if (token) {
-      client.send(JSON.stringify({
-        type: 'authorization',
-        token: token
-      }));
-    }
+  if (socket) {
+    socket.close();
+  }
+
+  socket = new WebSocket(wsUrl);
+
+  socket.onmessage = (e) => {
+    const data = JSON.parse(e.data);
+    onMessage(data);
   };
-  
-  client.onmessage = (message) => {
-    const data = JSON.parse(message.data);
-    onMessageReceived(data);
+
+  socket.onclose = () => {
+    console.log('Socket closed');
+    // Implement reconnection logic if needed
   };
-  
-  client.onclose = () => {
-    console.log('WebSocket Client Disconnected');
-    // Implement reconnection logic here if desired
-  };
-  
-  return client;
+
+  return socket;
 };
 
-export default setupWebSocket;
+export const sendSocketMessage = (message) => {
+  if (socket && socket.readyState === WebSocket.OPEN) {
+    socket.send(JSON.stringify(message));
+  }
+};
