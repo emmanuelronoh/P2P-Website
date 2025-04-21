@@ -5,6 +5,8 @@ import {
   Route,
   Outlet
 } from "react-router-dom";
+import AOS from 'aos';
+import 'aos/dist/aos.css';
 import { useNavigate } from "react-router-dom";
 import { useAuth, AuthProvider } from './contexts/AuthContext';
 import Home from "./pages/Home";
@@ -36,15 +38,23 @@ import SellCrypto from "./pages/SellCrypto";
 import ProfileDetails from "./pages/ProfileDetails";
 import Market from "./pages/Market";
 import ForgotPassword from "./components/ForgotPassword";
-import TermsAndCondition from "./components/VendorDashboard/TermsAndCondition";
-import CryptoListing from "./components/VendorDashboard/CryptoListing";
-import DashboardVendors from "./components/VendorDashboard/DashboardVendors";
+import TermsAndCondition from "./pages/TermsAndCondition";
+import CryptoListing from "./pages/CryptoListing";
+import DashboardVendors from "./pages/DashboardVendors";
 import Navbar from "./components/Navbar";
 import "uikit/dist/css/uikit.min.css";
 import ResetPassword from "./components/ResetPassword";
 
 function AppWrapper() {
   const [theme, setTheme] = useState(localStorage.getItem("theme") || "light");
+
+  useEffect(() => {
+    AOS.init({
+      duration: 800,
+      easing: 'ease-in-out',
+      once: true
+    });
+  }, []);
 
   useEffect(() => {
     document.documentElement.setAttribute("data-theme", theme);

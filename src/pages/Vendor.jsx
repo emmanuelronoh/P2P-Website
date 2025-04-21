@@ -191,7 +191,7 @@ const VendorVerification = () => {
       
       <div className="verification-help">
         <h4>Need help with verification?</h4>
-        <p>Contact our support team at <a href="mailto:support@vendors.com">support@vendors.com</a></p>
+        <p>Contact our support team at <a href="mailto:admin@cheetahxofficial.com">admin@cheetahxofficial.com</a></p>
       </div>
     </div>
   );

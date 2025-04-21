@@ -174,8 +174,8 @@ const Navbar = ({ toggleTheme, theme }) => {
 
     const startTutorial = () => {
         setShowTutorial(true);
-      };
-    
+    };
+
     // Handle logout using context
     const handleLogout = useCallback(async () => {
         try {
@@ -284,24 +284,13 @@ const Navbar = ({ toggleTheme, theme }) => {
                         {isAuthenticated ? (
                             <>
                                 {/* Notifications */}
-                                <div className="notification-icon">
-                                    <button
-                                        className="notification-button"
-                                        onClick={() => navigate('/notifications-p2p')}
-                                    >
-                                        <FaBell />
-                                        {notifications > 0 && (
-                                            <motion.span
-                                                className="notification-badge"
-                                                initial={{ scale: 0 }}
-                                                animate={{ scale: 1 }}
-                                                key={notifications}
-                                            >
-                                                {notifications}
-                                            </motion.span>
-                                        )}
-                                    </button>
-                                </div>
+                                <button
+                                    className="notification-button"
+                                    onClick={() => navigate('/notifications-p2p')}
+                                >
+                                    <FaBell />
+                                </button>
+
                                 {/* Messages */}
                                 <div
                                     className="message-icon"

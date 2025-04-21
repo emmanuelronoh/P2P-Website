@@ -589,3 +589,326 @@
       align-items: stretch;
     }
   }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+/* Animated How To Buy Section */
+.how-to-buy-section {
+  margin: 80px 0;
+  padding: 60px 20px;
+  background: linear-gradient(135deg, #f8faff 0%, #f0f5ff 100%);
+  border-radius: 20px;
+  position: relative;
+  overflow: hidden;
+}
+
+.how-to-buy-section::before {
+  content: "";
+  position: absolute;
+  top: -50px;
+  right: -50px;
+  width: 200px;
+  height: 200px;
+  background: radial-gradient(circle, rgba(74,144,226,0.1) 0%, rgba(74,144,226,0) 70%);
+  border-radius: 50%;
+}
+
+.buy-crypto-header {
+  text-align: center;
+  margin-bottom: 60px;
+}
+
+.buy-crypto-header h2 {
+  font-size: 2.5rem;
+  color: #1a2b50;
+  margin-bottom: 15px;
+  background: linear-gradient(90deg, #2c3e50, #4a90e2);
+
+  /* Standard and vendor-prefixed background-clip */
+  background-clip: text;
+  -webkit-background-clip: text;
+
+  /* For transparent text fill */
+  -webkit-text-fill-color: transparent;
+
+  position: relative;
+  display: inline-block;
+}
+
+
+.buy-crypto-header h2::after {
+  content: "";
+  position: absolute;
+  bottom: -10px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 80px;
+  height: 4px;
+  background: linear-gradient(90deg, #4a90e2, #2c3e50);
+  border-radius: 2px;
+}
+
+.buy-crypto-header .subtitle {
+  font-size: 1.1rem;
+  color: #666;
+  max-width: 600px;
+  margin: 0 auto;
+  line-height: 1.6;
+}
+
+.steps-roadmap {
+  position: relative;
+  max-width: 900px;
+  margin: 0 auto;
+  padding: 0 20px;
+}
+
+.step-track {
+  position: absolute;
+  top: 50px;
+  left: 50px;
+  right: 50px;
+  height: 3px;
+  background: linear-gradient(90deg, #4a90e2, rgba(74,144,226,0.2));
+  z-index: 1;
+}
+
+.step-card {
+  position: relative;
+  display: flex;
+  align-items: center;
+  background: white;
+  border-radius: 15px;
+  padding: 30px;
+  margin-bottom: 40px;
+  box-shadow: 0 10px 30px rgba(74, 144, 226, 0.1);
+  z-index: 2;
+  transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+.step-card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 15px 35px rgba(74, 144, 226, 0.2);
+}
+
+.step-icon {
+  flex-shrink: 0;
+  margin-right: 25px;
+  position: relative;
+}
+
+.icon-circle {
+  width: 80px;
+  height: 80px;
+}
+
+.icon-circle circle {
+  fill: #f0f5ff;
+  stroke: #4a90e2;
+  stroke-width: 3;
+  transition: all 0.3s ease;
+}
+
+.step-card:hover .icon-circle circle {
+  fill: #4a90e2;
+  stroke: #4a90e2;
+}
+
+.icon-circle path {
+  stroke: #4a90e2;
+  stroke-width: 5;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  fill: none;
+  transition: all 0.3s ease;
+}
+
+.step-card:hover .icon-circle path {
+  stroke: white;
+}
+
+.step-content {
+  flex-grow: 1;
+}
+
+.step-content h3 {
+  font-size: 1.5rem;
+  color: #2c3e50;
+  margin-bottom: 10px;
+}
+
+.step-content p {
+  color: #666;
+  line-height: 1.6;
+  margin: 0;
+}
+
+.step-arrow {
+  margin-left: 20px;
+  opacity: 0.3;
+  transition: all 0.3s ease;
+}
+
+.step-card:hover .step-arrow {
+  opacity: 1;
+  transform: translateX(5px);
+}
+
+.step-arrow svg {
+  width: 30px;
+  height: 30px;
+}
+
+.step-arrow path {
+  stroke: #4a90e2;
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  fill: none;
+}
+
+.cta-section {
+  text-align: center;
+  margin-top: 60px;
+}
+
+.glow-button {
+  background: linear-gradient(90deg, #4a90e2, #2c3e50);
+  color: white;
+  border: none;
+  padding: 15px 35px;
+  font-size: 1.1rem;
+  border-radius: 50px;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  box-shadow: 0 5px 15px rgba(74, 144, 226, 0.4);
+  transition: all 0.3s ease;
+  position: relative;
+  overflow: hidden;
+}
+
+.glow-button::after {
+  content: "";
+  position: absolute;
+  top: -50%;
+  left: -60%;
+  width: 200%;
+  height: 200%;
+  background: rgba(255,255,255,0.2);
+  transform: rotate(30deg);
+  transition: all 0.3s ease;
+}
+
+.glow-button:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 8px 25px rgba(74, 144, 226, 0.6);
+}
+
+.glow-button:hover::after {
+  left: 100%;
+}
+
+.glow-button svg {
+  width: 20px;
+  height: 20px;
+  margin-left: 10px;
+  transition: all 0.3s ease;
+}
+
+.glow-button:hover svg {
+  transform: translateX(5px);
+}
+
+.glow-button path {
+  stroke: white;
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  fill: none;
+}
+
+/* Mobile Responsiveness */
+@media (max-width: 768px) {
+  .how-to-buy-section {
+    padding: 40px 15px;
+    margin: 60px 0;
+  }
+  
+  .buy-crypto-header h2 {
+    font-size: 1.8rem;
+  }
+  
+  .step-track {
+    display: none;
+  }
+  
+  .step-card {
+    flex-direction: column;
+    text-align: center;
+    padding: 30px 20px;
+    margin-bottom: 30px;
+  }
+  
+  .step-icon {
+    margin-right: 0;
+    margin-bottom: 20px;
+  }
+  
+  .icon-circle {
+    width: 70px;
+    height: 70px;
+  }
+  
+  .step-arrow {
+    display: none;
+  }
+  
+  .step-content h3 {
+    font-size: 1.3rem;
+  }
+  
+  .glow-button {
+    padding: 12px 25px;
+    font-size: 1rem;
+  }
+}
+
+/* Animation for step cards */
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+[data-aos] {
+  transition: all 0.8s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+[data-aos="fade-up"] {
+  opacity: 0;
+  transform: translateY(30px);
+  transition-property: transform, opacity;
+}
+
+[data-aos="fade-up"].aos-animate {
+  opacity: 1;
+  transform: translateY(0);
+}

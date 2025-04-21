@@ -1,7 +1,7 @@
 // VendorDashboard/TermsAndCondition.jsx
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom"; // ✅ Import useNavigate
-import "./styles.css";
+import "../styles/styles.css";
 
 const TermsAndCondition = () => {
   const [agreed, setAgreed] = useState(false);

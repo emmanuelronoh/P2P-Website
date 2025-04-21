@@ -1,390 +1,386 @@
-import React, { useState, useEffect } from "react";
-import { useParams, Link, useNavigate } from "react-router-dom";
-import { 
-  FaRegCheckCircle, 
-  FaStar, 
-  FaUserShield,
-  FaClock,
-  FaGlobe,
-  FaLanguage,
-  FaBan,
-  FaHandshake
-} from "react-icons/fa";
-import { IoMdFlash, IoMdTime } from "react-icons/io";
-import { MdOutlineArrowForwardIos, MdPayment, MdLocationOn } from "react-icons/md";
-import "../styles/profile.css";
+import React, { useState, useEffect } from 'react';
+import { useParams, useNavigate } from 'react-router-dom';
+import { FaStar, FaShieldAlt, FaUserCheck, FaRegClock, FaExchangeAlt, FaPercentage, FaRegThumbsUp, FaRegThumbsDown } from 'react-icons/fa';
+import { MdPayment, MdAccountBalance, MdAttachMoney, MdVerifiedUser } from 'react-icons/md';
+import { jwtDecode } from "jwt-decode"; // ✅ correct named import
+import axios from 'axios';
+import '../styles/userProfile.css';
 
-const Profile = () => {
-  const { username } = useParams();
+const UserProfile = () => {
+  const { userId } = useParams();
   const navigate = useNavigate();
-  const [trader, setTrader] = useState(null);
-  const [offers, setOffers] = useState({ buy: [], sell: [] });
-  const [feedback, setFeedback] = useState([]);
+  const [profile, setProfile] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const [activeTab, setActiveTab] = useState("details");
+  const [activeTab, setActiveTab] = useState('overview');
 
   useEffect(() => {
-    const fetchData = async () => {
+    const fetchProfile = async () => {
+
       try {
-        // Verify token first
-        const token = localStorage.getItem('accessToken');
-        if (!token) {
-          navigate('/login');
-          return;
-        }
+        const token = localStorage.getItem('accessToken'); // ✅ Move this up
+        const decoded = jwtDecode(token); // ✅ Now token is available
+        const userId = decoded.user_id;
 
-        // Verify token is valid
-        const tokenValid = await validateToken(token);
-        if (!tokenValid) {
-          localStorage.removeItem('accessToken');
-          navigate('/login');
-          return;
-        }
-
-        // Fetch trader profile
-        const traderResponse = await fetchTraderProfile(username, token);
-        setTrader(traderResponse);
-
-        // Pre-fetch offers and feedback
-        const offersResponse = await fetchTraderOffers(username, token);
-        setOffers(offersResponse);
-
-        const feedbackResponse = await fetchTraderFeedback(username, token);
-        setFeedback(feedbackResponse.reviews);
-
+        console.log("userId:", userId);
+        console.log("token:", token);
+        const response = await axios.get(`http://localhost:8000/user/api/users/${userId}/profile/`, {
+          headers: {
+            Authorization: `Bearer ${token}`
+          }
+        });
+        setProfile(response.data);
       } catch (err) {
-        setError(err.message);
+        setError(err.response?.data?.message || 'Failed to load profile');
+        console.error('Error fetching profile:', err);
       } finally {
         setLoading(false);
       }
     };
 
-    fetchData();
-  }, [username, navigate]);
+    fetchProfile();
+  }, [userId]);
 
-  const validateToken = async (token) => {
-    try {
-      const response = await fetch('http://127.0.0.1:8000/api/auth/validate-token', {
-        headers: { 'Authorization': `Bearer ${token}` }
-      });
-      return response.ok;
-    } catch (error) {
-      console.error("Token validation failed:", error);
-      return false;
-    }    
-  };
-
-  const fetchTraderProfile = async (username, token) => {
-    const response = await fetch(`http://127.0.0.1:8000/api/auth/traders/${username}`, {
-      headers: { 'Authorization': `Bearer ${token}` }
-    });
-    if (!response.ok) throw new Error('Failed to fetch trader profile');
-    return await response.json();
-  };
-  
-  const fetchTraderOffers = async (username, token) => {
-    const response = await fetch(`http://127.0.0.1:8000/api/auth/traders/${username}/offers`, {
-      headers: { 'Authorization': `Bearer ${token}` }
-    });
-    if (!response.ok) throw new Error('Failed to fetch trader offers');
-    return await response.json();
-  };
-  
-  const fetchTraderFeedback = async (username, token) => {
-    const response = await fetch(`http://127.0.0.1:8000/api/auth/traders/${username}/feedback`, {
-      headers: { 'Authorization': `Bearer ${token}` }
-    });
-    if (!response.ok) throw new Error('Failed to fetch trader feedback');
-    return await response.json();
-  };
-  
-  const handleInitiateTrade = async (offerId, tradeType) => {
-    try {
-      const token = localStorage.getItem('accessToken');
-      const response = await fetch('http://127.0.0.1:8000/api/auth/trades/initiate', {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({
-          trader_username: username,
-          offer_id: offerId,
-          type: tradeType.toLowerCase()
-        })
-      });
-
-      if (!response.ok) throw new Error('Failed to initiate trade');
-
-      const data = await response.json();
-      navigate(`/trade/${data.tradeId}`);
-    } catch (error) {
-      setError(error.message);
-    }
-  };
-
-  const renderRatingStars = (rating) => {
-    const stars = [];
-    for (let i = 1; i <= 5; i++) {
-      stars.push(
-        <FaStar 
-          key={i} 
-          className={i <= rating ? "star filled" : "star empty"} 
-        />
-      );
-    }
-    return stars;
-  };
-
-  if (loading) {
-    return <div className="loading">Loading trader profile...</div>;
-  }
-
-  if (error) {
-    return (
-      <div className="profile-error">
-        <h2>Error loading profile</h2>
-        <p>{error}</p>
-        <Link to="/market" className="back-button">
-          Back to Marketplace
-        </Link>
-      </div>
-    );
-  }
-
-  if (!trader) {
-    return (
-      <div className="profile-not-found">
-        <h2>Trader not found</h2>
-        <p>The trader you're looking for doesn't exist or may have been removed.</p>
-        <Link to="/market" className="back-button">
-          Back to Marketplace
-        </Link>
-      </div>
-    );
-  }
+  if (loading) return <div className="profile-loading">Loading profile...</div>;
+  if (error) return <div className="profile-error">Error: {error}</div>;
+  if (!profile) return <div className="profile-not-found">Profile not found</div>;
 
   return (
-    <div className="profile-container">
+    <div className="user-profile-container">
       <div className="profile-header">
-        <div className="profile-avatar">
-          <div className="avatar">{trader.user?.first_name?.charAt(0) || 'T'}</div>
-          {trader.rating >= 4.9 && (
-            <div className="trusted-badge">
-              <FaUserShield /> Trusted Trader
+        <button onClick={() => navigate(-1)} className="back-button">
+          &larr; Back to Orders
+        </button>
+
+        <div className="user-basic-info">
+          <div className="avatar-container">
+            <img
+              src={profile.avatar || 'https://i.ibb.co/PsXqD7Xd/groom-6925756.png'}
+              alt={profile.username}
+              className="profile-avatar"
+            />
+            {profile.online && <span className="online-badge">Online</span>}
+          </div>
+
+          <div className="user-main-details">
+            <h1>{profile.username}</h1>
+            <div className="verification-badges">
+              {profile.verification_level >= 1 && (
+                <span className="badge email-verified">
+                  <FaUserCheck /> Email Verified
+                </span>
+              )}
+              {profile.verification_level >= 2 && (
+                <span className="badge id-verified">
+                  <MdVerifiedUser /> ID Verified
+                </span>
+              )}
+              {profile.verification_level >= 3 && (
+                <span className="badge address-verified">
+                  <FaShieldAlt /> Address Verified
+                </span>
+              )}
             </div>
-          )}
-        </div>
-        
-        <div className="profile-info">
-          <h1>
-            {trader.user?.first_name} {trader.user?.last_name}
-            <FaRegCheckCircle className="verified-icon" />
-          </h1>
-          
-          <div className="rating-container">
-            <div className="stars">{renderRatingStars(trader.rating)}</div>
-            <span className="rating-value">{trader.rating.toFixed(2)}</span>
-            <span className="trades-count">
-              <IoMdFlash /> {trader.trades_completed.toLocaleString()} trades
-            </span>
+
+            <div className="member-since">
+              Member since {new Date(profile.join_date).toLocaleDateString()}
+            </div>
           </div>
-          
-          <div className="location-info">
-            <MdLocationOn /> {trader.location}
-          </div>
-          
-          <div className="last-active">
-            <IoMdTime /> Last online: {new Date(trader.last_online).toLocaleString()}
+
+          <div className="user-stats-summary">
+            <div className="stat-item">
+              <FaStar className="stat-icon" />
+              <div className="stat-value">{profile.rating.toFixed(1)}</div>
+              <div className="stat-label">Rating</div>
+            </div>
+            <div className="stat-item">
+              <FaExchangeAlt className="stat-icon" />
+              <div className="stat-value">{profile.total_trades}</div>
+              <div className="stat-label">Trades</div>
+            </div>
+            <div className="stat-item">
+              <FaPercentage className="stat-icon" />
+              <div className="stat-value">{profile.completion_rate}%</div>
+              <div className="stat-label">Completion</div>
+            </div>
           </div>
         </div>
       </div>
 
       <div className="profile-tabs">
-        <button 
-          className={`tab-button ${activeTab === "details" ? "active" : ""}`}
-          onClick={() => setActiveTab("details")}
+        <button
+          className={`tab-button ${activeTab === 'overview' ? 'active' : ''}`}
+          onClick={() => setActiveTab('overview')}
         >
-          Trader Details
+          Overview
         </button>
-        <button 
-          className={`tab-button ${activeTab === "offers" ? "active" : ""}`}
-          onClick={() => setActiveTab("offers")}
+        <button
+          className={`tab-button ${activeTab === 'reviews' ? 'active' : ''}`}
+          onClick={() => setActiveTab('reviews')}
         >
-          Trade Offers
+          Reviews ({profile.reviews.length})
         </button>
-        <button 
-          className={`tab-button ${activeTab === "feedback" ? "active" : ""}`}
-          onClick={() => setActiveTab("feedback")}
+        <button
+          className={`tab-button ${activeTab === 'trade-history' ? 'active' : ''}`}
+          onClick={() => setActiveTab('trade-history')}
         >
-          Feedback ({feedback.length || 0})
+          Trade History
+        </button>
+        <button
+          className={`tab-button ${activeTab === 'payment-methods' ? 'active' : ''}`}
+          onClick={() => setActiveTab('payment-methods')}
+        >
+          Payment Methods
         </button>
       </div>
 
-      <div className="tab-content">
-        {activeTab === "details" && (
-          <div className="trader-details-card">
-            <div className="detail-item">
-              <FaClock className="detail-icon" />
-              <div>
-                <h3>Member since</h3>
-                <p>{new Date(trader.member_since).toLocaleDateString()}</p>
+      <div className="profile-content">
+        {activeTab === 'overview' && (
+          <div className="overview-tab">
+            <div className="profile-section">
+              <h3>Trader Statistics</h3>
+              <div className="stats-grid">
+                <div className="stat-card">
+                  <div className="stat-title">Average Release Time</div>
+                  <div className="stat-value">
+                    <FaRegClock /> {profile.avg_release_time}
+                  </div>
+                </div>
+                <div className="stat-card">
+                  <div className="stat-title">Positive Feedback</div>
+                  <div className="stat-value positive">
+                    <FaRegThumbsUp /> {profile.positive_feedback}%
+                  </div>
+                </div>
+                <div className="stat-card">
+                  <div className="stat-title">Dispute Rate</div>
+                  <div className="stat-value negative">
+                    <FaRegThumbsDown /> {profile.dispute_rate}%
+                  </div>
+                </div>
+                <div className="stat-card">
+                  <div className="stat-title">Response Time</div>
+                  <div className="stat-value">
+                    <FaRegClock /> {profile.avg_response_time}
+                  </div>
+                </div>
               </div>
             </div>
-            
-            <div className="detail-item">
-              <FaGlobe className="detail-icon" />
-              <div>
-                <h3>Timezone</h3>
-                <p>{trader.timezone}</p>
-              </div>
-            </div>
-            
-            <div className="detail-item">
-              <FaLanguage className="detail-icon" />
-              <div>
-                <h3>Spoken languages</h3>
-                <p>{trader.languages}</p>
-              </div>
-            </div>
-            
-            <div className="detail-item">
-              <FaBan className="detail-icon" />
-              <div>
-                <h3>Blocked by</h3>
-                <p>{trader.blocked_by_count} traders</p>
-              </div>
-            </div>
-            
-            <div className="detail-item">
-              <FaHandshake className="detail-icon" />
-              <div>
-                <h3>Trusted by</h3>
-                <p>{trader.trusted_by_count} traders</p>
+
+            <div className="profile-section">
+              <h3>Recent Activity</h3>
+              <div className="activity-list">
+                {Array.isArray(profile.recent_activity) ? (
+                  profile.recent_activity.map((activity, index) => (
+                    <div key={index} className="activity-item">
+                      <div className="activity-icon">
+                        {activity.type === 'trade' && <FaExchangeAlt />}
+                        {activity.type === 'login' && <FaUserCheck />}
+                        {activity.type === 'verification' && <FaShieldAlt />}
+                      </div>
+                      <div className="activity-details">
+                        <div className="activity-text">{activity.text}</div>
+                        <div className="activity-time">
+                          {new Date(activity.timestamp).toLocaleString()}
+                        </div>
+                      </div>
+                    </div>
+                  ))
+                ) : (
+                  <div className="activity-item">
+                    <div className="activity-icon">
+                      <FaUserCheck />
+                    </div>
+                    <div className="activity-details">
+                      <div className="activity-text">{profile.recent_activity || 'No recent activity'}</div>
+                    </div>
+                  </div>
+                )}
               </div>
             </div>
           </div>
-        )}
+                    
+                )}
 
-        {activeTab === "offers" && (
-          <div className="trader-offers">
-            {offers.buy.length === 0 && offers.sell.length === 0 ? (
-              <div className="no-offers">
-                <p>This trader currently has no active offers.</p>
+      {activeTab === 'reviews' && (
+        <div className="reviews-tab">
+          <div className="reviews-summary">
+            <div className="rating-overview">
+              <div className="average-rating">
+                {profile.rating.toFixed(1)} <FaStar className="star-icon" />
               </div>
-            ) : (
-              <>
-                {offers.buy.map((offer) => (
-                  <OfferCard 
-                    key={`buy-${offer.id}`}
-                    offer={offer}
-                    tradeType="Buy"
-                    onInitiateTrade={handleInitiateTrade}
-                  />
+              <div className="rating-distribution">
+                {[5, 4, 3, 2, 1].map((stars) => (
+                  <div key={stars} className="rating-bar">
+                    <span className="stars">{stars} <FaStar /></span>
+                    <div className="bar-container">
+                      <div
+                        className="bar-fill"
+                        style={{
+                          width: `${(profile.rating_distribution[stars] / profile.total_reviews) * 100}%`
+                        }}
+                      ></div>
+                    </div>
+                    <span className="count">{profile.rating_distribution[stars]}</span>
+                  </div>
                 ))}
-                {offers.sell.map((offer) => (
-                  <OfferCard 
-                    key={`sell-${offer.id}`}
-                    offer={offer}
-                    tradeType="Sell"
-                    onInitiateTrade={handleInitiateTrade}
-                  />
-                ))}
-              </>
-            )}
-          </div>
-        )}
-
-        {activeTab === "feedback" && (
-          <div className="feedback-section">
-            {feedback.length > 0 ? (
-              feedback.map((review) => (
-                <FeedbackCard 
-                  key={review.id}
-                  review={review}
-                  renderRatingStars={renderRatingStars}
-                />
-              ))
-            ) : (
-              <div className="no-feedback">
-                <p>This trader hasn't received any feedback yet.</p>
               </div>
-            )}
+            </div>
           </div>
-        )}
-      </div>
-    </div>
-  );
-};
 
-// Extracted Offer Card Component
-const OfferCard = ({ offer, tradeType, onInitiateTrade }) => (
-  <div className="offer-card">
-    <div className="offer-header">
-      <h2>
-        {tradeType} {offer.crypto} in {offer.trader.trader_profile?.location}
-      </h2>
-      <span className="offer-type">{tradeType}</span>
-    </div>
-    
-    <div className="offer-details">
-      <div className="price-info">
-        <p className="price">${offer.price}</p>
-        <p className="price-change">
-          {offer.price_change.includes("above") ? (
-            <span className="above">▲ {offer.price_change}</span>
-          ) : (
-            <span className="below">▼ {offer.price_change}</span>
-          )}
-        </p>
-      </div>
-      
-      <div className="limits-info">
-        <p><strong>Min:</strong> ${offer.min_limit}</p>
-        <p><strong>Max:</strong> ${offer.max_limit}</p>
-      </div>
-      
-      <div className="payment-method">
-        <MdPayment /> {offer.payment_method}
-      </div>
-    </div>
-    
-    <button 
-      className={`trade-button ${tradeType.toLowerCase()}`}
-      onClick={() => onInitiateTrade(offer.id, tradeType)}
-    >
-      {tradeType} Now <MdOutlineArrowForwardIos />
-    </button>
-  </div>
-);
-
-// Extracted Feedback Card Component
-const FeedbackCard = ({ review, renderRatingStars }) => {
-  const getTimeAgo = (dateString) => {
-    const date = new Date(dateString);
-    const now = new Date();
-    const diffInDays = Math.floor((now - date) / (1000 * 60 * 60 * 24));
-    
-    if (diffInDays === 0) return 'Today';
-    if (diffInDays === 1) return 'Yesterday';
-    if (diffInDays < 7) return `${diffInDays} days ago`;
-    if (diffInDays < 30) return `${Math.floor(diffInDays / 7)} weeks ago`;
-    return date.toLocaleDateString();
-  };
-
-  return (
-    <div className="feedback-card">
-      <div className="feedback-header">
-        <div className="reviewer">{review.reviewer.first_name}</div>
-        <div className="review-rating">
-          {renderRatingStars(review.rating)}
+          <div className="reviews-list">
+            {profile.reviews.map((review) => (
+              <div key={review.id} className="review-card">
+                <div className="review-header">
+                  <div className="reviewer-info">
+                    <img
+                      src={review.reviewer.avatar || 'https://i.ibb.co/PsXqD7Xd/groom-6925756.png'}
+                      alt={review.reviewer.username}
+                      className="reviewer-avatar"
+                    />
+                    <span className="reviewer-name">{review.reviewer.username}</span>
+                  </div>
+                  <div className="review-rating">
+                    {Array.from({ length: 5 }).map((_, i) => (
+                      <FaStar
+                        key={i}
+                        className={`star ${i < review.rating ? 'filled' : ''}`}
+                      />
+                    ))}
+                  </div>
+                  <div className="review-time">
+                    {new Date(review.timestamp).toLocaleDateString()}
+                  </div>
+                </div>
+                <div className="review-content">
+                  <p>{review.comment}</p>
+                </div>
+                {review.response && (
+                  <div className="review-response">
+                    <div className="response-header">
+                      <strong>Response from {profile.username}:</strong>
+                    </div>
+                    <p>{review.response}</p>
+                  </div>
+                )}
+              </div>
+            ))}
+          </div>
         </div>
-      </div>
-      <p className="review-comment">{review.comment}</p>
-      <div className="review-date">{getTimeAgo(review.created_at)}</div>
+      )}
+
+      {activeTab === 'trade-history' && (
+        <div className="trade-history-tab">
+          <div className="history-filters">
+            <select className="time-filter">
+              <option>Last 30 Days</option>
+              <option>Last 90 Days</option>
+              <option>Last Year</option>
+              <option>All Time</option>
+            </select>
+            <select className="type-filter">
+              <option>All Trades</option>
+              <option>Buy Trades</option>
+              <option>Sell Trades</option>
+            </select>
+          </div>
+
+          <div className="trades-list">
+            <table className="trades-table">
+              <thead>
+                <tr>
+                  <th>Date</th>
+                  <th>Type</th>
+                  <th>Amount</th>
+                  <th>Price</th>
+                  <th>Counterparty</th>
+                  <th>Status</th>
+                </tr>
+              </thead>
+              <tbody>
+                {profile.trade_history.map((trade) => (
+                  <tr key={trade.id}>
+                    <td>{new Date(trade.date).toLocaleDateString()}</td>
+                    <td className={`trade-type ${trade.type}`}>
+                      {trade.type}
+                    </td>
+                    <td>
+                      {trade.amount} {trade.currency}
+                    </td>
+                    <td>
+                      {trade.price} {trade.currency}/{trade.crypto}
+                    </td>
+                    <td className="counterparty">
+                      <img
+                        src={trade.counterparty.avatar || 'https://i.ibb.co/PsXqD7Xd/groom-6925756.png'}
+                        alt={trade.counterparty.username}
+                        className="counterparty-avatar"
+                      />
+                      {trade.counterparty.username}
+                    </td>
+                    <td className={`trade-status ${trade.status}`}>
+                      {trade.status}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      )}
+
+      {activeTab === 'payment-methods' && (
+        <div className="payment-methods-tab">
+          <div className="payment-methods-list">
+            {profile.payment_methods.map((method) => (
+              <div key={method.id} className="payment-method-card">
+                <div className="method-header">
+                  <div className="method-name">
+                    <MdPayment className="method-icon" />
+                    {method.name}
+                  </div>
+                  <div className="method-status">
+                    {method.verified ? (
+                      <span className="verified-badge">
+                        <FaCheckCircle /> Verified
+                      </span>
+                    ) : (
+                      <span className="unverified-badge">
+                        Unverified
+                      </span>
+                    )}
+                  </div>
+                </div>
+                <div className="method-details">
+                  {method.details && (
+                    <div className="details">
+                      {Object.entries(method.details).map(([key, value]) => (
+                        <div key={key} className="detail-item">
+                          <span className="detail-label">{key}:</span>
+                          <span className="detail-value">{value}</span>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+                <div className="method-limits">
+                  <div className="limit-item">
+                    <span>Min:</span>
+                    <strong>{method.min_limit} {method.currency}</strong>
+                  </div>
+                  <div className="limit-item">
+                    <span>Max:</span>
+                    <strong>{method.max_limit} {method.currency}</strong>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
     </div>
-  );
+        </div >
+    );
 };
 
-export default Profile;
+export default UserProfile;

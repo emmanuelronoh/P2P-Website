@@ -42,7 +42,7 @@ const Amount = () => {
     const numStr = value.replace(/,/g, '');
     if (numStr === "") return "";
     if (isNaN(numStr)) return value; // don't modify if invalid
-    
+
     const [whole, decimal] = numStr.split('.');
     const formattedWhole = whole.replace(/\B(?=(\d{3})+(?!\d))/g, ",");
     return decimal ? `${formattedWhole}.${decimal}` : formattedWhole;
@@ -51,25 +51,25 @@ const Amount = () => {
   // Handle amount changes with validation
   const handleAmountChange = (e) => {
     let value = e.target.value;
-    
+
     // Allow only numbers and one decimal point
     const validInput = value.match(/^(\d+\.?\d*|\.\d*)/);
     if (!validInput && value !== "") return;
-    
+
     value = validInput?.[0] || "";
-    
+
     // Remove existing commas for validation
     const numericValue = value.replace(/,/g, '');
-    
+
     if (numericValue === "") {
       setAmount("");
       setInputError("");
       return;
     }
-    
+
     // Validate the numeric value
     const validation = validateInput(numericValue, trader?.minLimit, trader?.maxLimit);
-    
+
     if (validation.isValid) {
       setInputError("");
       // Store the formatted value in state for display
@@ -86,11 +86,11 @@ const Amount = () => {
     setAmount(formatDisplayAmount(quickAmount.toString()));
     setInputError("");
   };
-  
+
   // Handle proceed to trade
   const handleProceed = async () => {
     const numericAmount = parseFloat(amount.replace(/,/g, '') || 0);
-    
+
     // Final validation before proceeding
     if (!amount || numericAmount <= 0) {
       setInputError("Please enter a valid amount");

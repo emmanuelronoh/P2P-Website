@@ -1,613 +1,1054 @@
-import { useState, useEffect, useRef } from "react";
-import { useLocation } from "react-router-dom";
-import EmojiPicker from "emoji-picker-react";
-import "../styles/Messages.css";
+import React, { useState, useEffect, useRef, useCallback } from 'react';
+import { useLocation, useNavigate } from 'react-router-dom';
+import { useAuth } from '../contexts/AuthContext';
+import EmojiPicker from 'emoji-picker-react';
+import { FiSearch, FiPlus, FiPaperclip, FiSmile, FiSend, FiCheck, FiChevronDown } from 'react-icons/fi';
+import { BsCheck2All, BsThreeDotsVertical } from 'react-icons/bs';
+import { IoClose } from 'react-icons/io5';
+import '../styles/messages.css';
 
 const Messages = () => {
+  const { isAuthenticated, user } = useAuth();
   const location = useLocation();
-  const { trader, tradeType = "", crypto = "", amount = 0 } = location.state || {};
+  const navigate = useNavigate();
   const messagesEndRef = useRef(null);
   const fileInputRef = useRef(null);
+  const socketRef = useRef(null);
+  const messageInputRef = useRef(null);
+  const typingTimeoutRef = useRef(null);
 
-  const [chats, setChats] = useState([
-    { 
-      id: 1, 
-      trader: "Alice Johnson", 
-      avatar: "https://randomuser.me/api/portraits/women/44.jpg",
-      status: "online",
-      messages: [
-        { 
-          text: "Hey, are you available for a trade?", 
-          sender: "them", 
-          status: "delivered",
-          timestamp: new Date(Date.now() - 3600000)
-        },
-        { 
-          text: "I'd like to buy 0.5 BTC", 
-          sender: "them", 
-          status: "delivered",
-          timestamp: new Date(Date.now() - 3500000)
-        },
-        { 
-          text: "Yes, I'm available. What's your offer?", 
-          sender: "me", 
-          status: "read",
-          timestamp: new Date(Date.now() - 3400000)
-        }
-      ], 
-      unread: true, 
-      lastActive: new Date(Date.now() - 300000)
-    },
-    { 
-      id: 2, 
-      trader: "Bob Smith", 
-      avatar: "https://randomuser.me/api/portraits/men/32.jpg",
-      status: "offline",
-      messages: [
-        { 
-          text: "Trade completed successfully!", 
-          sender: "them", 
-          status: "read",
-          timestamp: new Date(Date.now() - 7200000)
-        },
-        { 
-          text: "Thanks for the smooth transaction", 
-          sender: "me", 
-          status: "read",
-          timestamp: new Date(Date.now() - 7100000)
-        }
-      ], 
-      unread: false, 
-      lastActive: new Date(Date.now() - 7200000)
-    },
-    { 
-      id: 3, 
-      trader: "Emma Wilson", 
-      avatar: "https://randomuser.me/api/portraits/women/68.jpg",
-      status: "online",
-      messages: [
-        { 
-          text: "Can we negotiate the price?", 
-          sender: "them", 
-          status: "read",
-          timestamp: new Date(Date.now() - 86400000)
-        }
-      ], 
-      unread: false, 
-      lastActive: new Date(Date.now() - 3600000)
-    }
-  ]);
+  const [state, setState] = useState({
+    chatRooms: [],
+    currentChat: location.state?.chatRoomId ? {
+      id: location.state.chatRoomId,
+      counterparty: location.state.counterparty,
+      tradeId: location.state.tradeId,
+      orderDetails: location.state.orderDetails
+    } : null,
+    messages: [],
+    newMessage: '',
+    attachment: null,
+    isTyping: false,
+    typingUser: '',
+    searchTerm: '',
+    showEmojiPicker: false,
+    isUploading: false,
+    unreadCounts: {},
+    isMobileView: window.innerWidth < 768,
+    showChatList: window.innerWidth >= 768,
+    showMobileMenu: false,
+    darkMode: window.matchMedia('(prefers-color-scheme: dark)').matches
+  });
 
-  const [selectedChat, setSelectedChat] = useState(null);
-  const [newMessage, setNewMessage] = useState("");
-  const [searchTerm, setSearchTerm] = useState("");
-  const [isTyping, setIsTyping] = useState(false);
-  const [showEmojiPicker, setShowEmojiPicker] = useState(false);
-
-
-
-  useEffect(() => {
-    if (trader?.name) {
-      setChats(prevChats => {
-        const existingChat = prevChats.find(chat => chat.trader === trader.name);
-        
-        if (!existingChat) {
-          const newChat = {
-            id: Date.now(),
-            trader: trader.name,
-            avatar: trader.avatar || `https://randomuser.me/api/portraits/${Math.random() > 0.5 ? 'men' : 'women'}/${Math.floor(Math.random() * 100)}.jpg`,
-            status: "online",
-            messages: [{
-              text: `Hello! I want to ${tradeType.toLowerCase()} ${amount} ${crypto} for KES ${amount}.`,
-              sender: "me",
-              status: "sent",
-              timestamp: new Date()
-            }],
-            unread: false,
-            lastActive: new Date()
-          };
-          return [...prevChats, newChat];
-        }
-        return prevChats;
-      });
-
-      setSelectedChat(prevSelected => {
-        const existingChat = chats.find(chat => chat.trader === trader.name);
-        return existingChat || {
-          id: Date.now(),
-          trader: trader.name,
-          avatar: trader.avatar || `https://randomuser.me/api/portraits/${Math.random() > 0.5 ? 'men' : 'women'}/${Math.floor(Math.random() * 100)}.jpg`,
-          status: "online",
-          messages: [{
-            text: `Hello! I want to ${tradeType.toLowerCase()} ${amount} ${crypto} for KES ${amount}.`,
-            sender: "me",
-            status: "sent",
-            timestamp: new Date()
-          }],
-          unread: false,
-          lastActive: new Date()
-        };
-      });
-    }
-  }, [trader, tradeType, crypto, amount]);
-
-  const handleEmojiClick = (emojiData) => {
-    setNewMessage(prev => prev + emojiData.emoji);
-    setShowEmojiPicker(false);
-  };
-
-  const handleFileChange = (e) => {
-    const file = e.target.files[0];
-    if (!file) return;
-
-    // Create a preview for the file
-    let filePreview;
-    if (file.type.startsWith('image/')) {
-      filePreview = URL.createObjectURL(file);
-    } else {
-      filePreview = null;
-    }
-
-    const fileMessage = {
-      text: file.name,
-      sender: "me",
-      status: "sent",
-      timestamp: new Date(),
-      file: {
-        name: file.name,
-        type: file.type,
-        size: file.size,
-        preview: filePreview
-      }
-    };
-
-    setChats(prevChats =>
-      prevChats.map(chat =>
-        chat.id === selectedChat.id
-          ? { 
-              ...chat, 
-              messages: [...chat.messages, fileMessage],
-              lastActive: new Date()
-            }
-          : chat
-      )
-    );
-
-    setSelectedChat(prev => ({
-      ...prev,
-      messages: [...prev.messages, fileMessage],
-      lastActive: new Date()
-    }));
-
-    // Simulate file upload and response
-    setIsTyping(true);
-    setTimeout(() => {
-      const replyMessage = {
-        text: getRandomFileResponse(file.type),
-        sender: "them",
-        status: "delivered",
-        timestamp: new Date()
-      };
-
-      setChats(prevChats =>
-        prevChats.map(chat =>
-          chat.id === selectedChat.id
-            ? { 
-                ...chat, 
-                messages: [...chat.messages, replyMessage],
-                lastActive: new Date(),
-                unread: true
-              }
-            : chat
-        )
-      );
-
-      setSelectedChat(prev => ({
-        ...prev,
-        messages: [...prev.messages, replyMessage],
-        lastActive: new Date()
-      }));
-
-      setIsTyping(false);
-    }, 2000 + Math.random() * 3000);
-  };
-
-  const getRandomFileResponse = (fileType) => {
-    if (fileType.startsWith('image/')) {
-      const responses = [
-        "Nice picture!",
-        "Thanks for sharing this image.",
-        "I've received the image.",
-        "This looks great!",
-        "Image received successfully."
-      ];
-      return responses[Math.floor(Math.random() * responses.length)];
-    } else {
-      const responses = [
-        "File received, thanks!",
-        "I'll check this document.",
-        "Thanks for sending this over.",
-        "File downloaded successfully.",
-        "I've received the file."
-      ];
-      return responses[Math.floor(Math.random() * responses.length)];
-    }
-  };
-
-  const sendMessage = () => {
-    if (newMessage.trim() && selectedChat) {
-      const updatedMessage = {
-        text: newMessage,
-        sender: "me",
-        status: "sent",
-        timestamp: new Date()
-      };
-      
-      setChats(prevChats =>
-        prevChats.map(chat =>
-          chat.id === selectedChat.id
-            ? { 
-                ...chat, 
-                messages: [...chat.messages, updatedMessage],
-                lastActive: new Date()
-              }
-            : chat
-        )
-      );
-      
-      setSelectedChat(prev => ({
-        ...prev,
-        messages: [...prev.messages, updatedMessage],
-        lastActive: new Date()
-      }));
-      
-      setNewMessage("");
-      setShowEmojiPicker(false);
-      
-      // Simulate typing indicator and reply
-      if (Math.random() > 0.3) {
-        setIsTyping(true);
-        setTimeout(() => {
-          const replyMessage = {
-            text: getRandomReply(),
-            sender: "them",
-            status: "delivered",
-            timestamp: new Date()
-          };
-          
-          setChats(prevChats =>
-            prevChats.map(chat =>
-              chat.id === selectedChat.id
-                ? { 
-                    ...chat, 
-                    messages: [...chat.messages, replyMessage],
-                    lastActive: new Date(),
-                    unread: true
-                  }
-                : chat
-            )
-          );
-          
-          setSelectedChat(prev => ({
-            ...prev,
-            messages: [...prev.messages, replyMessage],
-            lastActive: new Date()
-          }));
-          
-          setIsTyping(false);
-        }, 2000 + Math.random() * 3000);
-      }
-    }
-  };
-
-  const getRandomReply = () => {
-    const replies = [
-      "Sounds good to me!",
-      "Let me think about that...",
-      "Can we negotiate the price?",
-      "I'll get back to you shortly.",
-      "Perfect! When can we meet?",
-      "Do you accept M-Pesa?",
-      "What's your best offer?",
-      "I'm interested, let's proceed.",
-      "Can we do half now, half later?",
-      "Are you available tomorrow?"
-    ];
-    return replies[Math.floor(Math.random() * replies.length)];
-  };
-
-  const formatTime = (date) => {
-    if (!date) return "";
+  // Utility functions
+  const formatTime = (dateString) => {
+    const date = new Date(dateString);
     return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
   };
 
-  const formatDate = (date) => {
-    if (!date) return "";
+  const formatDate = (dateString) => {
+    const date = new Date(dateString);
     const now = new Date();
     const diffDays = Math.floor((now - date) / (1000 * 60 * 60 * 24));
-    
-    if (diffDays === 0) {
-      return "Today";
-    } else if (diffDays === 1) {
-      return "Yesterday";
-    } else if (diffDays < 7) {
-      return date.toLocaleDateString([], { weekday: 'long' });
-    } else {
-      return date.toLocaleDateString([], { month: 'short', day: 'numeric' });
-    }
+
+    if (diffDays === 0) return "Today";
+    if (diffDays === 1) return "Yesterday";
+    if (diffDays < 7) return date.toLocaleDateString([], { weekday: 'long' });
+    return date.toLocaleDateString([], { month: 'short', day: 'numeric' });
   };
 
-  const getActiveStatus = (date) => {
-    if (!date) return "Long time ago";
+  const getActiveStatus = (dateString) => {
+    if (!dateString) return "Long time ago";
+    const date = new Date(dateString);
     const now = new Date();
     const diffMinutes = Math.floor((now - date) / (1000 * 60));
-    
+
     if (diffMinutes < 1) return "Active now";
-    if (diffMinutes < 60) return `Active ${diffMinutes} min ago`;
-    if (diffMinutes < 1440) return `Active ${Math.floor(diffMinutes / 60)} hours ago`;
-    return `Active ${Math.floor(diffMinutes / 1440)} days ago`;
+    if (diffMinutes < 60) return `${diffMinutes} min ago`;
+    if (diffMinutes < 1440) return `${Math.floor(diffMinutes / 60)} hours ago`;
+    return `${Math.floor(diffMinutes / 1440)} days ago`;
   };
 
-  const filteredChats = chats.filter(chat => 
-    chat.trader.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    chat.messages.some(msg => 
-      msg.text.toLowerCase().includes(searchTerm.toLowerCase())
-    )
-  );
+  const loadChatRooms = useCallback(async () => {
+    try {
+      const token = localStorage.getItem('accessToken');
+      const response = await fetch('http://localhost:8000/chat-room/', {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      const data = await response.json();
+      
+      // Calculate unread counts
+      const unreadCounts = {};
+      data.forEach(room => {
+        unreadCounts[room.id] = room.unread_count || 0;
+      });
 
-  const renderMessageContent = (msg) => {
-    if (msg.file) {
-      if (msg.file.type.startsWith('image/')) {
-        return (
-          <div className="file-message">
-            <img src={msg.file.preview} alt={msg.file.name} className="file-preview" />
-            <div className="file-info">
-              <span className="file-name">{msg.file.name}</span>
-              <span className="file-size">{(msg.file.size / 1024).toFixed(1)} KB</span>
-            </div>
-          </div>
-        );
-      } else {
-        return (
-          <div className="file-message">
-            <div className="file-icon">
-              <svg viewBox="0 0 24 24" width="24" height="24">
-                <path fill="currentColor" d="M14 2H6c-1.1 0-1.99.9-1.99 2L4 20c0 1.1.89 2 1.99 2H18c1.1 0 2-.9 2-2V8l-6-6zM6 20V4h7v5h5v11H6z"/>
-              </svg>
-            </div>
-            <div className="file-info">
-              <span className="file-name">{msg.file.name}</span>
-              <span className="file-size">{(msg.file.size / 1024).toFixed(1)} KB</span>
-            </div>
-          </div>
-        );
-      }
+      setState(prev => ({ 
+        ...prev, 
+        chatRooms: data, 
+        userId: user?.id,
+        unreadCounts
+      }));
+    } catch (error) {
+      console.error('Error loading chat rooms:', error);
     }
-    return <p>{msg.text}</p>;
+  }, [user]);
+
+  const connectToChat = useCallback((chatRoomId) => {
+    const token = localStorage.getItem('accessToken');
+    const wsUrl = `ws://localhost:8001/ws/chat/${chatRoomId}/?token=${token}`;
+
+    if (socketRef.current) {
+      socketRef.current.close();
+    }
+
+    const newSocket = new WebSocket(wsUrl);
+
+    newSocket.onopen = () => {
+      loadMessages(chatRoomId);
+      markMessagesAsRead(chatRoomId);
+    };
+
+    newSocket.onmessage = (e) => {
+      try {
+        const data = JSON.parse(e.data);
+        
+        const handleChatMessage = () => {
+          setState(prev => {
+            // Parse and validate timestamp
+            const parseTimestamp = (timestamp) => {
+              try {
+                // Handle both ISO strings and formatted strings
+                if (typeof timestamp === 'string') {
+                  // Try ISO format first
+                  if (timestamp.includes('T')) {
+                    return new Date(timestamp).toISOString();
+                  }
+                  // Try common formats
+                  const formats = [
+                    'yyyy-MM-dd HH:mm:ss', 
+                    'yyyy/MM/dd HH:mm:ss',
+                    'MM/dd/yyyy HH:mm:ss'
+                  ];
+                  
+                  for (const format of formats) {
+                    try {
+                      const dt = new Date(timestamp);
+                      if (!isNaN(dt.getTime())) {
+                        return dt.toISOString();
+                      }
+                    } catch (e) {
+                      continue;
+                    }
+                  }
+                }
+                return new Date().toISOString(); // Fallback to current time
+              } catch (e) {
+                console.warn('Failed to parse timestamp:', timestamp, e);
+                return new Date().toISOString();
+              }
+            };
+    
+            const validatedTimestamp = parseTimestamp(data.message?.timestamp);
+            const isOwnMessage = data.sender === prev.userId;
+            const chatRoomId = data.chat_room_id || prev.currentChat?.id;
+    
+            // Check for optimistic update
+            const existingMessageIndex = prev.messages.findIndex(
+              msg => msg.id === data.temp_id || 
+                    (msg.text === data.message?.content && 
+                     Math.abs(new Date(msg.time) - new Date(validatedTimestamp)) < 60000) // Within 1 minute
+            );
+    
+            // Handle optimistic update
+            if (existingMessageIndex >= 0) {
+              const updatedMessages = [...prev.messages];
+              updatedMessages[existingMessageIndex] = {
+                ...updatedMessages[existingMessageIndex],
+                id: data.message?.id || updatedMessages[existingMessageIndex].id,
+                text: data.message?.content || updatedMessages[existingMessageIndex].text,
+                time: validatedTimestamp,
+                read: data.message?.read || false,
+                attachments: data.message?.attachments || 
+                           updatedMessages[existingMessageIndex].attachments || []
+              };
+    
+              return {
+                ...prev,
+                messages: updatedMessages,
+                isUploading: false,
+                unreadCounts: {
+                  ...prev.unreadCounts,
+                  [chatRoomId]: isOwnMessage ? 0 : (prev.unreadCounts[chatRoomId] || 0) + 1
+                }
+              };
+            }
+    
+            // New message
+            return {
+              ...prev,
+              messages: [
+                ...prev.messages,
+                {
+                  id: data.message?.id || Date.now().toString(),
+                  sender: isOwnMessage ? 'me' : 'them',
+                  text: data.message?.content || '',
+                  time: validatedTimestamp,
+                  read: data.message?.read || false,
+                  attachments: data.message?.attachments || []
+                }
+              ],
+              unreadCounts: {
+                ...prev.unreadCounts,
+                [chatRoomId]: isOwnMessage ? 0 : (prev.unreadCounts[chatRoomId] || 0) + 1
+              }
+            };
+          });
+    
+          // Mark as read if needed
+          if (state.currentChat?.id === data.chat_room_id && data.sender !== state.userId) {
+            markMessagesAsRead(data.chat_room_id);
+          }
+        };
+    
+        const handleTyping = () => {
+          setState(prev => ({
+            ...prev,
+            isTyping: Boolean(data.is_typing),
+            typingUser: data.user || ''
+          }));
+        };
+    
+        const handleAttachment = () => {
+          setState(prev => {
+            if (!data.message_id || !data.attachment) return prev;
+    
+            return {
+              ...prev,
+              messages: prev.messages.map(msg => {
+                if (msg.id !== data.message_id) return msg;
+                
+                const existingAttachment = msg.attachments?.find(a => a.id === data.attachment.id);
+                const attachment = {
+                  ...data.attachment,
+                  file: data.attachment.file || existingAttachment?.file
+                };
+    
+                return {
+                  ...msg,
+                  attachments: [
+                    ...(msg.attachments || []).filter(a => a.id !== attachment.id),
+                    attachment
+                  ]
+                };
+              })
+            };
+          });
+        };
+    
+        const handleMessageRead = () => {
+          setState(prev => ({
+            ...prev,
+            messages: prev.messages.map(msg => 
+              msg.sender === 'me' && !msg.read 
+                ? { ...msg, read: true }
+                : msg
+            )
+          }));
+        };
+    
+        // Route message types
+        switch (data.type) {
+          case 'chat_message':
+            handleChatMessage();
+            break;
+          case 'typing':
+            handleTyping();
+            break;
+          case 'attachment':
+            handleAttachment();
+            break;
+          case 'message_read':
+            handleMessageRead();
+            break;
+          default:
+            console.warn('Unknown message type:', data.type);
+        }
+      } catch (error) {
+        console.error('Error processing WebSocket message:', error, e.data);
+      }
+    };
+
+    newSocket.onerror = (error) => {
+      console.error('WebSocket error:', error);
+    };
+
+    newSocket.onclose = () => {
+      console.log('WebSocket disconnected');
+    };
+
+    socketRef.current = newSocket;
+  }, []);
+
+  const loadMessages = useCallback(async (chatRoomId) => {
+    try {
+      const token = localStorage.getItem('accessToken');
+      const response = await fetch(
+        `http://localhost:8000/chat-room/${chatRoomId}/messages/`,
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+      const data = await response.json();
+      
+      setState(prev => ({
+        ...prev,
+        messages: data.map(msg => ({
+          id: msg.id,
+          sender: msg.sender.id === prev.userId ? 'me' : 'them',
+          text: msg.content,
+          time: msg.timestamp,
+          read: msg.read,
+          attachments: msg.attachments || []
+        }))
+      }));
+    } catch (error) {
+      console.error('Error loading messages:', error);
+    }
+  }, []);
+
+  const markMessagesAsRead = async (chatRoomId) => {
+    try {
+        const token = localStorage.getItem('accessToken');
+        await fetch(
+            `http://localhost:8000/chat-room/${chatRoomId}/mark-read/`,
+            {
+                method: 'PATCH', // Change to 'PATCH' or 'PUT'
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`
+                }
+            }
+        );
+        
+        setState(prev => ({
+            ...prev,
+            unreadCounts: {
+                ...prev.unreadCounts,
+                [chatRoomId]: 0
+            }
+        }));
+    } catch (error) {
+        console.error('Error marking messages as read:', error);
+    }
+};
+
+
+  const handleFileChange = (e) => {
+    if (e.target.files && e.target.files[0]) {
+      setState(prev => ({ ...prev, attachment: e.target.files[0] }));
+    }
+  };
+
+  const triggerFileInput = () => {
+    fileInputRef.current.click();
+  };
+
+  const handleTyping = () => {
+    if (!socketRef.current || !state.currentChat?.id) return;
+
+    // Send typing start event
+    socketRef.current.send(JSON.stringify({
+      type: 'typing',
+      chat_room_id: state.currentChat.id,
+      is_typing: true
+    }));
+
+    // Clear any existing timeout
+    if (typingTimeoutRef.current) {
+      clearTimeout(typingTimeoutRef.current);
+    }
+
+    // Set timeout to send typing stop event
+    typingTimeoutRef.current = setTimeout(() => {
+      socketRef.current.send(JSON.stringify({
+        type: 'typing',
+        chat_room_id: state.currentChat.id,
+        is_typing: false
+      }));
+    }, 2000);
+  };
+  const sendMessage = useCallback(async () => {
+    if (!state.newMessage.trim() && !state.attachment) return;
+    const tempId = Date.now().toString();
+  
+    try {
+      const token = localStorage.getItem('accessToken');
+      const tempTimestamp = new Date().toISOString();
+  
+      // Create optimistic message immediately
+      setState(prev => ({
+        ...prev,
+        isUploading: true,
+        messages: [
+          ...prev.messages,
+          {
+            id: tempId,
+            sender: 'me',
+            text: prev.newMessage.trim(),
+            time: tempTimestamp,
+            read: false,
+            attachments: prev.attachment 
+              ? [{
+                  id: 'temp-' + tempId,
+                  file: URL.createObjectURL(prev.attachment),
+                  file_type: prev.attachment.type.startsWith('image/') ? 'image' : 'file',
+                  file_name: prev.attachment.name
+                }]
+              : []
+          }
+        ],
+        newMessage: '',
+        attachment: null,
+        showEmojiPicker: false
+      }));
+  
+      // Handle text message via WebSocket
+      if (state.newMessage.trim() && socketRef.current) {
+        socketRef.current.send(JSON.stringify({
+          type: 'chat_message',
+          chat_room_id: state.currentChat.id,
+          message: state.newMessage.trim(),
+          temp_id: tempId
+        }));
+      }
+  
+      // Handle attachment upload if present
+      if (state.attachment) {
+        // First create the message (even if empty)
+        const messageResponse = await fetch(
+          `http://localhost:8000/chat-room/${state.currentChat.id}/messages/create/`,
+          {
+            method: 'POST',
+            headers: { 
+              'Content-Type': 'application/json',
+              'Authorization': `Bearer ${token}`
+            },
+            body: JSON.stringify({ 
+              content: state.newMessage.trim() || '[Attachment]' 
+            })
+          }
+        );
+  
+        if (!messageResponse.ok) {
+          throw new Error('Failed to create message');
+        }
+  
+        const messageData = await messageResponse.json();
+  
+        // Then upload the attachment
+        const formData = new FormData();
+        formData.append('file', state.attachment);
+  
+        const uploadResponse = await fetch(
+          `http://localhost:8000/chat-room/chat-room/messages/${messageId}/attachments/`,
+          {
+            method: 'POST',
+            headers: { 
+              'Authorization': `Bearer ${token}`,
+            },
+            body: formData
+          }
+        );
+  
+        if (!uploadResponse.ok) {
+          throw new Error('Failed to upload attachment');
+        }
+      }
+  
+      // Focus back on input after sending
+      if (messageInputRef.current) {
+        messageInputRef.current.focus();
+      }
+  
+    } catch (error) {
+      console.error('Error sending message:', error);
+      // Remove the optimistic message if sending fails
+      setState(prev => ({
+        ...prev,
+        isUploading: false,
+        messages: prev.messages.filter(msg => msg.id !== tempId),
+        attachment: prev.attachment, // Keep the attachment if upload failed
+        newMessage: prev.newMessage // Restore the message if needed
+      }));
+    }
+  }, [state.newMessage, state.currentChat, state.attachment, state.userId]);
+
+  const startNewChat = useCallback(async (order, tradeType) => {
+    try {
+      const token = localStorage.getItem('accessToken');
+      const response = await fetch(
+        'http://localhost:8000/chat-room/api/trades/initiate/',
+        {
+          method: 'POST',
+          headers: { 
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${token}` 
+          },
+          body: JSON.stringify({
+            order_id: order.id,
+            trade_type: tradeType
+          })
+        }
+      );
+      const data = await response.json();
+
+      setState(prev => ({
+        ...prev,
+        currentChat: {
+          id: data.chat_room_id,
+          counterparty: order.user,
+          tradeId: data.trade_id,
+          orderDetails: order
+        },
+        showChatList: false // On mobile, show chat after selection
+      }));
+
+      connectToChat(data.chat_room_id);
+    } catch (error) {
+      console.error('Error starting new chat:', error);
+    }
+  }, [connectToChat]);
+
+  const handleResize = () => {
+    setState(prev => ({
+      ...prev,
+      isMobileView: window.innerWidth < 768,
+      showChatList: window.innerWidth >= 768
+    }));
+  };
+
+  useEffect(() => {
+    if (!isAuthenticated) {
+      navigate('/login');
+      return;
+    }
+
+    loadChatRooms();
+
+    if (state.currentChat?.id) {
+      connectToChat(state.currentChat.id);
+    }
+
+    window.addEventListener('resize', handleResize);
+    
+    // Check for dark mode preference
+    const darkModeMediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
+    const handleDarkModeChange = (e) => {
+      setState(prev => ({ ...prev, darkMode: e.matches }));
+    };
+    darkModeMediaQuery.addListener(handleDarkModeChange);
+
+    return () => {
+      if (socketRef.current) {
+        socketRef.current.close();
+      }
+      window.removeEventListener('resize', handleResize);
+      darkModeMediaQuery.removeListener(handleDarkModeChange);
+    };
+  }, [isAuthenticated, navigate, loadChatRooms, state.currentChat, connectToChat]);
+
+  useEffect(() => {
+    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+  }, [state.messages]);
+
+  useEffect(() => {
+    // Focus on input when chat changes
+    if (messageInputRef.current && state.currentChat) {
+      messageInputRef.current.focus();
+    }
+  }, [state.currentChat]);
+
+  const filteredChats = state.chatRooms.filter(room => {
+    const counterparty = room.buyer.id === user?.id ? room.seller : room.buyer;
+    return (
+      counterparty.username.toLowerCase().includes(state.searchTerm.toLowerCase()) ||
+      room.last_message?.content?.toLowerCase().includes(state.searchTerm.toLowerCase())
+    );
+  });
+
+  const renderAttachment = (attachment) => {
+    // Determine if this is a temporary attachment (before upload completes)
+    const isTempAttachment = attachment.id && attachment.id.startsWith('temp-');
+    
+    // Get the correct file URL based on attachment type
+    const fileUrl = isTempAttachment ? attachment.file : attachment.file_url || attachment.file;
+    
+    // Get the filename - checking multiple possible sources
+    const fileName = attachment.file_name || 
+                    (attachment.file && attachment.file.name) || 
+                    (fileUrl && fileUrl.split('/').pop()) || 
+                    'Unknown file';
+  
+    // Get the file type - with fallback to extension detection
+    const fileType = attachment.file_type || 
+                    (fileName.includes('.') ? fileName.split('.').pop().toUpperCase() : 'FILE');
+  
+    // Handle click - with error prevention
+    const handleClick = (e) => {
+      e.stopPropagation();
+      try {
+        if (fileUrl) {
+          // For temporary files, we can only open them if they're blobs
+          if (isTempAttachment && typeof fileUrl === 'string' && fileUrl.startsWith('blob:')) {
+            window.open(fileUrl, '_blank');
+          } 
+          // For permanent files, use the proper URL
+          else if (!isTempAttachment) {
+            window.open(fileUrl, '_blank');
+          }
+        }
+      } catch (error) {
+        console.error('Error opening attachment:', error);
+        // Optionally show a user-friendly error message
+      }
+    };
+  
+    // Image attachment
+    if (fileType.toLowerCase() === 'image' || 
+        (attachment.file && attachment.file.type.startsWith('image/'))) {
+      return (
+        <div className="attachment-image">
+          <img 
+            src={fileUrl} 
+            alt={fileName}
+            onClick={handleClick}
+            onError={(e) => {
+              e.target.onerror = null; 
+              e.target.src = '/placeholder-image.png';
+            }}
+          />
+          {isTempAttachment && (
+            <div className="upload-indicator">
+              <div className="spinner"></div>
+              <span>Uploading...</span>
+            </div>
+          )}
+        </div>
+      );
+    }
+  
+    // PDF attachment
+    if (fileType.toLowerCase() === 'pdf') {
+      return (
+        <div className="attachment-pdf" onClick={handleClick}>
+          <div className="pdf-icon">
+            <svg viewBox="0 0 24 24" width="24" height="24">
+              <path fill="currentColor" d="M8.267 14.68c-.184 0-.308.018-.372.036v1.178c.076.018.171.023.302.023.479 0 .774-.242.774-.651 0-.366-.254-.586-.704-.586zm-1.27 1.196c-.235 0-.367.018-.367.045v.566c0 .027.135.045.367.045.351 0 .556-.18.556-.477 0-.213-.146-.379-.556-.379zm-2.16-.13c-.184 0-.308.018-.372.036v1.178c.076.018.171.023.302.023.479 0 .774-.242.774-.651 0-.366-.254-.586-.704-.586zm10.043-.933c0-.522-.354-.77-.938-.77h-.888v2.535h.888c.584 0 .938-.248.938-.765zm-1.004-.114h1.525v-.539h-1.525v.539zm4.126-5.593h-7.456v12.796h7.456V9.149zm-1.357 11.47h-4.762V10.576h4.762v9.995zm-12.698-9.995h1.531v9.995h-1.531V10.576zm-2.691 0h1.531v9.995H4.631V10.576zm16.437 0h1.531v9.995h-1.531V10.576z"/>
+            </svg>
+          </div>
+          <div className="file-info">
+            <span className="file-name">{fileName}</span>
+            <span className="file-type">PDF</span>
+          </div>
+        </div>
+      );
+    }
+  
+    // Document attachment (Word, Excel, etc)
+    const documentTypes = ['doc', 'docx', 'xls', 'xlsx', 'ppt', 'pptx'];
+    if (documentTypes.includes(fileType.toLowerCase())) {
+      return (
+        <div className="attachment-document" onClick={handleClick}>
+          <div className="document-icon">
+            <svg viewBox="0 0 24 24" width="24" height="24">
+              <path fill="currentColor" d="M14 2H6c-1.1 0-1.99.9-1.99 2L4 20c0 1.1.89 2 1.99 2H18c1.1 0 2-.9 2-2V8l-6-6zM6 20V4h7v5h5v11H6z"/>
+            </svg>
+          </div>
+          <div className="file-info">
+            <span className="file-name">{fileName}</span>
+            <span className="file-type">{fileType.toUpperCase()}</span>
+          </div>
+        </div>
+      );
+    }
+  
+    // Video attachment
+    if (fileType.toLowerCase() === 'video' || 
+        (attachment.file && attachment.file.type.startsWith('video/'))) {
+      return (
+        <div className="attachment-video" onClick={handleClick}>
+          <div className="video-icon">
+            <svg viewBox="0 0 24 24" width="24" height="24">
+              <path fill="currentColor" d="M10 16.5l6-4.5-6-4.5v9zM12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8z"/>
+            </svg>
+          </div>
+          <div className="file-info">
+            <span className="file-name">{fileName}</span>
+            <span className="file-type">VIDEO</span>
+          </div>
+        </div>
+      );
+    }
+  
+    // Audio attachment
+    if (fileType.toLowerCase() === 'audio' || 
+        (attachment.file && attachment.file.type.startsWith('audio/'))) {
+      return (
+        <div className="attachment-audio" onClick={handleClick}>
+          <div className="audio-icon">
+            <svg viewBox="0 0 24 24" width="24" height="24">
+              <path fill="currentColor" d="M12 3v10.55c-.59-.34-1.27-.55-2-.55-2.21 0-4 1.79-4 4s1.79 4 4 4 4-1.79 4-4V7h4V3h-6zm-2 16c-1.1 0-2-.9-2-2s.9-2 2-2 2 .9 2 2-.9 2-2 2z"/>
+            </svg>
+          </div>
+          <div className="file-info">
+            <span className="file-name">{fileName}</span>
+            <span className="file-type">AUDIO</span>
+          </div>
+        </div>
+      );
+    }
+  
+    // Default file attachment
+    return (
+      <div className="attachment-file" onClick={handleClick}>
+        <div className="file-icon">
+          <svg viewBox="0 0 24 24" width="24" height="24">
+            <path fill="currentColor" d="M14 2H6c-1.1 0-1.99.9-1.99 2L4 20c0 1.1.89 2 1.99 2H18c1.1 0 2-.9 2-2V8l-6-6zM6 20V4h7v5h5v11H6z"/>
+          </svg>
+        </div>
+        <div className="file-info">
+          <span className="file-name">{fileName}</span>
+          <span className="file-type">{fileType.toUpperCase()}</span>
+          {isTempAttachment && (
+            <div className="upload-progress">
+              <div className="progress-bar"></div>
+            </div>
+          )}
+        </div>
+      </div>
+    );
+  };
+
+  const onEmojiClick = (emojiData) => {
+    setState(prev => ({
+      ...prev,
+      newMessage: prev.newMessage + emojiData.emoji,
+      showEmojiPicker: false
+    }));
+    if (messageInputRef.current) {
+      messageInputRef.current.focus();
+    }
   };
 
   return (
-    <div className="messages-app">
-      <div className="conversation-list">
-        <div className="conversation-header">
-          <h2>Messages</h2>
-          <button className="new-chat-btn">
-            <svg viewBox="0 0 24 24" width="20" height="20">
-              <path fill="currentColor" d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"/>
-            </svg>
-          </button>
-        </div>
-        
-        <div className="conversation-search">
-          <svg viewBox="0 0 24 24" width="18" height="18" className="search-icon">
-            <path fill="currentColor" d="M15.5 14h-.79l-.28-.27a6.5 6.5 0 0 0 1.48-5.34c-.47-2.78-2.79-5-5.59-5.34a6.505 6.505 0 0 0-7.27 7.27c.34 2.8 2.56 5.12 5.34 5.59a6.5 6.5 0 0 0 5.34-1.48l.27.28v.79l4.25 4.25c.41.41 1.08.41 1.49 0 .41-.41.41-1.08 0-1.49L15.5 14zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"/>
-          </svg>
-          <input 
-            type="text" 
-            placeholder="Search messages..." 
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-          />
-          {searchTerm && (
-            <button className="clear-search" onClick={() => setSearchTerm("")}>
-              <svg viewBox="0 0 24 24" width="18" height="18">
-                <path fill="currentColor" d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/>
-              </svg>
-            </button>
+    <div className={`messages-app ${state.darkMode ? 'dark-mode' : ''}`}>
+      {/* Mobile header */}
+      {state.isMobileView && (
+        <div className="mobile-header">
+          {state.currentChat && !state.showChatList ? (
+            <div className="mobile-chat-header">
+              <button 
+                className="back-button"
+                onClick={() => setState(prev => ({ ...prev, showChatList: true }))}
+              >
+                <svg viewBox="0 0 24 24" width="24" height="24">
+                  <path fill="currentColor" d="M20 11H7.83l5.59-5.59L12 4l-8 8 8 8 1.41-1.41L7.83 13H20v-2z" />
+                </svg>
+              </button>
+              <div className="user-info">
+                <h3>{state.currentChat.counterparty.username}</h3>
+                <p className="active-status">
+                  {state.isTyping ? "Typing..." : "Online"}
+                </p>
+              </div>
+              <button className="menu-button">
+                <BsThreeDotsVertical size={20} />
+              </button>
+            </div>
+          ) : (
+            <div className="mobile-list-header">
+              <h2>Messages</h2>
+              <button 
+                className="new-chat-btn"
+                onClick={() => navigate('/fiat-p2p')}
+              >
+                <FiPlus size={20} />
+              </button>
+            </div>
           )}
         </div>
-        
-        <div className="conversation-items">
-          {filteredChats.map(chat => {
-            const lastMessage = chat.messages[chat.messages.length - 1];
-            const isActive = selectedChat?.id === chat.id;
-            
-            return (
-              <div
-                key={chat.id}
-                className={`conversation-item ${isActive ? 'active' : ''} ${chat.unread ? 'unread' : ''}`}
-                onClick={() => {
-                  setSelectedChat(chat);
-                  if (chat.unread) {
-                    setChats(prev => 
-                      prev.map(c => 
-                        c.id === chat.id ? {...c, unread: false} : c
-                      )
-                    );
-                  }
-                }}
-              >
-                <div className="avatar-container">
-                  <img src={chat.avatar} alt={chat.trader} className="conversation-avatar" />
-                  {chat.status === "online" && <span className="online-badge"></span>}
-                </div>
-                <div className="conversation-info">
-                  <div className="conversation-header">
-                    <h3>{chat.trader}</h3>
-                    <span className="conversation-time">
-                      {formatTime(lastMessage?.timestamp)}
-                    </span>
-                  </div>
-                  <p className="conversation-snippet">
-                    {lastMessage?.text.length > 40 
-                      ? `${lastMessage.text.substring(0, 40)}...` 
-                      : lastMessage?.text}
-                  </p>
-                  <div className="conversation-footer">
-                    <span className="last-active">{getActiveStatus(chat.lastActive)}</span>
-                    {chat.unread && <span className="unread-badge"></span>}
-                  </div>
-                </div>
-              </div>
-            );
-          })}
-        </div>
-      </div>
+      )}
 
-      <div className="message-area">
-        {selectedChat ? (
-          <>
-            <div className="message-header">
-              <div className="header-left">
-                <button className="back-button" onClick={() => setSelectedChat(null)}>
-                  <svg viewBox="0 0 24 24" width="24" height="24">
-                    <path fill="currentColor" d="M20 11H7.83l5.59-5.59L12 4l-8 8 8 8 1.41-1.41L7.83 13H20v-2z"/>
-                  </svg>
-                </button>
-                <div className="avatar-container">
-                  <img src={selectedChat.avatar} alt={selectedChat.trader} className="message-avatar" />
-                  {selectedChat.status === "online" && <span className="online-badge"></span>}
-                </div>
-                <div className="user-info">
-                  <h3>{selectedChat.trader}</h3>
-                  <p className="active-status">
-                    {selectedChat.status === "online" ? "Online" : getActiveStatus(selectedChat.lastActive)}
-                  </p>
-                </div>
-              </div>
-              <div className="header-actions">
-                <button className="action-btn">
-                  <svg viewBox="0 0 24 24" width="20" height="20">
-                    <path fill="currentColor" d="M12 8c1.1 0 2-.9 2-2s-.9-2-2-2-2 .9-2 2 .9 2 2 2zm0 2c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2zm0 6c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2z"/>
-                  </svg>
-                </button>
-              </div>
+      {/* Main content */}
+      <div className="messages-container">
+        {/* Conversation list */}
+        {(state.showChatList || !state.isMobileView) && (
+          <div className="conversation-list">
+            <div className="conversation-search">
+              <FiSearch className="search-icon" />
+              <input
+                type="text"
+                placeholder="Search messages..."
+                value={state.searchTerm}
+                onChange={(e) => setState(prev => ({ ...prev, searchTerm: e.target.value }))}
+              />
             </div>
-            
-            <div className="message-container">
-              <div className="message-list">
-                {selectedChat.messages.map((msg, index) => {
-                  const showDateSeparator = index === 0 || 
-                    formatDate(msg.timestamp) !== formatDate(selectedChat.messages[index - 1]?.timestamp);
-                  
+
+            <div className="conversation-items">
+              {filteredChats.length > 0 ? (
+                filteredChats.map(room => {
+                  const counterparty = room.buyer.id === user?.id ? room.seller : room.buyer;
+                  const isActive = state.currentChat?.id === room.id;
+                  const unreadCount = state.unreadCounts[room.id] || 0;
+
                   return (
-                    <div key={index}>
-                      {showDateSeparator && (
-                        <div className="date-separator">
-                          <span>{formatDate(msg.timestamp)}</span>
+                    <div
+                      key={room.id}
+                      className={`conversation-item ${isActive ? 'active' : ''}`}
+                      onClick={() => {
+                        setState(prev => ({
+                          ...prev,
+                          currentChat: {
+                            id: room.id,
+                            counterparty,
+                            tradeId: room.trade_id,
+                            orderDetails: room.order_details
+                          },
+                          showChatList: false // On mobile, show chat after selection
+                        }));
+                        connectToChat(room.id);
+                        markMessagesAsRead(room.id);
+                      }}
+                    >
+                      <div className="avatar-container">
+                        <img 
+                          src={counterparty.profile_picture || 'https://i.ibb.co/PsXqD7Xd/groom-6925756.png'} 
+                          alt={counterparty.username} 
+                          className="conversation-avatar" 
+                        />
+                        {room.is_online && <span className="online-badge"></span>}
+                      </div>
+                      <div className="conversation-info">
+                        <div className="conversation-header">
+                          <h3>{counterparty.username}</h3>
+                          <span className="conversation-time">
+                            {formatTime(room.last_message?.timestamp)}
+                          </span>
                         </div>
-                      )}
-                      <div 
-                        className={`message-bubble ${msg.sender === 'me' ? 'outgoing' : 'incoming'}`}
-                      >
-                        <div className="message-content">
-                          {renderMessageContent(msg)}
-                          <div className="message-meta">
-                            <span className="message-time">{formatTime(msg.timestamp)}</span>
-                            {msg.sender === 'me' && (
-                              <span className={`message-status ${msg.status}`}>
-                                {msg.status === "read" ? (
-                                  <svg viewBox="0 0 24 24" width="16" height="16">
-                                    <path fill="currentColor" d="M18 7l-1.41-1.41-6.34 6.34 1.41 1.41L18 7zm4.24-1.41L11.66 16.17 7.48 12l-1.41 1.41L11.66 19l12-12-1.42-1.41zM.41 13.41L6 19l1.41-1.41L1.83 12 .41 13.41z"/>
-                                  </svg>
-                                ) : (
-                                  <svg viewBox="0 0 24 24" width="16" height="16">
-                                    <path fill="currentColor" d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41L9 16.17z"/>
-                                  </svg>
-                                )}
-                              </span>
-                            )}
-                          </div>
+                        <p className="conversation-snippet">
+                          {room.last_message?.content?.substring(0, 40) || 'No messages yet'}
+                          {room.last_message?.attachments?.length > 0 && ' 📎'}
+                        </p>
+                        <div className="conversation-footer">
+                          <span className="last-active">
+                            {room.is_online ? 'Online' : getActiveStatus(room.last_message?.timestamp)}
+                          </span>
+                          {unreadCount > 0 && (
+                            <span className="unread-badge">{unreadCount}</span>
+                          )}
                         </div>
                       </div>
                     </div>
                   );
-                })}
-                {isTyping && (
-                  <div className="message-bubble incoming">
-                    <div className="typing-indicator">
-                      <span></span>
-                      <span></span>
-                      <span></span>
-                    </div>
-                  </div>
-                )}
-                <div ref={messagesEndRef} />
-              </div>
-              
-              <div className="message-composer">
-                <button 
-                  className="emoji-btn"
-                  onClick={() => setShowEmojiPicker(!showEmojiPicker)}
-                >
-                  <svg viewBox="0 0 24 24" width="24" height="24">
-                    <path fill="currentColor" d="M12 22C6.477 22 2 17.523 2 12S6.477 2 12 2s10 4.477 10 10-4.477 10-10 10zm0-2a8 8 0 1 0 0-16 8 8 0 0 0 0 16zm-5-7h2a3 3 0 0 0 6 0h2a5 5 0 0 1-10 0zm1-2a1.5 1.5 0 1 1 0-3 1.5 1.5 0 0 1 0 3zm8 0a1.5 1.5 0 1 1 0-3 1.5 1.5 0 0 1 0 3z"/>
-                  </svg>
-                </button>
-                
-                {showEmojiPicker && (
-                  <div className="emoji-picker-container">
-                    <EmojiPicker onEmojiClick={handleEmojiClick} width={300} height={350} />
-                  </div>
-                )}
-                
-                <button 
-                  className="attachment-btn"
-                  onClick={() => fileInputRef.current.click()}
-                >
-                  <svg viewBox="0 0 24 24" width="24" height="24">
-                    <path fill="currentColor" d="M16.5 6v11.5c0 2.21-1.79 4-4 4s-4-1.79-4-4V5c0-1.38 1.12-2.5 2.5-2.5s2.5 1.12 2.5 2.5v10.5c0 .55-.45 1-1 1s-1-.45-1-1V6H10v9.5c0 1.38 1.12 2.5 2.5 2.5s2.5-1.12 2.5-2.5V5c0-2.21-1.79-4-4-4S7 2.79 7 5v12.5c0 3.04 2.46 5.5 5.5 5.5s5.5-2.46 5.5-5.5V6h-1.5z"/>
-                  </svg>
-                  <input
-                    type="file"
-                    ref={fileInputRef}
-                    style={{ display: 'none' }}
-                    onChange={handleFileChange}
-                  />
-                </button>
-                
-                <input
-                  type="text"
-                  placeholder="Type a message..."
-                  value={newMessage}
-                  onChange={(e) => setNewMessage(e.target.value)}
-                  onKeyPress={(e) => e.key === 'Enter' && sendMessage()}
-                />
-                
-                <button 
-                  className="send-btn" 
-                  onClick={sendMessage}
-                  disabled={!newMessage.trim()}
-                >
-                  <svg viewBox="0 0 24 24" width="24" height="24">
-                    <path fill="currentColor" d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/>
-                  </svg>
-                </button>
-              </div>
+                })
+              ) : (
+                <div className="no-conversations">
+                  <p>No conversations found</p>
+                  <button 
+                    className="start-chat-btn"
+                    onClick={() => navigate('/fiat-p2p')}
+                  >
+                    Start New Chat
+                  </button>
+                </div>
+              )}
             </div>
-          </>
-        ) : (
-          <div className="empty-state">
-            <div className="empty-illustration">
-              <svg viewBox="0 0 24 24" width="80" height="80">
-                <path fill="#d1d5db" d="M20 2H4c-1.1 0-1.99.9-1.99 2L2 22l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zM6 9h12v2H6V9zm8 5H6v-2h8v2zm4-6H6V6h12v2z"/>
-              </svg>
-            </div>
-            <h3>Select a conversation</h3>
-            <p>Choose a chat from the list or start a new one</p>
-            <button className="start-chat-btn">Start New Chat</button>
           </div>
         )}
+
+        {/* Message area */}
+        <div className={`message-area ${!state.currentChat ? 'empty' : ''}`}>
+          {state.currentChat ? (
+            <>
+              {!state.isMobileView && (
+                <div className="message-header">
+                  <div className="header-left">
+                    <div className="avatar-container">
+                      <img 
+                        src={state.currentChat.counterparty.profile_picture || 'https://i.ibb.co/PsXqD7Xd/groom-6925756.png'} 
+                        alt={state.currentChat.counterparty.username} 
+                        className="message-avatar" 
+                      />
+                      <span className="online-badge"></span>
+                    </div>
+                    <div className="user-info">
+                      <h3>{state.currentChat.counterparty.username}</h3>
+                      <p className="active-status">
+                        {state.isTyping ? "Typing..." : "Online"}
+                      </p>
+                    </div>
+                  </div>
+                  <div className="header-right">
+                    <div className="trade-details">
+                      Trade #{state.currentChat.tradeId}
+                    </div>
+                    <button className="menu-button">
+                      <BsThreeDotsVertical size={18} />
+                    </button>
+                  </div>
+                </div>
+              )}
+
+              <div className="message-container">
+                <div className="message-list">
+                  {state.messages.length > 0 ? (
+                    state.messages.map((msg, index) => {
+                      const showDateSeparator = index === 0 ||
+                        formatDate(msg.time) !== formatDate(state.messages[index - 1]?.time);
+
+                      return (
+                        <div key={msg.id || index} className="message-group">
+                          {showDateSeparator && (
+                            <div className="date-separator">
+                              <span>{formatDate(msg.time)}</span>
+                            </div>
+                          )}
+                          <div className={`message-bubble ${msg.sender === 'me' ? 'outgoing' : 'incoming'}`}>
+                            <div className="message-content">
+                              {msg.text && <p>{msg.text}</p>}
+                              {msg.attachments?.length > 0 && (
+                                <div className="message-attachments">
+                                  {msg.attachments.map(attachment => (
+                                    <div key={attachment.id} className="attachment-container">
+                                      {renderAttachment(attachment)}
+                                    </div>
+                                  ))}
+                                </div>
+                              )}
+                              <div className="message-meta">
+                                <span className="message-time">{formatTime(msg.time)}</span>
+                                {msg.sender === 'me' && (
+                                  <span className={`message-status ${msg.read ? 'read' : 'delivered'}`}>
+                                    {msg.read ? <BsCheck2All size={16} /> : <FiCheck size={16} />}
+                                  </span>
+                                )}
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      );
+                    })
+                  ) : (
+                    <div className="empty-conversation">
+                      <p>No messages yet</p>
+                      <p>Start the conversation with {state.currentChat.counterparty.username}</p>
+                    </div>
+                  )}
+                  <div ref={messagesEndRef} />
+                </div>
+
+                <div className="message-composer">
+                  {state.showEmojiPicker && (
+                    <div className="emoji-picker-container">
+                      <EmojiPicker 
+                        onEmojiClick={onEmojiClick} 
+                        width="100%"
+                        height={300}
+                        skinTonesDisabled
+                        searchDisabled
+                        previewConfig={{ showPreview: false }}
+                        theme={state.darkMode ? 'dark' : 'light'}
+                      />
+                    </div>
+                  )}
+                  
+                  {state.attachment && (
+                    <div className="attachment-preview">
+                      <div className="attachment-info">
+                        <span>{state.attachment.name}</span>
+                        <span className="file-size">
+                          {(state.attachment.size / 1024).toFixed(1)} KB
+                        </span>
+                      </div>
+                      <button 
+                        className="remove-attachment"
+                        onClick={() => setState(prev => ({ ...prev, attachment: null }))}
+                      >
+                        <IoClose size={18} />
+                      </button>
+                    </div>
+                  )}
+
+                  <div className="composer-inputs">
+                    <button
+                      className="emoji-btn"
+                      onClick={() => setState(prev => ({ ...prev, showEmojiPicker: !prev.showEmojiPicker }))}
+                      disabled={state.isUploading}
+                    >
+                      <FiSmile size={22} />
+                    </button>
+
+                    <button
+                      className="attachment-btn"
+                      onClick={triggerFileInput}
+                      disabled={state.isUploading}
+                    >
+                      <FiPaperclip size={22} />
+                    </button>
+
+                    <input
+                      type="file"
+                      ref={fileInputRef}
+                      onChange={handleFileChange}
+                      style={{ display: 'none' }}
+                      accept="image/*, .pdf, .doc, .docx, .txt"
+                    />
+
+                    <input
+                      type="text"
+                      ref={messageInputRef}
+                      placeholder={state.attachment ? state.attachment.name : "Type a message..."}
+                      value={state.newMessage}
+                      onChange={(e) => {
+                        setState(prev => ({ ...prev, newMessage: e.target.value }));
+                        handleTyping();
+                      }}
+                      onKeyPress={(e) => e.key === 'Enter' && sendMessage()}
+                      disabled={state.isUploading}
+                    />
+
+                    <button
+                      className="send-btn"
+                      onClick={sendMessage}
+                      disabled={(!state.newMessage.trim() && !state.attachment) || state.isUploading}
+                    >
+                      {state.isUploading ? (
+                        <div className="spinner"></div>
+                      ) : (
+                        <FiSend size={20} />
+                      )}
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </>
+          ) : (
+            <div className="empty-state">
+              <div className="empty-illustration">
+                <svg viewBox="0 0 24 24" width="80" height="80">
+                  <path fill="currentColor" d="M20 2H4c-1.1 0-1.99.9-1.99 2L2 22l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zM6 9h12v2H6V9zm8 5H6v-2h8v2zm4-6H6V6h12v2z" />
+                </svg>
+              </div>
+              <h3>No conversation selected</h3>
+              <p>Choose a chat from the list or start a new one</p>
+              <button 
+                className="start-chat-btn"
+                onClick={() => navigate('/fiat-p2p')}
+              >
+                Start New Chat
+              </button>
+            </div>
+          )}
+        </div>
       </div>
     </div>
   );

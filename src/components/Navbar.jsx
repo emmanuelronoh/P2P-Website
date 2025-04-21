@@ -160,8 +160,8 @@ const Navbar = ({ toggleTheme, theme }) => {
   const handleWalletConnect = async (walletType) => {
     try {
       let provider;
-      
-      switch(walletType) {
+
+      switch (walletType) {
         case 'metamask':
           if (!window.ethereum) {
             window.open('https://metamask.io/download.html', '_blank');
@@ -170,7 +170,7 @@ const Navbar = ({ toggleTheme, theme }) => {
           provider = window.ethereum;
           await window.ethereum.request({ method: 'eth_requestAccounts' });
           break;
-          
+
         case 'trustwallet':
           if (!window.ethereum) {
             throw new Error('Trust Wallet not detected');
@@ -178,7 +178,7 @@ const Navbar = ({ toggleTheme, theme }) => {
           provider = window.ethereum;
           await window.ethereum.request({ method: 'eth_requestAccounts' });
           break;
-          
+
         case 'binance':
           if (!window.BinanceChain) {
             throw new Error('Binance Chain Wallet not detected');
@@ -186,19 +186,19 @@ const Navbar = ({ toggleTheme, theme }) => {
           provider = window.BinanceChain;
           await window.BinanceChain.request({ method: 'eth_requestAccounts' });
           break;
-          
+
         default:
           throw new Error('Unsupported wallet type');
       }
-      
+
       const accounts = await provider.request({ method: 'eth_accounts' });
       const address = accounts[0];
-      
+
       if (!address) throw new Error('No accounts found');
-      
+
       handleWalletConnected(address);
       setShowWalletModal(false);
-      
+
     } catch (error) {
       console.error('Wallet connection error:', error);
       // You can add error state and display it in the modal if you want
@@ -298,7 +298,7 @@ const Navbar = ({ toggleTheme, theme }) => {
           >
             <Link to="/">
               <img src={logo} alt="Cheetah P2P Logo" className="logo" />
-              <span className="logo-text">Cheetah P2P</span>
+              <span className="logo-contain">Cheetah P2P</span>
             </Link>
           </motion.div>
 
@@ -342,25 +342,14 @@ const Navbar = ({ toggleTheme, theme }) => {
           <div className="user-actions">
             {isAuthenticated ? (
               <>
-                {/* Notifications */}
-                <div className="notification-icon">
-                  <button
-                    className="notification-button"
-                    onClick={() => navigate('/notifications')}
-                  >
-                    <FaBell />
-                    {notifications > 0 && (
-                      <motion.span
-                        className="notification-badge"
-                        initial={{ scale: 0 }}
-                        animate={{ scale: 1 }}
-                        key={notifications}
-                      >
-                        {notifications}
-                      </motion.span>
-                    )}
-                  </button>
-                </div>
+                <button
+                  className="notification-button"
+                  onClick={() => navigate('/amount')}
+                >
+                  <FaBell />
+                </button>
+
+
                 {/* Messages */}
                 <div
                   className="message-icon"
@@ -433,11 +422,11 @@ const Navbar = ({ toggleTheme, theme }) => {
 
       </header>
       {showWalletModal && (
-          <ConnectWalletModal
-            onClose={() => setShowWalletModal(false)}
-            onConnect={handleWalletConnect}
-          />
-        )}
+        <ConnectWalletModal
+          onClose={() => setShowWalletModal(false)}
+          onConnect={handleWalletConnect}
+        />
+      )}
     </>
   );
 };

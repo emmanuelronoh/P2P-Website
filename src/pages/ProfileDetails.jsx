@@ -55,7 +55,7 @@ const UserProfile = () => {
         <div className="user-basic-info">
           <div className="avatar-container">
             <img
-              src={profile.avatar || '/default-avatar.png'}
+              src={profile.avatar || 'https://i.ibb.co/PsXqD7Xd/groom-6925756.png'}
               alt={profile.username}
               className="profile-avatar"
             />
@@ -234,7 +234,7 @@ const UserProfile = () => {
                 <div className="review-header">
                   <div className="reviewer-info">
                     <img
-                      src={review.reviewer.avatar || '/default-avatar.png'}
+                      src={review.reviewer.avatar || 'https://i.ibb.co/PsXqD7Xd/groom-6925756.png'}
                       alt={review.reviewer.username}
                       className="reviewer-avatar"
                     />
@@ -312,7 +312,7 @@ const UserProfile = () => {
                     </td>
                     <td className="counterparty">
                       <img
-                        src={trade.counterparty.avatar || '/default-avatar.png'}
+                        src={trade.counterparty.avatar || 'https://i.ibb.co/PsXqD7Xd/groom-6925756.png'}
                         alt={trade.counterparty.username}
                         className="counterparty-avatar"
                       />
