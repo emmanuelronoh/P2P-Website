@@ -94,6 +94,25 @@ const Market = () => {
   const [error, setError] = useState(null);
   const [searchQuery, setSearchQuery] = useState("");
   const navigate = useNavigate();
+  // Check if user was active in the last 5 minutes
+  const isOnline = (user) => {
+    if (!user.last_login) return false;
+    const lastSeen = new Date(user.last_login);
+    const now = new Date();
+    return (now - lastSeen) < (5 * 60 * 1000); // 5 minutes
+  };
+
+  // Format last seen time in a user-friendly way
+  const formatLastSeen = (lastSeen) => {
+    const now = new Date();
+    const lastSeenDate = new Date(lastSeen);
+    const diffMinutes = Math.floor((now - lastSeenDate) / (1000 * 60));
+
+    if (diffMinutes < 60) return `${diffMinutes} min ago`;
+    if (diffMinutes < 24 * 60) return "today";
+    if (diffMinutes < 7 * 24 * 60) return `${Math.floor(diffMinutes / (24 * 60))} days ago`;
+    return lastSeenDate.toLocaleDateString();
+  };
 
   // Safely parse price string to number
   const parsePrice = (priceStr) => {
@@ -363,11 +382,18 @@ const Market = () => {
                         <div className={`avatar-market ${safeTrader.online ? "online" : "offline"}`}>
                           {safeTrader.name?.charAt(0) || '?'}
                         </div>
+
                         <div className="trader-status">
-                          {safeTrader.online ? (
-                            <span className="online-status">Online</span>
+                          {trader.creator?.last_login ? (
+                            <span className="offline-status">
+                              {isOnline(trader.creator) ? (
+                                <span className="online-status">Online now</span>
+                              ) : (
+                                `Last seen: ${formatLastSeen(trader.creator.last_login)}`
+                              )}
+                            </span>
                           ) : (
-                            <span className="offline-status">Offline ({safeTrader.lastActive || 'unknown'})</span>
+                            <span className="offline-status">Status: Not Available</span>
                           )}
                         </div>
                       </div>
@@ -376,7 +402,7 @@ const Market = () => {
                         <div className="trader-name-verification">
                           <h3>
                             <Link to={`/profile/${safeTrader.id}`} className="trader-link">
-                              {safeTrader.name || 'Anonymous'}
+                              {safeTrader.creator.username || 'Anonymous'}
                             </Link>
                             {safeTrader.kycVerified && <FaUserShield className="kyc-icon" title="KYC Verified" />}
                             {safeTrader.premium && <FaShieldAlt className="premium-icon" title="Premium Trader" />}
