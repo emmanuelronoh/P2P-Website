@@ -5,7 +5,7 @@ import EmojiPicker from 'emoji-picker-react';
 import { FiSearch, FiPlus, FiPaperclip, FiSmile, FiSend, FiCheck, FiChevronDown } from 'react-icons/fi';
 import { BsCheck2All, BsThreeDotsVertical } from 'react-icons/bs';
 import { IoClose } from 'react-icons/io5';
-import '../styles/messages.css';
+import '../styles/Messages.css';
 
 const Messages = () => {
   const { isAuthenticated, user } = useAuth();
