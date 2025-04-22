@@ -24,7 +24,6 @@ import Wallet from "./pages/Wallet";
 import Vendor from "./pages/Vendor";
 import Amount from "./pages/Amount";
 import Chat from "./pages/ChatApi";
-import Trades from "./pages/Trades";
 import VerifyOTP from "./components/VerifyOTP";
 import FiatP2P from "./components/FiatP2P";
 import BuyCrypto from "./pages/BuyCrypto";
@@ -98,6 +97,30 @@ function P2PLayout({ theme, toggleTheme }) {
   );
 }
 
+// Layout component for message pages (with Navbar but no Footer)
+function MessagesLayout({ theme, toggleTheme }) {
+  return (
+    <>
+      <Navbar theme={theme} toggleTheme={toggleTheme} />
+      <div className="app">
+        <Outlet />
+      </div>
+    </>
+  );
+}
+
+// Layout component for P2P message pages (with NavbarP2P but no Footer)
+function P2PMessagesLayout({ theme, toggleTheme }) {
+  return (
+    <>
+      <NavbarP2P theme={theme} toggleTheme={toggleTheme} />
+      <div className="app">
+        <Outlet />
+      </div>
+    </>
+  );
+}
+
 // Layout component for full-page routes (without Navbar/Footer)
 function FullPageLayout() {
   return (
@@ -157,7 +180,6 @@ function AppInner({ theme, toggleTheme }) {
           <Route path="/notifications" element={<Notifications />} />
           <Route path="/support" element={<Support />} />
           <Route path="/amount" element={<Amount />} />
-          <Route path="/messages" element={<Messages />} />
           <Route path="/tutorials" element={<Tutorials />} />
           <Route path="/become-vendor" element={<Vendor />} />
           <Route path="/profile-details/:username" element={<ProfileDetails />} />
@@ -165,14 +187,18 @@ function AppInner({ theme, toggleTheme }) {
           <Route path="/CryptoListing" element={<CryptoListing />} />
           <Route path="/faq" element={<Faq />} />
           <Route path="/DashboardVendors" element={<DashboardVendors />} />
-          <Route path="/chat-room-fiat-crypto" element={<MessagesP2p />} />
+        </Route>
+
+        {/* Message routes without Footer */}
+        <Route element={<MessagesLayout theme={theme} toggleTheme={toggleTheme} />}>
+          <Route path="/messages" element={<Messages />} />
         </Route>
 
         {/* P2P routes with NavbarP2P and Footer */}
         <Route element={<P2PLayout theme={theme} toggleTheme={toggleTheme} />}>
           <Route path="/fiat-p2p" element={<FiatP2P />} />
           <Route path="/chat" element={<Chat />} />
-          <Route path="/home-fiat" element={<HomeFiat />} /> {/* ✅ Add this here */}
+          <Route path="/home-fiat" element={<HomeFiat />} />
           <Route path="/notifications-p2p" element={<NotificationsPage />} />
           <Route path="/dashboard-fiat" element={<DashboardFiatPage />} />
           <Route path="/become-vendor-fiat" element={<Vendor />} />
@@ -180,8 +206,13 @@ function AppInner({ theme, toggleTheme }) {
           <Route path="/support-fiat" element={<Support />} />
           <Route path="/tutorials-fiat" element={<Tutorials />} />
           <Route path="/profile-details-user/:username" element={<ProfileDetails />} />
+        </Route>
+
+        {/* P2P Message routes without Footer */}
+        <Route element={<P2PMessagesLayout theme={theme} toggleTheme={toggleTheme} />}>
           <Route path="/messages-p2p" element={<MessagesP2p />} />
           <Route path="/chat-room-fiat" element={<MessagesP2p />} />
+          <Route path="/chat-room-fiat-crypto" element={<MessagesP2p />} />
         </Route>
 
         {/* Full-page routes without Navbar/Footer */}

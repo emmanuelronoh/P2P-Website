@@ -614,6 +614,37 @@
   overflow: hidden;
 }
 
+.pagination-controls {
+  display: flex;
+  justify-content: center;
+  margin: 2rem 0;
+  gap: 0.5rem;
+}
+
+.pagination-controls button {
+  padding: 0.5rem 1rem;
+  border: 1px solid #ddd;
+  background: white;
+  cursor: pointer;
+  border-radius: 4px;
+  transition: all 0.2s;
+}
+
+.pagination-controls button:hover:not(:disabled) {
+  background: #f0f0f0;
+}
+
+.pagination-controls button.active {
+  background: #3a0ca3;
+  color: white;
+  border-color: #3a0ca3;
+}
+
+.pagination-controls button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
 .how-to-buy-section::before {
   content: "";
   position: absolute;

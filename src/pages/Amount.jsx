@@ -32,7 +32,7 @@ const Amount = () => {
   // Validate trader data on mount
   useEffect(() => {
     if (!trader || !crypto) {
-      navigate("/trade", { replace: true });
+      navigate("/notifications", { replace: true });
     }
   }, [trader, crypto, navigate]);
 

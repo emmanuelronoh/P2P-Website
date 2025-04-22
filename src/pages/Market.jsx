@@ -13,38 +13,59 @@ import { RiExchangeDollarFill } from "react-icons/ri";
 import debounce from "lodash.debounce";
 import "../styles/market.css";
 
-const API_BASE_URL = "http://localhost:8000/crypto";
+const API_BASE_URL = "http://localhost:8000";
 
-// Default trader object to prevent undefined errors
 const DEFAULT_TRADER = {
   id: '',
-  name: '',
-  online: false,
-  lastActive: '',
-  kycVerified: false,
-  premium: false,
-  rating: 0,
-  trades: 0,
-  completionRate: 0,
-  paymentMethod: '',
-  location: '',
-  terms: '',
-  price: '0',
-  priceIncrease: '',
-  minLimit: '0',
-  maxLimit: '0',
-  cryptoAmount: '0',
-  crypto: 'ETH'
+  creator: {
+    id: '',
+    username: 'Anonymous',
+    email: '',
+    last_seen: null,
+    verification_status: 'UNVERIFIED',
+    trade_stats: {
+      total_trades: 0,
+      completion_rate: 0,
+      avg_release_time: 0
+    }
+  },
+  trade_type: 'FIAT',
+  transaction_type: 'BUY',
+  crypto_currency: 'XRP',
+  crypto_amount: '0',
+  min_amount: '0',
+  max_amount: '0',
+  secondary_currency: 'KES',
+  secondary_amount: '0',
+  rate: '0',
+  payment_methods: [],
+  time_window: 30,
+  terms: 'No terms specified',
+  status: 'PENDING',
+  created_at: new Date().toISOString(),
+  location: 'Unknown'
 };
 
-// API service for real backend calls
 const TradingService = {
   fetchTraders: async (filters) => {
     try {
       const accessToken = localStorage.getItem('accessToken');
-      const queryParams = new URLSearchParams(filters).toString();
+      const apiFilters = {
+        transaction_type: filters.tradeType === 'Buy' ? 'BUY' : 'SELL',
+        crypto_currency: filters.crypto,
+        payment_methods: filters.paymentMethod === 'Any' ? '' : filters.paymentMethod,
+        location: filters.location,
+        sort_by: filters.sortBy
+      };
+      
+      const queryParams = new URLSearchParams();
+      for (const key in apiFilters) {
+        if (apiFilters[key]) {
+          queryParams.append(key, apiFilters[key]);
+        }
+      }
 
-      const response = await fetch(`${API_BASE_URL}/trade-offers/?${queryParams}`, {
+      const response = await fetch(`${API_BASE_URL}/crypto/trade-offers/?${queryParams.toString()}`, {
         method: "GET",
         headers: {
           "Content-Type": "application/json",
@@ -60,20 +81,20 @@ const TradingService = {
       return Array.isArray(data) ? data : [];
     } catch (error) {
       console.error("Error fetching traders:", error);
-      return []; // Return empty array instead of throwing error
+      throw error;
     }
   },
 
   fetchTraderDetails: async (traderId) => {
     try {
-      const response = await fetch(`${API_BASE_URL}/trader/${traderId}`);
-
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
-      }
-
-      const data = await response.json();
-      return data || DEFAULT_TRADER;
+      const accessToken = localStorage.getItem('accessToken');
+      const response = await fetch(`${API_BASE_URL}/crypto/trader/${traderId}`, {
+        headers: {
+          "Authorization": `Bearer ${accessToken}`
+        }
+      });
+      if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+      return await response.json();
     } catch (error) {
       console.error("Error fetching trader details:", error);
       return DEFAULT_TRADER;
@@ -83,8 +104,8 @@ const TradingService = {
 
 const Market = () => {
   const [filters, setFilters] = useState({
-    tradeType: "Sell",
-    crypto: "ETH",
+    tradeType: "Buy",
+    crypto: "XRP",
     paymentMethod: "Any",
     location: "Kenya",
     sortBy: "bestPrice"
@@ -93,45 +114,56 @@ const Market = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const [searchQuery, setSearchQuery] = useState("");
+  const [pagination, setPagination] = useState({
+    currentPage: 1,
+    itemsPerPage: 4,
+    totalItems: 0
+  });
   const navigate = useNavigate();
-  // Check if user was active in the last 5 minutes
-  const isOnline = (user) => {
-    if (!user.last_login) return false;
-    const lastSeen = new Date(user.last_login);
+
+  const filterMemo = useMemo(() => JSON.stringify(filters), [filters]);
+
+  const isOnline = (lastSeen) => {
+    if (!lastSeen) return false;
+    const lastSeenDate = new Date(lastSeen);
     const now = new Date();
-    return (now - lastSeen) < (5 * 60 * 1000); // 5 minutes
+    return (now - lastSeenDate) < (5 * 60 * 1000);
   };
 
-  // Format last seen time in a user-friendly way
   const formatLastSeen = (lastSeen) => {
+    if (!lastSeen) return "Never";
     const now = new Date();
     const lastSeenDate = new Date(lastSeen);
     const diffMinutes = Math.floor((now - lastSeenDate) / (1000 * 60));
 
+    if (diffMinutes < 1) return "Just now";
     if (diffMinutes < 60) return `${diffMinutes} min ago`;
-    if (diffMinutes < 24 * 60) return "today";
+    if (diffMinutes < 24 * 60) return "Today";
     if (diffMinutes < 7 * 24 * 60) return `${Math.floor(diffMinutes / (24 * 60))} days ago`;
     return lastSeenDate.toLocaleDateString();
   };
 
-  // Safely parse price string to number
   const parsePrice = (priceStr) => {
     if (!priceStr) return 0;
     try {
-      return parseFloat(priceStr.replace(/[^0-9.]/g, "")) || 0;
+      return parseFloat(priceStr) || 0;
     } catch {
       return 0;
     }
   };
 
-  // Fetch traders with debouncing
   const fetchTraders = useCallback(
-    debounce(async (filters) => {
+    debounce(async (currentFilters) => {
       try {
         setLoading(true);
         setError(null);
-        const data = await TradingService.fetchTraders(filters);
+        const data = await TradingService.fetchTraders(currentFilters);
         setTraders(data);
+        setPagination(prev => ({
+          ...prev,
+          totalItems: data.length,
+          currentPage: 1
+        }));
       } catch (err) {
         setError("Failed to load traders. Please try again later.");
         console.error("Error fetching traders:", err);
@@ -145,58 +177,57 @@ const Market = () => {
 
   useEffect(() => {
     fetchTraders(filters);
-    return () => fetchTraders.cancel(); // Cancel debounce on unmount
-  }, [filters, fetchTraders]);
+    return () => fetchTraders.cancel();
+  }, [filterMemo, fetchTraders]);
 
-  // Filter traders based on search query
-  const filteredTraders = useMemo(() => {
-    if (!searchQuery) return traders;
-    const query = searchQuery.toLowerCase();
-    return traders.filter(trader => {
-      const safeTrader = { ...DEFAULT_TRADER, ...trader };
-      return (
-        safeTrader.name?.toLowerCase().includes(query) ||
-        safeTrader.paymentMethod?.toLowerCase().includes(query)
-      );
-    });
-  }, [traders, searchQuery]);
+  const processedTraders = useMemo(() => {
+    const filtered = searchQuery 
+      ? traders.filter(trader => {
+          const query = searchQuery.toLowerCase();
+          const safeTrader = { ...DEFAULT_TRADER, ...trader };
+          return (
+            safeTrader.creator?.username?.toLowerCase().includes(query) ||
+            (safeTrader.payment_methods?.join(', ')?.toLowerCase().includes(query) || ''
+          ));
+        })
+      : traders;
 
-  // Sort traders based on selected criteria
-  const sortedTraders = useMemo(() => {
-    const tradersCopy = [...filteredTraders];
-    switch (filters.sortBy) {
-      case "bestPrice":
-        return tradersCopy.sort((a, b) => {
-          const safeA = { ...DEFAULT_TRADER, ...a };
-          const safeB = { ...DEFAULT_TRADER, ...b };
-          const priceA = parsePrice(safeA.price);
-          const priceB = parsePrice(safeB.price);
+    return [...filtered].sort((a, b) => {
+      const safeA = { ...DEFAULT_TRADER, ...a };
+      const safeB = { ...DEFAULT_TRADER, ...b };
+
+      switch (filters.sortBy) {
+        case "bestPrice":
+          const priceA = parsePrice(safeA.rate);
+          const priceB = parsePrice(safeB.rate);
           return filters.tradeType === "Buy" ? priceA - priceB : priceB - priceA;
-        });
-      case "mostTrades":
-        return tradersCopy.sort((a, b) => {
-          const safeA = { ...DEFAULT_TRADER, ...a };
-          const safeB = { ...DEFAULT_TRADER, ...b };
-          return (safeB.trades || 0) - (safeA.trades || 0);
-        });
-      case "highestRating":
-        return tradersCopy.sort((a, b) => {
-          const safeA = { ...DEFAULT_TRADER, ...a };
-          const safeB = { ...DEFAULT_TRADER, ...b };
-          return (safeB.rating || 0) - (safeA.rating || 0);
-        });
-      case "newest":
-        return tradersCopy.sort((a, b) => {
-          const safeA = { ...DEFAULT_TRADER, ...a };
-          const safeB = { ...DEFAULT_TRADER, ...b };
-          const dateA = safeA.createdAt ? new Date(safeA.createdAt) : new Date(0);
-          const dateB = safeB.createdAt ? new Date(safeB.createdAt) : new Date(0);
+        case "mostTrades":
+          return (safeB.creator?.trade_stats?.total_trades || 0) - (safeA.creator?.trade_stats?.total_trades || 0);
+        case "highestRating":
+          return (safeB.creator?.trade_stats?.completion_rate || 0) - (safeA.creator?.trade_stats?.completion_rate || 0);
+        case "newest":
+          const dateA = safeA.created_at ? new Date(safeA.created_at) : new Date(0);
+          const dateB = safeB.created_at ? new Date(safeB.created_at) : new Date(0);
           return dateB - dateA;
-        });
-      default:
-        return tradersCopy;
+        default:
+          return 0;
+      }
+    });
+  }, [traders, searchQuery, filters.sortBy, filters.tradeType]);
+
+  const currentTraders = useMemo(() => {
+    const start = (pagination.currentPage - 1) * pagination.itemsPerPage;
+    return processedTraders.slice(start, start + pagination.itemsPerPage);
+  }, [processedTraders, pagination]);
+
+  const totalPages = Math.ceil(processedTraders.length / pagination.itemsPerPage);
+
+  const handlePageChange = (page) => {
+    if (page >= 1 && page <= totalPages) {
+      setPagination(prev => ({ ...prev, currentPage: page }));
+      window.scrollTo({ top: 0, behavior: 'smooth' });
     }
-  }, [filteredTraders, filters.sortBy, filters.tradeType]);
+  };
 
   const handleFilterChange = (key, value) => {
     setFilters(prev => ({ ...prev, [key]: value }));
@@ -213,34 +244,25 @@ const Market = () => {
     });
   };
 
-  const renderRatingStars = (rating) => {
-    const safeRating = typeof rating === 'number' ? rating : 0;
-    const stars = [];
-    const fullStars = Math.floor(safeRating);
-    const hasHalfStar = safeRating % 1 >= 0.5;
-
-    for (let i = 0; i < fullStars; i++) {
-      stars.push(<FaStar key={`full-${i}`} className="star full-star" />);
-    }
-
-    if (hasHalfStar) {
-      stars.push(<FaStar key="half" className="star half-star" />);
-    }
-
-    const emptyStars = 5 - stars.length;
-    for (let i = 0; i < emptyStars; i++) {
-      stars.push(<FaStar key={`empty-${i}`} className="star empty-star" />);
-    }
-
-    return stars;
+  const renderRatingStars = (completionRate) => {
+    // Convert completion rate (0-100) to 5-star rating (0-5)
+    const rating = (completionRate || 0) / 20;
+    return Array(5).fill(0).map((_, i) => (
+      <FaStar 
+        key={i} 
+        className={`star ${i < Math.floor(rating) ? 'full-star' : ''}${i === Math.floor(rating) && rating % 1 >= 0.5 ? ' half-star' : ''}`}
+      />
+    ));
   };
 
-  // Safely extract crypto symbol
-  const getCryptoSymbol = (crypto) => {
-    if (!crypto) return 'ETH';
-    if (typeof crypto !== 'string') return 'ETH';
-    const parts = crypto.split(" - ");
-    return parts.length > 1 ? parts[1] : parts[0];
+  const getPaymentMethods = (methods) => {
+    if (!methods || !Array.isArray(methods)) return 'Unknown';
+    return methods.join(', ') || 'Not specified';
+  };
+
+  const getLocation = (location) => {
+    if (!location) return 'Unknown';
+    return location;
   };
 
   return (
@@ -279,11 +301,11 @@ const Market = () => {
               onChange={(e) => handleFilterChange("crypto", e.target.value)}
               className="market-select"
             >
+              <option value="XRP">Ripple (XRP)</option>
               <option value="ETH">Ethereum (ETH)</option>
               <option value="BTC">Bitcoin (BTC)</option>
               <option value="USDT">Tether (USDT)</option>
               <option value="BNB">Binance Coin (BNB)</option>
-              <option value="SOL">Solana (SOL)</option>
             </select>
           </div>
 
@@ -298,9 +320,6 @@ const Market = () => {
               <option value="M-PESA">M-PESA</option>
               <option value="Bank Transfer">Bank Transfer</option>
               <option value="PayPal">PayPal</option>
-              <option value="Cash">Cash</option>
-              <option value="Wise">Wise</option>
-              <option value="Revolut">Revolut</option>
             </select>
           </div>
 
@@ -312,11 +331,9 @@ const Market = () => {
               className="market-select"
             >
               <option value="Kenya">🇰🇪 Kenya</option>
+              <option value="Germany">🇩🇪 Germany</option>
               <option value="USA">🇺🇸 United States</option>
               <option value="UK">🇬🇧 United Kingdom</option>
-              <option value="Germany">🇩🇪 Germany</option>
-              <option value="Nigeria">🇳🇬 Nigeria</option>
-              <option value="South Africa">🇿🇦 South Africa</option>
             </select>
           </div>
         </div>
@@ -365,35 +382,33 @@ const Market = () => {
         <div className="market-content">
           <div className="market-stats">
             <p>
-              Showing {sortedTraders.length} {filters.tradeType.toLowerCase()} offers for {filters.crypto.split(" - ")[0]} in {filters.location}
+              Showing {processedTraders.length} {filters.tradeType.toLowerCase()} offers for {filters.crypto} in {filters.location}
             </p>
           </div>
 
           <div className="trader-list">
-            {sortedTraders.length > 0 ? (
-              sortedTraders.map((trader) => {
+            {currentTraders.length > 0 ? (
+              currentTraders.map((trader) => {
                 const safeTrader = { ...DEFAULT_TRADER, ...trader };
-                const cryptoSymbol = getCryptoSymbol(safeTrader.crypto);
+                const isTraderOnline = isOnline(safeTrader.creator?.last_seen);
+                const completionRate = safeTrader.creator?.trade_stats?.completion_rate || 0;
+                const totalTrades = safeTrader.creator?.trade_stats?.total_trades || 0;
 
                 return (
-                  <div key={safeTrader.id || Math.random().toString(36).substr(2, 9)} className={`trader-card ${safeTrader.premium ? "premium" : ""}`}>
+                  <div key={safeTrader.id} className="trader-card">
                     <div className="trader-main-info">
                       <div className="trader-avatar">
-                        <div className={`avatar-market ${safeTrader.online ? "online" : "offline"}`}>
-                          {safeTrader.name?.charAt(0) || '?'}
+                        <div className={`avatar-market ${isTraderOnline ? "online" : "offline"}`}>
+                          {safeTrader.creator?.username?.charAt(0) || '?'}
                         </div>
 
                         <div className="trader-status">
-                          {trader.creator?.last_login ? (
-                            <span className="offline-status">
-                              {isOnline(trader.creator) ? (
-                                <span className="online-status">Online now</span>
-                              ) : (
-                                `Last seen: ${formatLastSeen(trader.creator.last_login)}`
-                              )}
-                            </span>
+                          {isTraderOnline ? (
+                            <span className="online-status">Online now</span>
                           ) : (
-                            <span className="offline-status">Status: Not Available</span>
+                            <span className="offline-status">
+                              Last seen: {formatLastSeen(safeTrader.creator?.last_seen)}
+                            </span>
                           )}
                         </div>
                       </div>
@@ -401,34 +416,38 @@ const Market = () => {
                       <div className="trader-details">
                         <div className="trader-name-verification">
                           <h3>
-                            <Link to={`/profile/${safeTrader.id}`} className="trader-link">
-                              {safeTrader.creator.username || 'Anonymous'}
+                            <Link to={`/profile/${safeTrader.creator?.id}`} className="trader-link">
+                              {safeTrader.creator?.username || 'Anonymous'}
                             </Link>
-                            {safeTrader.kycVerified && <FaUserShield className="kyc-icon" title="KYC Verified" />}
-                            {safeTrader.premium && <FaShieldAlt className="premium-icon" title="Premium Trader" />}
+                            {safeTrader.creator?.verification_status === 'VERIFIED' && (
+                              <FaUserShield className="kyc-icon" title="KYC Verified" />
+                            )}
+                            {safeTrader.creator?.verification_status === 'PREMIUM' && (
+                              <FaShieldAlt className="premium-icon" title="Premium Trader" />
+                            )}
                           </h3>
                           <div className="trader-rating">
-                            <div className="stars">{renderRatingStars(safeTrader.rating)}</div>
-                            <span className="rating-value">{typeof safeTrader.rating === 'number' ? safeTrader.rating.toFixed(2) : '0.00'}</span>
+                            <div className="stars">{renderRatingStars(completionRate)}</div>
+                            <span className="rating-value">{(completionRate / 20).toFixed(1)}</span>
                           </div>
                         </div>
 
                         <div className="trader-stats">
                           <div className="stat-item">
                             <IoMdFlash className="stat-icon" />
-                            <span>{(safeTrader.trades || 0).toLocaleString()} trades</span>
+                            <span>{totalTrades}+ trades</span>
                           </div>
                           <div className="stat-item">
                             <FaExchangeAlt className="stat-icon" />
-                            <span>{safeTrader.completionRate || 0}% completion</span>
+                            <span>{completionRate}% completion</span>
                           </div>
                           <div className="stat-item">
                             <MdPayment className="stat-icon" />
-                            <span>{safeTrader.paymentMethod || 'Unknown'}</span>
+                            <span>{getPaymentMethods(safeTrader.payment_methods)}</span>
                           </div>
                           <div className="stat-item">
                             <MdLocationOn className="stat-icon" />
-                            <span>{safeTrader.location || 'Unknown'}</span>
+                            <span>{getLocation(safeTrader.location)}</span>
                           </div>
                         </div>
 
@@ -444,29 +463,23 @@ const Market = () => {
                     <div className="trader-offer">
                       <div className="price-info">
                         <div className="price-section">
-                          <p className="price">{safeTrader.price || '0'}</p>
+                          <p className="price">{safeTrader.rate} {safeTrader.secondary_currency}</p>
                           <p className="price-increase">
-                            {safeTrader.priceIncrease?.includes("above") ? (
-                              <span className="above-market">
-                                <RiExchangeDollarFill /> {safeTrader.priceIncrease || ''}
-                              </span>
-                            ) : (
-                              <span className="below-market">
-                                <RiExchangeDollarFill /> {safeTrader.priceIncrease || ''}
-                              </span>
-                            )}
+                            <span className="market-rate">
+                              <RiExchangeDollarFill /> Market rate
+                            </span>
                           </p>
                         </div>
 
                         <div className="limit-info">
                           <p className="limits">
-                            <span>Min:</span> {safeTrader.minLimit || '0'}
+                            <span>Min:</span> {safeTrader.min_amount} {safeTrader.secondary_currency}
                           </p>
                           <p className="limits">
-                            <span>Max:</span> {safeTrader.maxLimit || '0'}
+                            <span>Max:</span> {safeTrader.max_amount} {safeTrader.secondary_currency}
                           </p>
                           <p className="crypto-amount">
-                            <span>Available:</span> {safeTrader.cryptoAmount || '0'} {cryptoSymbol}
+                            <span>Available:</span> {safeTrader.crypto_amount} {safeTrader.crypto_currency}
                           </p>
                         </div>
                       </div>
@@ -475,7 +488,7 @@ const Market = () => {
                         className={`trade-button ${filters.tradeType.toLowerCase()}`}
                         onClick={() => handleTradeClick(safeTrader)}
                       >
-                        {filters.tradeType} {cryptoSymbol}
+                        {filters.tradeType} {safeTrader.crypto_currency}
                         <MdOutlineArrowForwardIos className="button-arrow" />
                       </button>
                     </div>
@@ -490,11 +503,39 @@ const Market = () => {
               </div>
             )}
           </div>
+
+          {totalPages > 1 && (
+            <div className="pagination-controls">
+              <button
+                onClick={() => handlePageChange(pagination.currentPage - 1)}
+                disabled={pagination.currentPage === 1}
+              >
+                Previous
+              </button>
+
+              {Array.from({ length: totalPages }, (_, i) => i + 1).map(page => (
+                <button
+                  key={page}
+                  onClick={() => handlePageChange(page)}
+                  className={pagination.currentPage === page ? 'active' : ''}
+                >
+                  {page}
+                </button>
+              ))}
+
+              <button
+                onClick={() => handlePageChange(pagination.currentPage + 1)}
+                disabled={pagination.currentPage === totalPages}
+              >
+                Next
+              </button>
+            </div>
+          )}
         </div>
       )}
 
 
-      <div className="how-to-buy-section">
+<div className="how-to-buy-section">
         <div className="buy-crypto-header">
           <h2>How to buy Crypto on CheetahX</h2>
           <p className="subtitle">Fast, secure, and beginner-friendly in just 3 simple steps</p>
@@ -562,7 +603,6 @@ const Market = () => {
           </button>
         </div>
       </div>
-
     </div>
   );
 };

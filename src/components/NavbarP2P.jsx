@@ -207,7 +207,7 @@ const Navbar = ({ toggleTheme, theme }) => {
     ];
 
     const helpItems = [
-        { label: "FAQ", path: "/faq-fiat", icon: FaQuestionCircle },
+        { label: "FAQ", path: "/CryptoListing", icon: FaQuestionCircle },
         { label: "Tutorials", path: "/tutorials-fiat", icon: FaQuestionCircle },
         { label: "Contact Support", path: "/support-fiat", icon: FaHeadset }
     ];
