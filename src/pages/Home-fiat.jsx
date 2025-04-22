@@ -1,8 +1,5 @@
 import React, { useState, useEffect } from 'react';
 import '../styles/Home.css';
-import btc from '../assets/btc.svg'
-import eth from '../assets/eth.svg'
-import USDT from '../assets/USDT.svg'
 
 const CheetahXHome = () => {
     const [stats, setStats] = useState({
