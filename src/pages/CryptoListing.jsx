@@ -52,7 +52,7 @@ const AmountForm = ({ mode = 'create', initialData = {} }) => {
         })));
 
         // Fetch payment methods
-        const paymentRes = await fetch(`${BASE_URL}payment-methods/`);
+        const paymentRes = await fetch(`${BASE_URL}payment-methods-crypto/`);
         const paymentData = await paymentRes.json();
         setPaymentOptions(paymentData.map(method => ({
           id: method.id.toString(),

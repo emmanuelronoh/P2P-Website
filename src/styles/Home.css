@@ -316,6 +316,7 @@
   display: flex;
   flex-direction: column;
   align-items: center;
+  text-align: center;
   padding: 180px 20px 100px;
   max-width: 1400px;
   margin: 0 auto;
@@ -325,7 +326,7 @@
   .hero-section {
     flex-direction: row;
     justify-content: space-between;
-    padding: 180px 40px 100px;
+    padding: 80px 40px 100px;
   }
 }
 
@@ -472,6 +473,7 @@
 .hero-image {
   position: relative;
   width: 100%;
+  margin-left: 0px;
 }
 
 .platform-preview {

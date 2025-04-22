@@ -13,7 +13,31 @@ const FiatP2P = () => {
     const { isAuthenticated, loading: authLoading, logout } = useAuth();
     const navigate = useNavigate();
     const [darkMode, setDarkMode] = useState(window.matchMedia('(prefers-color-scheme: dark)').matches);
-    const [state, setState] = useState({
+    
+    // Separate state for order placement and filtering
+    const [orderState, setOrderState] = useState({
+        selectedPayment: '',
+        amount: '',
+        price: '',
+        selectedOrderType: 'limit',
+        orderExpiry: '24h',
+        termsAccepted: false,
+        sellCurrency: 'USD',
+        receiveCurrency: 'KES'
+    });
+
+    const [filterState, setFilterState] = useState({
+        currency: 'USD',
+        paymentMethod: 'all',
+        amountRange: [0, 10000],
+        sortBy: 'price',
+        sortOrder: 'asc',
+        searchQuery: '',
+        sellCurrency: 'USD',
+        receiveCurrency: 'KES'
+    });
+
+    const [uiState, setUiState] = useState({
         userBalance: {
             fiat: 12500.75,
             crypto: 2.4567,
@@ -24,19 +48,6 @@ const FiatP2P = () => {
         orders: [],
         userOrders: [],
         paymentMethods: [],
-        selectedPayment: '',
-        amount: '',
-        price: '',
-        filter: {
-            currency: 'USD',
-            paymentMethod: 'all',
-            amountRange: [0, 10000],
-            sortBy: 'price',
-            sortOrder: 'asc',
-            searchQuery: '',
-            sellCurrency: 'USD',  // New field for sell currency
-            receiveCurrency: 'KES' // New field for receive currency
-        },
         showAdvancedFilters: false,
         notificationCount: 3,
         tradeInProgress: null,
@@ -50,9 +61,6 @@ const FiatP2P = () => {
         priceTrends: {},
         marketStats: {},
         securityDeposit: 0,
-        selectedOrderType: 'limit',
-        orderExpiry: '24h',
-        termsAccepted: false,
         showTutorial: false,
         activeStep: 0
     });
@@ -63,35 +71,34 @@ const FiatP2P = () => {
         document.documentElement.setAttribute('data-theme', !darkMode ? 'dark' : 'light');
     };
 
-    // Load data from API
     const loadData = async () => {
         if (authLoading || !isAuthenticated) return;
-
+    
         try {
             const token = localStorage.getItem('accessToken');
             if (!token) {
                 navigate('/login');
                 return;
             }
-
+    
             const headers = {
                 Authorization: `Bearer ${token}`,
                 'Content-Type': 'application/json'
             };
-
-            const [ordersResponse, paymentMethodsResponse, userOrdersResponse, priceTrendsResponse, marketStatsResponse] =
-                await Promise.all([
-                    axios.get('http://localhost:8000/escrow/orders/', { headers }),
-                    axios.get('http://localhost:8000/escrow/payment-methods/', { headers }),
-                    axios.get('http://localhost:8000/escrow/user-orders/', { headers }),
-                    axios.get('http://localhost:8000/escrow/price-trends/', { headers }),
-                    axios.get('http://localhost:8000/escrow/market-stats/', { headers })
-                ]);
-
+    
+            // Fetch all data in parallel
+            const [ordersResponse, paymentMethodsResponse, userOrdersResponse, priceTrendsResponse] = await Promise.all([
+                axios.get('http://localhost:8000/escrow/orders/', { headers }),
+                axios.get('http://localhost:8000/escrow/payment-methods-fiat/', { headers }),
+                axios.get('http://localhost:8000/escrow/user-orders/', { headers }),
+                axios.get('http://localhost:8000/escrow/price-trends/', { headers }),
+            ]);
+    
+            // Transform market orders
             const transformedOrders = ordersResponse.data.map(order => {
                 let userDisplay;
                 let userId;
-
+    
                 if (typeof order.user === 'object') {
                     userDisplay = order.user.username || order.user.email || String(order.user.id);
                     userId = order.user.id;
@@ -99,13 +106,15 @@ const FiatP2P = () => {
                     userDisplay = order.user || 'Unknown';
                     userId = null;
                 }
-
-                const paymentMethods = Array.isArray(order.payment_methods)
-                    ? order.payment_methods.map(pm =>
-                        typeof pm === 'object' ? pm.name : String(pm)
-                    )
-                    : [];
-
+    
+                // Handle payment methods - ensure we always get an array of method names
+                let paymentMethods = [];
+                if (Array.isArray(order.payment_methods)) {
+                    paymentMethods = order.payment_methods.map(method => 
+                        typeof method === 'object' ? method.name : method
+                    );
+                }
+    
                 return {
                     id: order.id,
                     userId,
@@ -116,8 +125,8 @@ const FiatP2P = () => {
                     price: parseFloat(order.price) || 0,
                     currency: order.currency || 'USD',
                     cryptoCurrency: order.crypto_currency || 'KSH',
-                    sellCurrency: order.sell_currency || 'USD', // New field
-                    receiveCurrency: order.receive_currency || 'KES', // New field
+                    sellCurrency: order.sell_currency || 'USD',
+                    receiveCurrency: order.receive_currency || 'KES',
                     paymentMethods,
                     limit: order.min_limit && order.max_limit
                         ? `${order.min_limit}-${order.max_limit} ${order.currency || 'USD'}`
@@ -131,17 +140,50 @@ const FiatP2P = () => {
                     verificationLevel: order.verification_level || 1
                 };
             });
-
-            setState(prev => ({
+    
+            // Transform user orders
+            const transformedUserOrders = userOrdersResponse.data.map(order => {
+                let paymentMethods = [];
+                if (Array.isArray(order.payment_methods)) {
+                    paymentMethods = order.payment_methods.map(method => 
+                        typeof method === 'object' ? method.name : method
+                    );
+                } else if (order.payment_method) {
+                    paymentMethods = [typeof order.payment_method === 'object' 
+                        ? order.payment_method.name 
+                        : order.payment_method];
+                }
+    
+                return {
+                    id: order.id,
+                    type: order.order_type,
+                    amount: parseFloat(order.amount),
+                    filled: parseFloat(order.filled),
+                    price: parseFloat(order.price),
+                    currency: order.currency,
+                    cryptoCurrency: order.crypto_currency,
+                    sellCurrency: order.sell_currency,
+                    receiveCurrency: order.receive_currency,
+                    paymentMethods,
+                    limit: order.limit_range || 'N/A',
+                    terms: order.terms,
+                    status: order.status,
+                    date: order.created_at || order.date,
+                    counterparty: order.counterparty,
+                    isEscrow: order.is_escrow,
+                    hasDispute: order.has_dispute
+                };
+            });
+    
+            setUiState(prev => ({
                 ...prev,
                 orders: transformedOrders,
                 paymentMethods: paymentMethodsResponse.data,
-                userOrders: userOrdersResponse.data,
+                userOrders: transformedUserOrders,
                 priceTrends: priceTrendsResponse.data,
-                marketStats: marketStatsResponse.data,
                 securityDeposit: 200
             }));
-
+    
         } catch (error) {
             console.error('Error loading data:', error);
             if (error.response?.status === 401) {
@@ -159,31 +201,30 @@ const FiatP2P = () => {
         }
     }, [authLoading, isAuthenticated, navigate, logout]);
 
-    // Filter and sort orders
-    const filteredOrders = state.orders
-        .filter(order => order.type === (state.activeTab === 'buy' ? 'sell' : 'buy'))
+    // Filter and sort orders - now only uses filterState
+    const filteredOrders = uiState.orders
+        .filter(order => order.type === (uiState.activeTab === 'buy' ? 'sell' : 'buy'))
         .filter(order =>
-            (state.filter.sellCurrency === 'all' || order.sellCurrency === state.filter.sellCurrency) &&
-            (state.filter.receiveCurrency === 'all' || order.receiveCurrency === state.filter.receiveCurrency)
+            (filterState.sellCurrency === 'all' || order.sellCurrency === filterState.sellCurrency) &&
+            (filterState.receiveCurrency === 'all' || order.receiveCurrency === filterState.receiveCurrency)
         )
-        .filter(order => state.filter.paymentMethod === 'all' ||
-            order.paymentMethods.some(method =>
-                state.paymentMethods.find(pm => pm.id === state.filter.paymentMethod)?.name === method
-            ))
+        .filter(order => filterState.paymentMethod === 'all' ||
+            order.paymentMethods.some(method => method.id === parseInt(filterState.paymentMethod))
+        )
         .filter(order =>
-            state.filter.searchQuery === '' ||
-            order.user.toLowerCase().includes(state.filter.searchQuery.toLowerCase()) ||
+            filterState.searchQuery === '' ||
+            order.user.toLowerCase().includes(filterState.searchQuery.toLowerCase()) ||
             order.paymentMethods.some(method =>
-                method.toLowerCase().includes(state.filter.searchQuery.toLowerCase())
+                method.name.toLowerCase().includes(filterState.searchQuery.toLowerCase())
             )
         )
         .sort((a, b) => {
-            if (state.filter.sortBy === 'price') {
-                return state.filter.sortOrder === 'asc' ? a.price - b.price : b.price - a.price;
-            } else if (state.filter.sortBy === 'rating') {
-                return state.filter.sortOrder === 'asc' ? a.rating - b.rating : b.rating - a.rating;
-            } else if (state.filter.sortBy === 'amount') {
-                return state.filter.sortOrder === 'asc' ? a.amount - b.amount : b.amount - a.amount;
+            if (filterState.sortBy === 'price') {
+                return filterState.sortOrder === 'asc' ? a.price - b.price : b.price - a.price;
+            } else if (filterState.sortBy === 'rating') {
+                return filterState.sortOrder === 'asc' ? a.rating - b.rating : b.rating - a.rating;
+            } else if (filterState.sortBy === 'amount') {
+                return filterState.sortOrder === 'asc' ? a.amount - b.amount : b.amount - a.amount;
             }
             return 0;
         });
@@ -191,9 +232,9 @@ const FiatP2P = () => {
     // Calculate market price
     const calculateMarketPrice = () => {
         const relevantOrders = filteredOrders.filter(o =>
-            o.type === (state.activeTab === 'buy' ? 'sell' : 'buy') &&
-            o.sellCurrency === state.filter.sellCurrency &&
-            o.receiveCurrency === state.filter.receiveCurrency
+            o.type === (uiState.activeTab === 'buy' ? 'sell' : 'buy') &&
+            o.sellCurrency === filterState.sellCurrency &&
+            o.receiveCurrency === filterState.receiveCurrency
         );
         if (relevantOrders.length === 0) return 0;
         const total = relevantOrders.reduce((sum, order) => sum + order.price, 0);
@@ -202,17 +243,15 @@ const FiatP2P = () => {
 
     // Get payment method details
     const getPaymentMethodDetails = (id) => {
-        return state.paymentMethods.find(m => m.id === id) || {};
+        return uiState.paymentMethods.find(m => m.id === id) || {};
     };
 
     const calculateOrderTotal = () => {
-        if (state.amount && state.price) {
-            if (state.activeTab === 'buy') {
-                // When buying, amount is in sell currency, total is in receive currency
-                return (parseFloat(state.amount) * parseFloat(state.price)).toFixed(2);
+        if (orderState.amount && orderState.price) {
+            if (uiState.activeTab === 'buy') {
+                return (parseFloat(orderState.amount) * parseFloat(orderState.price)).toFixed(2);
             } else {
-                // When selling, amount is in receive currency, total is in sell currency
-                return (parseFloat(state.amount) / parseFloat(state.price)).toFixed(2);
+                return (parseFloat(orderState.amount) / parseFloat(orderState.price)).toFixed(2);
             }
         }
         return '0.00';
@@ -226,7 +265,7 @@ const FiatP2P = () => {
                 'http://localhost:8000/chat-room/api/trades/initiate/',
                 {
                     order_id: order.id,
-                    trade_type: state.activeTab,
+                    trade_type: uiState.activeTab,
                     sell_currency: order.sellCurrency,
                     receive_currency: order.receiveCurrency,
                     exchange_rate: order.price
@@ -244,7 +283,7 @@ const FiatP2P = () => {
                     chatRoomId: response.data.chat_room_id,
                     counterparty: order.user,
                     orderDetails: order,
-                    tradeType: state.activeTab,
+                    tradeType: uiState.activeTab,
                     sellCurrency: order.sellCurrency,
                     receiveCurrency: order.receiveCurrency,
                     exchangeRate: order.price
@@ -256,39 +295,38 @@ const FiatP2P = () => {
             alert(`Failed to initiate trade: ${error.response?.data?.message || error.message}`);
         }
     };
-
-    // Handle order creation with custom currency exchange
+    
     const handleCreateOrder = async (e) => {
         e.preventDefault();
-        if (!state.termsAccepted) {
+        if (!orderState.termsAccepted) {
             alert('You must accept the terms and conditions');
             return;
         }
-
+    
         try {
             const token = localStorage.getItem('accessToken');
             if (!token) {
                 navigate('/login');
                 return;
             }
-
+    
             const orderData = {
-                order_type: state.activeTab,
-                amount: state.amount,
-                price: state.price,
-                currency: state.filter.sellCurrency, // Using sell currency as primary currency
-                crypto_currency: state.userBalance.cryptoCurrency,
-                sell_currency: state.filter.sellCurrency,
-                receive_currency: state.filter.receiveCurrency,
-                payment_methods: [parseInt(state.selectedPayment)],
-                min_limit: (state.activeTab === 'buy' ? '10.00' : '5.00'),
+                order_type: uiState.activeTab,
+                amount: orderState.amount,
+                price: orderState.price,
+                currency: orderState.sellCurrency,
+                crypto_currency: uiState.userBalance.cryptoCurrency,
+                sell_currency: orderState.sellCurrency,
+                receive_currency: orderState.receiveCurrency,
+                payment_methods: [parseInt(orderState.selectedPayment)],
+                min_limit: (uiState.activeTab === 'buy' ? '10.00' : '5.00'),
                 max_limit: '10000.00',
-                terms: state.selectedOrderType === 'limit' ?
-                    `This is a limit order that expires in ${state.orderExpiry}` :
-                    'This is a market order',
+                terms: orderState.selectedOrderType === 'limit'
+                    ? `This is a limit order that expires in ${orderState.orderExpiry}`
+                    : 'This is a market order',
                 avg_release_time: '15 minutes'
             };
-
+    
             const response = await axios.post(
                 'http://localhost:8000/escrow/orders/',
                 orderData,
@@ -299,38 +337,66 @@ const FiatP2P = () => {
                     }
                 }
             );
-
-            const newOrder = {
-                id: response.data.id,
-                type: response.data.order_type,
-                user: response.data.user?.username || 'You',
-                amount: parseFloat(response.data.amount),
-                available: parseFloat(response.data.available),
-                price: parseFloat(response.data.price),
-                currency: response.data.currency,
-                cryptoCurrency: response.data.crypto_currency,
-                sellCurrency: response.data.sell_currency,
-                receiveCurrency: response.data.receive_currency,
-                paymentMethods: response.data.payment_methods.map(pm => pm.name),
-                limit: response.data.limit_range || 'N/A',
-                terms: response.data.terms,
-                avgReleaseTime: response.data.avg_release_time,
-                status: 'pending',
-                date: new Date().toISOString()
-            };
-
-            setState(prev => ({
+    
+            // Reset the form first
+            setOrderState(prev => ({
                 ...prev,
-                orders: [...prev.orders, newOrder],
-                userOrders: [newOrder, ...prev.userOrders],
                 amount: '',
                 price: '',
-                selectedPayment: '',
-                showOrderDetails: newOrder.id
+                selectedPayment: ''
             }));
-
+    
+            // Then fetch fresh data from the server
+            const refreshedOrders = await axios.get('http://localhost:8000/escrow/user-orders/', {
+                headers: {
+                    Authorization: `Bearer ${token}`,
+                    'Content-Type': 'application/json'
+                }
+            });
+    
+            // Transform and update only the userOrders part of the state
+            const transformedUserOrders = refreshedOrders.data.map(order => {
+                let paymentMethods = [];
+                if (Array.isArray(order.payment_methods)) {
+                    paymentMethods = order.payment_methods.map(method => 
+                        typeof method === 'object' ? method.name : method
+                    );
+                } else if (order.payment_method) {
+                    paymentMethods = [typeof order.payment_method === 'object' 
+                        ? order.payment_method.name 
+                        : order.payment_method];
+                }
+    
+                return {
+                    id: order.id,
+                    type: order.order_type,
+                    amount: parseFloat(order.amount),
+                    filled: parseFloat(order.filled),
+                    price: parseFloat(order.price),
+                    currency: order.currency,
+                    cryptoCurrency: order.crypto_currency,
+                    sellCurrency: order.sell_currency,
+                    receiveCurrency: order.receive_currency,
+                    paymentMethods,
+                    limit: order.limit_range || 'N/A',
+                    terms: order.terms,
+                    status: order.status,
+                    date: order.created_at || order.date,
+                    counterparty: order.counterparty,
+                    isEscrow: order.is_escrow,
+                    hasDispute: order.has_dispute
+                };
+            });
+    
+            setUiState(prev => ({
+                ...prev,
+                userOrders: transformedUserOrders,
+                showOrderDetails: response.data.id
+            }));
+    
         } catch (error) {
             console.error('Error creating order:', error);
+    
             if (error.response?.status === 401) {
                 logout();
                 navigate('/login');
@@ -339,8 +405,7 @@ const FiatP2P = () => {
             }
         }
     };
-
-    // Currency options - you can expand this list
+    // Currency options
     const currencyOptions = ['USD', 'EUR', 'GBP', 'KES', 'UGX', 'TZS', 'NGN', 'ZAR', 'GHS', 'XAF'];
 
     return (
@@ -351,21 +416,21 @@ const FiatP2P = () => {
                 <div className="trading-tabs-container">
                     <div className="trading-tabs">
                         <button
-                            className={`tab-button ${state.activeTab === 'buy' ? 'active' : ''}`}
-                            onClick={() => setState(prev => ({ ...prev, activeTab: 'buy' }))}
+                            className={`tab-button ${uiState.activeTab === 'buy' ? 'active' : ''}`}
+                            onClick={() => setUiState(prev => ({ ...prev, activeTab: 'buy' }))}
                         >
-                            <MdAttachMoney /> Buy {state.filter.receiveCurrency}
+                            <MdAttachMoney /> Buy {filterState.receiveCurrency}
                         </button>
                         <button
-                            className={`tab-button ${state.activeTab === 'sell' ? 'active' : ''}`}
-                            onClick={() => setState(prev => ({ ...prev, activeTab: 'sell' }))}
+                            className={`tab-button ${uiState.activeTab === 'sell' ? 'active' : ''}`}
+                            onClick={() => setUiState(prev => ({ ...prev, activeTab: 'sell' }))}
                         >
-                            <MdAttachMoney /> Sell {state.filter.sellCurrency}
+                            <MdAttachMoney /> Sell {filterState.sellCurrency}
                         </button>
                     </div>
                     <div className="market-stats">
-                        <span>Market Rate: 1 {state.filter.sellCurrency} = {calculateMarketPrice()} {state.filter.receiveCurrency}</span>
-                        <span>24h Volume: {state.marketStats.volume || '0'} {state.filter.sellCurrency}</span>
+                        <span>Market Rate: 1 {filterState.sellCurrency} = {calculateMarketPrice()} {filterState.receiveCurrency}</span>
+                        <span>24h Volume: {uiState.marketStats.volume || '0'} {filterState.sellCurrency}</span>
                     </div>
                 </div>
 
@@ -375,29 +440,24 @@ const FiatP2P = () => {
                     <div className="order-creation-panel">
                         <div className="panel-header">
                             <h2>
-                                {state.activeTab === 'buy' ? 'Buy' : 'Sell'} Order
+                                {uiState.activeTab === 'buy' ? 'Buy' : 'Sell'} Order
                                 <span className="order-type-toggle">
                                     <button
-                                        className={`type-btn ${state.selectedOrderType === 'limit' ? 'active' : ''}`}
-                                        onClick={() => setState(prev => ({ ...prev, selectedOrderType: 'limit' }))}
+                                        className={`type-btn ${orderState.selectedOrderType === 'limit' ? 'active' : ''}`}
+                                        onClick={() => setOrderState(prev => ({ ...prev, selectedOrderType: 'limit' }))}
                                     >
                                         Limit
                                     </button>
-                                    <button
-                                        className={`type-btn ${state.selectedOrderType === 'market' ? 'active' : ''}`}
-                                        onClick={() => setState(prev => ({ ...prev, selectedOrderType: 'market' }))}
-                                    >
-                                        Market
-                                    </button>
+                                    
                                 </span>
                             </h2>
                         </div>
 
                         <form onSubmit={handleCreateOrder} className="order-form">
-                            {state.selectedOrderType === 'market' && (
+                            {orderState.selectedOrderType === 'market' && (
                                 <div className="market-price-notice">
                                     <FaChartLine />
-                                    <span>You will {state.activeTab === 'buy' ? 'buy' : 'sell'} at the best available market price</span>
+                                    <span>You will {uiState.activeTab === 'buy' ? 'buy' : 'sell'} at the best available market price</span>
                                 </div>
                             )}
 
@@ -406,13 +466,10 @@ const FiatP2P = () => {
                                 <label>Exchange Currencies</label>
                                 <div className="currency-exchange-selector">
                                     <select
-                                        value={state.filter.sellCurrency}
-                                        onChange={(e) => setState(prev => ({
+                                        value={orderState.sellCurrency}
+                                        onChange={(e) => setOrderState(prev => ({
                                             ...prev,
-                                            filter: {
-                                                ...prev.filter,
-                                                sellCurrency: e.target.value
-                                            }
+                                            sellCurrency: e.target.value
                                         }))}
                                     >
                                         {currencyOptions.map(currency => (
@@ -423,13 +480,10 @@ const FiatP2P = () => {
                                         <BsArrowLeftRight />
                                     </div>
                                     <select
-                                        value={state.filter.receiveCurrency}
-                                        onChange={(e) => setState(prev => ({
+                                        value={orderState.receiveCurrency}
+                                        onChange={(e) => setOrderState(prev => ({
                                             ...prev,
-                                            filter: {
-                                                ...prev.filter,
-                                                receiveCurrency: e.target.value
-                                            }
+                                            receiveCurrency: e.target.value
                                         }))}
                                     >
                                         {currencyOptions.map(currency => (
@@ -439,14 +493,14 @@ const FiatP2P = () => {
                                 </div>
                             </div>
 
-                            {state.selectedOrderType === 'limit' && (
+                            {orderState.selectedOrderType === 'limit' && (
                                 <div className="form-group">
-                                    <label>Exchange Rate (1 {state.filter.sellCurrency} = X {state.filter.receiveCurrency})</label>
+                                    <label>Exchange Rate (1 {orderState.sellCurrency} = X {orderState.receiveCurrency})</label>
                                     <input
                                         type="number"
-                                        value={state.price}
-                                        onChange={(e) => setState(prev => ({ ...prev, price: e.target.value }))}
-                                        placeholder={`Rate in ${state.filter.receiveCurrency}`}
+                                        value={orderState.price}
+                                        onChange={(e) => setOrderState(prev => ({ ...prev, price: e.target.value }))}
+                                        placeholder={`Rate in ${orderState.receiveCurrency}`}
                                         step="0.0001"
                                         required
                                     />
@@ -455,79 +509,67 @@ const FiatP2P = () => {
 
                             <div className="form-group">
                                 <label>
-                                    {state.activeTab === 'buy' ? 'You Spend' : 'You Receive'} ({state.activeTab === 'buy' ? state.filter.sellCurrency : state.filter.receiveCurrency})
-                                    {state.selectedOrderType === 'limit' && (
-                                        <span className="hint">Min: {state.activeTab === 'buy' ? '10' : '5'}</span>
+                                    {uiState.activeTab === 'buy' ? 'You Spend' : 'You Receive'} ({uiState.activeTab === 'buy' ? orderState.sellCurrency : orderState.receiveCurrency})
+                                    {orderState.selectedOrderType === 'limit' && (
+                                        <span className="hint">Min: {uiState.activeTab === 'buy' ? '10' : '5'}</span>
                                     )}
                                 </label>
                                 <div className="input-with-actions">
                                     <input
                                         type="number"
-                                        value={state.amount}
-                                        onChange={(e) => setState(prev => ({ ...prev, amount: e.target.value }))}
-                                        placeholder={`0.00 ${state.activeTab === 'buy' ? state.filter.sellCurrency : state.filter.receiveCurrency}`}
-                                        min={state.activeTab === 'buy' ? 10 : 5}
+                                        value={orderState.amount}
+                                        onChange={(e) => setOrderState(prev => ({ ...prev, amount: e.target.value }))}
+                                        placeholder={`0.00 ${uiState.activeTab === 'buy' ? orderState.sellCurrency : orderState.receiveCurrency}`}
+                                        min={uiState.activeTab === 'buy' ? 10 : 5}
                                         required
                                     />
                                     <div className="amount-actions">
-                                        <button type="button" onClick={() => setState(prev => ({ ...prev, amount: '25' }))}>25</button>
-                                        <button type="button" onClick={() => setState(prev => ({ ...prev, amount: '50' }))}>50</button>
-                                        <button type="button" onClick={() => setState(prev => ({ ...prev, amount: '100' }))}>100</button>
+                                        <button type="button" onClick={() => setOrderState(prev => ({ ...prev, amount: '25' }))}>25</button>
+                                        <button type="button" onClick={() => setOrderState(prev => ({ ...prev, amount: '50' }))}>50</button>
+                                        <button type="button" onClick={() => setOrderState(prev => ({ ...prev, amount: '100' }))}>100</button>
                                     </div>
                                 </div>
                             </div>
 
-
-                            <div className="form-group">
-                                <label>Exchange Rate (1 {state.filter.sellCurrency} = X {state.filter.receiveCurrency})</label>
-                                <input
-                                    type="number"
-                                    value={state.price}
-                                    onChange={(e) => setState(prev => ({ ...prev, price: e.target.value }))}
-                                    placeholder={`Rate in ${state.filter.receiveCurrency}`}
-                                    step="0.0001"
-                                    required
-                                />
-                            </div>
-
-
                             <div className="form-group">
                                 <label>Payment Method</label>
                                 <select
-                                    value={state.selectedPayment}
-                                    onChange={(e) => setState(prev => ({ ...prev, selectedPayment: e.target.value }))}
+                                    value={orderState.selectedPayment}
+                                    onChange={(e) => setOrderState(prev => ({ ...prev, selectedPayment: e.target.value }))}
                                     required
                                 >
                                     <option value="">Select payment method</option>
-                                    {state.paymentMethods.map(method => (
+                                    {uiState.paymentMethods.map(method => (
                                         <option key={method.id} value={method.id}>
-                                            {method.name} {method.fee > 0 ? `(${(method.fee * 100).toFixed(1)}% fee)` : ''}
+                                            {method.name} {method.fee > 0 ? `(${(method.fee * 100).toFixed(2)}% fee)` : ''}
                                         </option>
                                     ))}
                                 </select>
                             </div>
 
-                            {state.selectedPayment && (
+                            {orderState.selectedPayment && (
                                 <div className="payment-method-details">
                                     <div className="detail-row">
                                         <span>Processing Time:</span>
-                                        <strong>{getPaymentMethodDetails(state.selectedPayment).processingTime || 'Instant'}</strong>
+                                        <strong>{getPaymentMethodDetails(parseInt(orderState.selectedPayment))?.processing_time || 'Instant'}</strong>
                                     </div>
-                                    {getPaymentMethodDetails(state.selectedPayment).fee > 0 && (
+                                    {getPaymentMethodDetails(parseInt(orderState.selectedPayment))?.fee > 0 && (
                                         <div className="detail-row">
                                             <span>Fee:</span>
-                                            <strong className="fee">{(getPaymentMethodDetails(state.selectedPayment).fee * 100)}%</strong>
+                                            <strong className="fee">
+                                                {(getPaymentMethodDetails(parseInt(orderState.selectedPayment))?.fee * 100).toFixed(2)}%
+                                            </strong>
                                         </div>
                                     )}
                                 </div>
                             )}
 
-                            {state.selectedOrderType === 'limit' && (
+                            {orderState.selectedOrderType === 'limit' && (
                                 <div className="form-group">
                                     <label>Order Expiry</label>
                                     <select
-                                        value={state.orderExpiry}
-                                        onChange={(e) => setState(prev => ({ ...prev, orderExpiry: e.target.value }))}
+                                        value={orderState.orderExpiry}
+                                        onChange={(e) => setOrderState(prev => ({ ...prev, orderExpiry: e.target.value }))}
                                     >
                                         <option value="1h">1 Hour</option>
                                         <option value="6h">6 Hours</option>
@@ -541,15 +583,15 @@ const FiatP2P = () => {
 
                             <div className="order-summary">
                                 <div className="summary-row">
-                                    <span>Total {state.activeTab === 'buy' ? 'You Get' : 'You Pay'}</span>
+                                    <span>Total {uiState.activeTab === 'buy' ? 'You Get' : 'You Pay'}</span>
                                     <strong>
-                                        {calculateOrderTotal()} {state.activeTab === 'buy' ? state.filter.receiveCurrency : state.filter.sellCurrency}
+                                        {calculateOrderTotal()} {uiState.activeTab === 'buy' ? orderState.receiveCurrency : orderState.sellCurrency}
                                     </strong>
                                 </div>
-                                {state.securityDeposit > 0 && (
+                                {uiState.securityDeposit > 0 && (
                                     <div className="summary-row">
                                         <span>Security Deposit</span>
-                                        <strong>{state.securityDeposit} {state.filter.sellCurrency}</strong>
+                                        <strong>{uiState.securityDeposit} {orderState.sellCurrency}</strong>
                                     </div>
                                 )}
                             </div>
@@ -558,8 +600,8 @@ const FiatP2P = () => {
                                 <input
                                     type="checkbox"
                                     id="terms-agree"
-                                    checked={state.termsAccepted}
-                                    onChange={(e) => setState(prev => ({ ...prev, termsAccepted: e.target.checked }))}
+                                    checked={orderState.termsAccepted}
+                                    onChange={(e) => setOrderState(prev => ({ ...prev, termsAccepted: e.target.checked }))}
                                 />
                                 <label htmlFor="terms-agree">
                                     I agree to the <a href="#">Terms of Service</a> and confirm I'm not from a restricted jurisdiction.
@@ -567,13 +609,13 @@ const FiatP2P = () => {
                             </div>
 
                             <button type="submit" className="submit-order-btn">
-                                {state.selectedOrderType === 'market' ? (
+                                {orderState.selectedOrderType === 'market' ? (
                                     <>
-                                        <FaExchangeAlt /> {state.activeTab === 'buy' ? 'Buy' : 'Sell'} Now
+                                        <FaExchangeAlt /> {uiState.activeTab === 'buy' ? 'Buy' : 'Sell'} Now
                                     </>
                                 ) : (
                                     <>
-                                        <FaRegClock /> Place {state.activeTab === 'buy' ? 'Buy' : 'Sell'} Order
+                                        <FaRegClock /> Place {uiState.activeTab === 'buy' ? 'Buy' : 'Sell'} Order
                                     </>
                                 )}
                             </button>
@@ -583,40 +625,40 @@ const FiatP2P = () => {
                     {/* Orders List Panel */}
                     <div className="orders-list-panel">
                         <div className="panel-header">
-                            <h2>Available {state.activeTab === 'buy' ? 'Sellers' : 'Buyers'}</h2>
+                            <h2>Available {uiState.activeTab === 'buy' ? 'Sellers' : 'Buyers'}</h2>
                             <div className="panel-actions">
                                 <div className="search-box">
                                     <FaSearch />
                                     <input
                                         type="text"
                                         placeholder="Search traders or payment methods..."
-                                        value={state.filter.searchQuery}
-                                        onChange={(e) => setState(prev => ({
+                                        value={filterState.searchQuery}
+                                        onChange={(e) => setFilterState(prev => ({
                                             ...prev,
-                                            filter: { ...prev.filter, searchQuery: e.target.value }
+                                            searchQuery: e.target.value
                                         }))}
                                     />
                                 </div>
                                 <button
-                                    className={`filter-btn ${state.showAdvancedFilters ? 'active' : ''}`}
-                                    onClick={() => setState(prev => ({ ...prev, showAdvancedFilters: !prev.showAdvancedFilters }))}
+                                    className={`filter-btn ${uiState.showAdvancedFilters ? 'active' : ''}`}
+                                    onClick={() => setUiState(prev => ({ ...prev, showAdvancedFilters: !prev.showAdvancedFilters }))}
                                 >
                                     <FaFilter /> Filters
-                                    {state.showAdvancedFilters ? <IoIosArrowUp /> : <IoIosArrowDown />}
+                                    {uiState.showAdvancedFilters ? <IoIosArrowUp /> : <IoIosArrowDown />}
                                 </button>
                             </div>
                         </div>
 
-                        {state.showAdvancedFilters && (
+                        {uiState.showAdvancedFilters && (
                             <div className="advanced-filters-panel">
                                 <div className="filter-column">
                                     <div className="filter-group">
                                         <label>Sell Currency</label>
                                         <select
-                                            value={state.filter.sellCurrency}
-                                            onChange={(e) => setState(prev => ({
+                                            value={filterState.sellCurrency}
+                                            onChange={(e) => setFilterState(prev => ({
                                                 ...prev,
-                                                filter: { ...prev.filter, sellCurrency: e.target.value }
+                                                sellCurrency: e.target.value
                                             }))}
                                         >
                                             <option value="all">All Currencies</option>
@@ -629,10 +671,10 @@ const FiatP2P = () => {
                                     <div className="filter-group">
                                         <label>Receive Currency</label>
                                         <select
-                                            value={state.filter.receiveCurrency}
-                                            onChange={(e) => setState(prev => ({
+                                            value={filterState.receiveCurrency}
+                                            onChange={(e) => setFilterState(prev => ({
                                                 ...prev,
-                                                filter: { ...prev.filter, receiveCurrency: e.target.value }
+                                                receiveCurrency: e.target.value
                                             }))}
                                         >
                                             <option value="all">All Currencies</option>
@@ -647,50 +689,44 @@ const FiatP2P = () => {
                                     <div className="filter-group">
                                         <label>Payment Method</label>
                                         <select
-                                            value={state.filter.paymentMethod}
-                                            onChange={(e) => setState(prev => ({
+                                            value={filterState.paymentMethod}
+                                            onChange={(e) => setFilterState(prev => ({
                                                 ...prev,
-                                                filter: { ...prev.filter, paymentMethod: e.target.value }
+                                                paymentMethod: e.target.value
                                             }))}
                                         >
                                             <option value="all">All Methods</option>
-                                            {state.paymentMethods.map(method => (
+                                            {uiState.paymentMethods.map(method => (
                                                 <option key={method.id} value={method.id}>{method.name}</option>
                                             ))}
                                         </select>
                                     </div>
 
                                     <div className="filter-group">
-                                        <label>Amount Range ({state.filter.sellCurrency})</label>
+                                        <label>Amount Range ({filterState.sellCurrency})</label>
                                         <div className="range-inputs">
                                             <input
                                                 type="number"
-                                                value={state.filter.amountRange[0]}
-                                                onChange={(e) => setState(prev => ({
+                                                value={filterState.amountRange[0]}
+                                                onChange={(e) => setFilterState(prev => ({
                                                     ...prev,
-                                                    filter: {
-                                                        ...prev.filter,
-                                                        amountRange: [
-                                                            parseFloat(e.target.value) || 0,
-                                                            prev.filter.amountRange[1]
-                                                        ]
-                                                    }
+                                                    amountRange: [
+                                                        parseFloat(e.target.value) || 0,
+                                                        prev.amountRange[1]
+                                                    ]
                                                 }))}
                                                 placeholder="Min"
                                             />
                                             <span>to</span>
                                             <input
                                                 type="number"
-                                                value={state.filter.amountRange[1]}
-                                                onChange={(e) => setState(prev => ({
+                                                value={filterState.amountRange[1]}
+                                                onChange={(e) => setFilterState(prev => ({
                                                     ...prev,
-                                                    filter: {
-                                                        ...prev.filter,
-                                                        amountRange: [
-                                                            prev.filter.amountRange[0],
-                                                            parseFloat(e.target.value) || 10000
-                                                        ]
-                                                    }
+                                                    amountRange: [
+                                                        prev.amountRange[0],
+                                                        parseFloat(e.target.value) || 10000
+                                                    ]
                                                 }))}
                                                 placeholder="Max"
                                             />
@@ -703,10 +739,10 @@ const FiatP2P = () => {
                                         <label>Sort By</label>
                                         <div className="sort-controls">
                                             <select
-                                                value={state.filter.sortBy}
-                                                onChange={(e) => setState(prev => ({
+                                                value={filterState.sortBy}
+                                                onChange={(e) => setFilterState(prev => ({
                                                     ...prev,
-                                                    filter: { ...prev.filter, sortBy: e.target.value }
+                                                    sortBy: e.target.value
                                                 }))}
                                             >
                                                 <option value="price">Exchange Rate</option>
@@ -716,34 +752,28 @@ const FiatP2P = () => {
                                             </select>
                                             <button
                                                 className="sort-direction"
-                                                onClick={() => setState(prev => ({
+                                                onClick={() => setFilterState(prev => ({
                                                     ...prev,
-                                                    filter: {
-                                                        ...prev.filter,
-                                                        sortOrder: prev.filter.sortOrder === 'asc' ? 'desc' : 'asc'
-                                                    }
+                                                    sortOrder: prev.sortOrder === 'asc' ? 'desc' : 'asc'
                                                 }))}
                                             >
-                                                {state.filter.sortOrder === 'asc' ? '↑' : '↓'}
+                                                {filterState.sortOrder === 'asc' ? '↑' : '↓'}
                                             </button>
                                         </div>
                                     </div>
 
                                     <button
                                         className="reset-filters"
-                                        onClick={() => setState(prev => ({
-                                            ...prev,
-                                            filter: {
-                                                ...prev.filter,
-                                                sellCurrency: 'USD',
-                                                receiveCurrency: 'KES',
-                                                paymentMethod: 'all',
-                                                amountRange: [0, 10000],
-                                                sortBy: 'price',
-                                                sortOrder: 'asc',
-                                                searchQuery: ''
-                                            }
-                                        }))}
+                                        onClick={() => setFilterState({
+                                            currency: 'USD',
+                                            paymentMethod: 'all',
+                                            amountRange: [0, 10000],
+                                            sortBy: 'price',
+                                            sortOrder: 'asc',
+                                            searchQuery: '',
+                                            sellCurrency: 'USD',
+                                            receiveCurrency: 'KES'
+                                        })}
                                     >
                                         Reset Filters
                                     </button>
@@ -766,7 +796,7 @@ const FiatP2P = () => {
                                     {filteredOrders.length === 0 ? (
                                         <tr className="no-orders">
                                             <td colSpan="5">
-                                                No {state.activeTab === 'buy' ? 'sell' : 'buy'} orders matching your filters.
+                                                No {uiState.activeTab === 'buy' ? 'sell' : 'buy'} orders matching your filters.
                                             </td>
                                         </tr>
                                     ) : (
@@ -808,9 +838,11 @@ const FiatP2P = () => {
                                                 <td className="payment-cell">
                                                     <div className="payment-methods">
                                                         {order.paymentMethods.slice(0, 2).map((method, idx) => (
-                                                            <span key={idx} className="payment-method">
-                                                                {method}
-                                                            </span>
+                                                            method && (
+                                                                <span key={idx} className="payment-method">
+                                                                    {method.name}
+                                                                </span>
+                                                            )
                                                         ))}
                                                         {order.paymentMethods.length > 2 && (
                                                             <span className="more-methods">
@@ -824,7 +856,7 @@ const FiatP2P = () => {
                                                         onClick={() => handleTrade(order)}
                                                         className="trade-btn"
                                                     >
-                                                        {state.activeTab === 'buy' ? 'Buy' : 'Sell'}
+                                                        {uiState.activeTab === 'buy' ? 'Buy' : 'Sell'}
                                                     </button>
                                                 </td>
                                             </tr>
@@ -862,7 +894,7 @@ const FiatP2P = () => {
                                 </tr>
                             </thead>
                             <tbody>
-                                {state.userOrders.map(order => (
+                                {uiState.userOrders.map(order => (
                                     <tr key={order.id} className={`user-order-row ${order.status}`}>
                                         <td className={`type ${order.type}`}>
                                             {order.type} {order.sellCurrency} for {order.receiveCurrency}
@@ -898,7 +930,7 @@ const FiatP2P = () => {
                                         <td className="actions">
                                             <button
                                                 className="details-btn"
-                                                onClick={() => setState(prev => ({ ...prev, showOrderDetails: order.id }))}
+                                                onClick={() => setUiState(prev => ({ ...prev, showOrderDetails: order.id }))}
                                             >
                                                 Details
                                             </button>
@@ -912,13 +944,13 @@ const FiatP2P = () => {
             </main>
 
             {/* Order Details Modal */}
-            {state.showOrderDetails && (
+            {uiState.showOrderDetails && (
                 <div className="modal-overlay">
                     <div className="order-details-modal">
                         <div className="modal-header">
                             <h3>Order Details</h3>
                             <button
-                                onClick={() => setState(prev => ({ ...prev, showOrderDetails: null }))}
+                                onClick={() => setUiState(prev => ({ ...prev, showOrderDetails: null }))}
                                 className="close-modal"
                             >
                                 &times;
@@ -927,7 +959,7 @@ const FiatP2P = () => {
 
                         <div className="modal-body">
                             {(() => {
-                                const order = state.userOrders.find(o => o.id === state.showOrderDetails);
+                                const order = uiState.userOrders.find(o => o.id === uiState.showOrderDetails);
                                 if (!order) return null;
 
                                 return (
@@ -996,7 +1028,7 @@ const FiatP2P = () => {
 
                         <div className="modal-footer">
                             {(() => {
-                                const order = state.userOrders.find(o => o.id === state.showOrderDetails);
+                                const order = uiState.userOrders.find(o => o.id === uiState.showOrderDetails);
                                 if (!order) return null;
 
                                 return (
@@ -1013,7 +1045,7 @@ const FiatP2P = () => {
                                         )}
                                         <button
                                             className="close-btn"
-                                            onClick={() => setState(prev => ({ ...prev, showOrderDetails: null }))}
+                                            onClick={() => setUiState(prev => ({ ...prev, showOrderDetails: null }))}
                                         >
                                             Close
                                         </button>
