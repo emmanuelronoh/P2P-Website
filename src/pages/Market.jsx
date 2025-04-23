@@ -57,7 +57,7 @@ const TradingService = {
         location: filters.location,
         sort_by: filters.sortBy
       };
-      
+
       const queryParams = new URLSearchParams();
       for (const key in apiFilters) {
         if (apiFilters[key]) {
@@ -181,15 +181,15 @@ const Market = () => {
   }, [filterMemo, fetchTraders]);
 
   const processedTraders = useMemo(() => {
-    const filtered = searchQuery 
+    const filtered = searchQuery
       ? traders.filter(trader => {
-          const query = searchQuery.toLowerCase();
-          const safeTrader = { ...DEFAULT_TRADER, ...trader };
-          return (
-            safeTrader.creator?.username?.toLowerCase().includes(query) ||
-            (safeTrader.payment_methods?.join(', ')?.toLowerCase().includes(query) || ''
+        const query = searchQuery.toLowerCase();
+        const safeTrader = { ...DEFAULT_TRADER, ...trader };
+        return (
+          safeTrader.creator?.username?.toLowerCase().includes(query) ||
+          (safeTrader.payment_methods?.join(', ')?.toLowerCase().includes(query) || ''
           ));
-        })
+      })
       : traders;
 
     return [...filtered].sort((a, b) => {
@@ -248,8 +248,8 @@ const Market = () => {
     // Convert completion rate (0-100) to 5-star rating (0-5)
     const rating = (completionRate || 0) / 20;
     return Array(5).fill(0).map((_, i) => (
-      <FaStar 
-        key={i} 
+      <FaStar
+        key={i}
         className={`star ${i < Math.floor(rating) ? 'full-star' : ''}${i === Math.floor(rating) && rating % 1 >= 0.5 ? ' half-star' : ''}`}
       />
     ));
@@ -416,7 +416,7 @@ const Market = () => {
                       <div className="trader-details">
                         <div className="trader-name-verification">
                           <h3>
-                            <Link to={`/profile/${safeTrader.creator?.id}`} className="trader-link">
+                            <Link to={`/profile-details-users/${safeTrader.creator?.id}`} className="trader-link">
                               {safeTrader.creator?.username || 'Anonymous'}
                             </Link>
                             {safeTrader.creator?.verification_status === 'VERIFIED' && (
@@ -535,7 +535,7 @@ const Market = () => {
       )}
 
 
-<div className="how-to-buy-section">
+      <div className="how-to-buy-section">
         <div className="buy-crypto-header">
           <h2>How to buy Crypto on CheetahX</h2>
           <p className="subtitle">Fast, secure, and beginner-friendly in just 3 simple steps</p>

@@ -187,6 +187,7 @@ function AppInner({ theme, toggleTheme }) {
           <Route path="/CryptoListing" element={<CryptoListing />} />
           <Route path="/faq" element={<Faq />} />
           <Route path="/DashboardVendors" element={<DashboardVendors />} />
+          <Route path="/profile-details-users/:userId" element={<ProfileDetails />} />
         </Route>
 
         {/* Message routes without Footer */}
@@ -205,7 +206,7 @@ function AppInner({ theme, toggleTheme }) {
           <Route path="/faq-fiat" element={<Faq />} />
           <Route path="/support-fiat" element={<Support />} />
           <Route path="/tutorials-fiat" element={<Tutorials />} />
-          <Route path="/profile-details-user/:username" element={<ProfileDetails />} />
+          <Route path="/profile-details-user/:userId" element={<ProfileDetails />} />
         </Route>
 
         {/* P2P Message routes without Footer */}

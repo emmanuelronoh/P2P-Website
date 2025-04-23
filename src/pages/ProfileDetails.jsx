@@ -19,8 +19,6 @@ const UserProfile = () => {
 
       try {
         const token = localStorage.getItem('accessToken'); // ✅ Move this up
-        const decoded = jwtDecode(token); // ✅ Now token is available
-        const userId = decoded.user_id;
 
         console.log("userId:", userId);
         console.log("token:", token);
@@ -37,9 +35,9 @@ const UserProfile = () => {
         setLoading(false);
       }
     };
-
+  
     fetchProfile();
-  }, [userId]);
+  }, [userId])
 
   if (loading) return <div className="profile-loading">Loading profile...</div>;
   if (error) return <div className="profile-error">Error: {error}</div>;

@@ -855,7 +855,7 @@ const Messages = () => {
                   <p>No conversations found</p>
                   <button
                     className="start-chat-btn"
-                    onClick={() => navigate('/fiat-p2p')}
+                    onClick={() => navigate('/market')}
                   >
                     Start New Chat
                   </button>
@@ -1045,7 +1045,7 @@ const Messages = () => {
               <p>Choose a chat from the list or start a new one</p>
               <button
                 className="start-chat-btn"
-                onClick={() => navigate('/fiat-p2p')}
+                onClick={() => navigate('/market')}
               >
                 Start New Chat
               </button>
