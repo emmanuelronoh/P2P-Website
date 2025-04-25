@@ -20,7 +20,7 @@
     font-size: 2.5rem;
     margin-bottom: 0.5rem;
     color: #2c3e50;
-    background: linear-gradient(to right, #3498db, #2ecc71);
+    background: linear-gradient(to right, #81C3DB);
     -webkit-background-clip: text;
     background-clip: text;
     color: transparent;
@@ -83,7 +83,7 @@
   .stat-number {
     font-size: 1.8rem;
     font-weight: bold;
-    color: #3498db;
+    color: #81C3DB;
     margin-bottom: 0.5rem;
   }
   
@@ -129,7 +129,7 @@
   .form-group input:focus,
   .form-group select:focus,
   .form-group textarea:focus {
-    border-color: #3498db;
+    border-color: #81C3DB;
     box-shadow: 0 0 0 3px rgba(52, 152, 219, 0.2);
     outline: none;
   }
@@ -150,7 +150,7 @@
     cursor: pointer;
     transition: all 0.3s ease;
     font-weight: 600;
-    color: #3498db;
+    color: #81C3DB;
   }
   
   .toggle-additional:hover {
@@ -167,7 +167,7 @@
     justify-content: center;
     width: 100%;
     padding: 1rem;
-    background: linear-gradient(to right, #3498db, #2ecc71);
+    background: linear-gradient(to right, #81C3DB);
     color: white;
     border: none;
     border-radius: 8px;
@@ -228,7 +228,7 @@
   .support-cta {
     text-align: center;
     padding: 2rem;
-    background: linear-gradient(135deg, #3498db 0%, #2ecc71 100%);
+    background: linear-gradient(135deg, #81C3DB);
     border-radius: 12px;
     color: white;
     margin-top: 2rem;

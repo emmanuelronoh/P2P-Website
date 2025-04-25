@@ -75,10 +75,10 @@
   }
   
   .links-heading {
-    font-size: 1.1rem;
-    font-weight: 600;
-    margin-bottom: 1rem;
-    color: #ffffff;
+    font-size: 1.1rem !important;
+    font-weight: 600 !important;
+    margin-bottom: 1rem !important;
+    color: #ffffff !important;
     position: relative;
     padding-bottom: 0.5rem;
   }

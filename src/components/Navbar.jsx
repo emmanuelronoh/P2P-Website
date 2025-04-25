@@ -1,6 +1,8 @@
 
 import { useState, useEffect, useRef, useCallback } from "react";
 import { Link, useNavigate, useLocation } from "react-router-dom";
+import { ethers } from 'ethers';
+import WalletConnectProvider from '@walletconnect/web3-provider';
 import { useAuth } from '../contexts/AuthContext';
 import {
   FaMoon,
@@ -71,6 +73,7 @@ const DropdownMenu = ({ title, items, icon: Icon }) => {
   const dropdownRef = useRef(null);
   const [isMobile, setIsMobile] = useState(window.innerWidth < 992);
   const { user, isAuthenticated, loading: authLoading } = useAuth();
+
 
 
   useEffect(() => {
@@ -155,72 +158,108 @@ const Navbar = ({ toggleTheme, theme }) => {
   const location = useLocation();
   const [showWalletModal, setShowWalletModal] = useState(false);
   const [key, setKey] = useState(0);
+  const [provider, setProvider] = useState(null);
+  const [signer, setSigner] = useState(null);
+  const [chainId, setChainId] = useState(null);
 
 
-  const handleWalletConnect = async (walletType) => {
+  // Improved wallet connection handler
+  const handleWalletConnect = async (walletType, address, provider) => {
     try {
-      let provider;
+      if (!address) throw new Error('No wallet address provided');
 
-      switch (walletType) {
-        case 'metamask':
-          if (!window.ethereum) {
-            window.open('https://metamask.io/download.html', '_blank');
-            throw new Error('MetaMask not installed');
-          }
-          provider = window.ethereum;
-          await window.ethereum.request({ method: 'eth_requestAccounts' });
-          break;
+      setWalletAddress(address);
+      localStorage.setItem("walletAddress", address);
 
-        case 'trustwallet':
-          if (!window.ethereum) {
-            throw new Error('Trust Wallet not detected');
-          }
-          provider = window.ethereum;
-          await window.ethereum.request({ method: 'eth_requestAccounts' });
-          break;
+      if (provider) {
+        setProvider(provider);
+        const ethersProvider = new ethers.providers.Web3Provider(provider);
+        const signer = ethersProvider.getSigner();
+        setSigner(signer);
 
-        case 'binance':
-          if (!window.BinanceChain) {
-            throw new Error('Binance Chain Wallet not detected');
-          }
-          provider = window.BinanceChain;
-          await window.BinanceChain.request({ method: 'eth_requestAccounts' });
-          break;
+        // Get network/chain info
+        const network = await ethersProvider.getNetwork();
+        setChainId(network.chainId);
 
-        default:
-          throw new Error('Unsupported wallet type');
+        // Listen for account changes
+        if (provider.on) {
+          provider.on('accountsChanged', (accounts) => {
+            if (accounts.length === 0) {
+              // Wallet disconnected
+              handleWalletDisconnect();
+            } else {
+              // Account changed
+              setWalletAddress(accounts[0]);
+            }
+          });
+
+          provider.on('chainChanged', (chainId) => {
+            setChainId(parseInt(chainId, 16));
+            window.location.reload(); // Recommended by MetaMask docs
+          });
+
+          provider.on('disconnect', () => {
+            handleWalletDisconnect();
+          });
+        }
       }
 
-      const accounts = await provider.request({ method: 'eth_accounts' });
-      const address = accounts[0];
-
-      if (!address) throw new Error('No accounts found');
-
-      handleWalletConnected(address);
+      // Fetch balance after connection
+      await fetchBalance(address);
       setShowWalletModal(false);
-
     } catch (error) {
       console.error('Wallet connection error:', error);
-      // You can add error state and display it in the modal if you want
+      // You might want to add error state and display it to the user
     }
   };
+
+  const handleWalletDisconnect = () => {
+    setWalletAddress(null);
+    setProvider(null);
+    setSigner(null);
+    setChainId(null);
+    localStorage.removeItem("walletAddress");
+    setBalance("0.00");
+  };
+
+  // Modified fetchBalance to work with actual provider
+  const fetchBalance = async (address) => {
+    if (!provider || !address) return;
+
+    try {
+      const ethersProvider = new ethers.providers.Web3Provider(provider);
+      const balance = await ethersProvider.getBalance(address);
+      setBalance(ethers.utils.formatEther(balance));
+    } catch (error) {
+      console.error("Error fetching balance:", error);
+      setBalance("0.00");
+    }
+  };
+
+  // Add this effect to check for connected wallet on load
+  useEffect(() => {
+    const checkConnectedWallet = async () => {
+      // Check if wallet is connected in localStorage
+      const savedAddress = localStorage.getItem("walletAddress");
+      if (savedAddress) {
+        setWalletAddress(savedAddress);
+
+        // Check if we have a provider (like MetaMask) already connected
+        if (window.ethereum && window.ethereum.selectedAddress) {
+          const provider = window.ethereum;
+          await handleWalletConnect('metamask', savedAddress, provider);
+        }
+      }
+    };
+
+    checkConnectedWallet();
+  }, []);
 
   useEffect(() => {
     setKey(prevKey => prevKey + 1);
   }, [isAuthenticated, location.pathname]);
 
 
-  // Fetch user balance
-  const fetchBalance = async (address) => {
-    try {
-      // Simulate balance fetch
-      setTimeout(() => {
-        setBalance((Math.random() * 10).toFixed(4));
-      }, 1000);
-    } catch (error) {
-      console.error("Error fetching balance:", error);
-    }
-  };
 
   // Handle wallet connection
   const handleWalletConnected = useCallback((address) => {
@@ -261,7 +300,7 @@ const Navbar = ({ toggleTheme, theme }) => {
   ];
 
   const helpItems = [
-    { label: "FAQ", path: "/CryptoListing", icon: FaQuestionCircle },
+    { label: "FAQ", path: "/faq", icon: FaQuestionCircle },
     { label: "Tutorials", path: "/tutorials", icon: FaQuestionCircle },
     { label: "Contact Support", path: "/support", icon: FaHeadset }
   ];
@@ -298,7 +337,7 @@ const Navbar = ({ toggleTheme, theme }) => {
           >
             <Link to="/">
               <img src={logo} alt="Cheetah P2P Logo" className="logo" />
-              <span className="logo-contain">Cheetah P2P</span>
+              <span className="logo-contain">CHEETAH P2P</span>
             </Link>
           </motion.div>
 
@@ -374,15 +413,27 @@ const Navbar = ({ toggleTheme, theme }) => {
                     <span className="wallet-balance">
                       {balance} ETH
                     </span>
+                    <div className="wallet-network">
+                      {chainId === 1 ? 'Mainnet' :
+                        chainId === 5 ? 'Goerli' :
+                          chainId === 56 ? 'BSC' :
+                            chainId ? `Chain ${chainId}` : 'Unknown'}
+                    </div>
                     <button
                       className="wallet-address"
                       onClick={() => navigate("/wallet")}
+                      title={walletAddress}
                     >
                       {`${walletAddress.substring(0, 6)}...${walletAddress.substring(walletAddress.length - 4)}`}
                     </button>
+                    <button
+                      className="wallet-disconnect"
+                      onClick={handleWalletDisconnect}
+                    >
+                      Disconnect
+                    </button>
                   </div>
                 ) : (
-
                   <button
                     className="connect-wallet-btn"
                     onClick={() => setShowWalletModal(true)}
@@ -424,7 +475,9 @@ const Navbar = ({ toggleTheme, theme }) => {
       {showWalletModal && (
         <ConnectWalletModal
           onClose={() => setShowWalletModal(false)}
-          onConnect={handleWalletConnect}
+          onConnect={(walletType, address, provider) =>
+            handleWalletConnect(walletType, address, provider)
+          }
         />
       )}
     </>

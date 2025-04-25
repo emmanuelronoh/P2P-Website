@@ -108,9 +108,9 @@
   
 /* Base Styles */
 :root {
-  --primary-color: #2962ff;
-  --primary-dark: #0039cb;
-  --primary-light: #768fff;
+  --primary-color: #81C3DB;
+  --primary-dark: #81C3DB;
+  --primary-light: #81C3DB;
   --secondary-color: #00c853;
   --secondary-dark: #009624;
   --danger-color: #ff3d00;

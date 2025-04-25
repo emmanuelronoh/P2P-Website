@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from "react-router-dom";
 import '../styles/Home.css';
 
 const CheetahXHome = () => {
@@ -12,6 +13,7 @@ const CheetahXHome = () => {
     const [activeTab, setActiveTab] = useState('buy');
     const [scrollPosition, setScrollPosition] = useState(0);
     const [isMenuOpen, setIsMenuOpen] = useState(false);
+    const navigate = useNavigate();
 
     useEffect(() => {
         const handleScroll = () => {

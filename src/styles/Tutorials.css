@@ -7,7 +7,7 @@
   }
   /* Premium P2P Header Style */
 .tutorials-header {
-  background: linear-gradient(135deg, #1e3a8a 0%, #3b82f6 100%);
+  background: linear-gradient(135deg, #81C3DB 0%, #3b82f6 100%);
   color: #ffffff;
   padding: 6rem 2rem;
   text-align: center;
@@ -23,7 +23,7 @@
 /* When user scrolls */
 .tutorials-header.scrolled {
   padding: 2rem;
-  background: linear-gradient(135deg, #1e40af 0%, #2563eb 100%);
+  background: linear-gradient(135deg, #1e40af 0%, #81C3DB 100%);
 }
 
 /* Add a subtle glowing effect */
@@ -169,7 +169,7 @@
   }
   
   .section-links li.active {
-    background-color: #2563eb;
+    background-color: #81C3DB;
     color: white;
   }
   
@@ -296,7 +296,7 @@
   .step-number {
     width: 32px;
     height: 32px;
-    background-color: #2563eb;
+    background-color: #81C3DB;
     color: white;
     border-radius: 50%;
     display: flex;
@@ -355,7 +355,7 @@
   
   .form-button {
     height: 40px;
-    background-color: #2563eb;
+    background-color: #81C3DB;
     color: white;
     border-radius: 6px;
     display: flex;
@@ -409,7 +409,7 @@
   .payment-method svg {
     font-size: 1.5rem;
     margin-bottom: 0.5rem;
-    color: #2563eb;
+    color: #81C3DB;
   }
   
   .escrow-diagram {
@@ -453,7 +453,7 @@
   .btn-interactive {
     margin-top: 1.5rem;
     padding: 0.75rem 1.5rem;
-    background-color: #2563eb;
+    background-color: #81C3DB;
     color: white;
     border: none;
     border-radius: 8px;
@@ -521,7 +521,7 @@
     left: 0;
     width: 30%;
     height: 100%;
-    background-color: #2563eb;
+    background-color: #81C3DB;
   }
   
   .video-chapters {
@@ -559,18 +559,18 @@
   }
   
   .btn-primary {
-    background-color: #2563eb;
+    background-color: #81C3DB;
     color: white;
     border: none;
   }
   
   .btn-primary:hover {
-    background-color: #1d4ed8;
+    background-color: #81C3DB;
   }
   
   .btn-secondary {
     background-color: white;
-    color: #2563eb;
+    color: #81C3DB;
     border: 1px solid #e2e8f0;
   }
   
@@ -600,7 +600,7 @@
   .step-number {
     width: 32px;
     height: 32px;
-    background-color: #2563eb;
+    background-color: #81C3DB;
     color: white;
     border-radius: 50%;
     display: flex;
@@ -653,7 +653,7 @@
   .btn-place-order {
     width: 100%;
     padding: 0.75rem;
-    background-color: #2563eb;
+    background-color: #81C3DB;
     color: white;
     border: none;
     border-radius: 6px;
@@ -706,7 +706,7 @@
   .release-icon {
     width: 40px;
     height: 40px;
-    background-color: #2563eb;
+    background-color: #81C3DB;
     color: white;
     border-radius: 50%;
     display: flex;
@@ -724,7 +724,7 @@
   .tutorials-cta {
     text-align: center;
     padding: 4rem 2rem;
-    background: linear-gradient(135deg, #1e3a8a 0%, #2563eb 100%);
+    background: linear-gradient(135deg, #81C3DB 0%, #81C3DB 100%);
     color: white;
     margin-top: 2rem;
   }

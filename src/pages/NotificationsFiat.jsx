@@ -1,105 +1,118 @@
 import React, { useState, useEffect } from 'react';
-import { FiBell, FiCheck, FiX, FiAlertTriangle, FiDollarSign, FiShield, FiMessageSquare, FiUser, FiClock } from 'react-icons/fi';
-import "../styles/Notifications.css"
+import { FiBell, FiCheck, FiX, FiAlertTriangle, FiDollarSign, FiShield, FiMessageSquare, FiUser, FiClock, FiMail, FiShoppingCart, FiCreditCard, FiLock, FiCheckCircle } from 'react-icons/fi';
+import { io } from 'socket.io-client';
+import axios from 'axios';
+import "../styles/Notifications.css";
 
 const NotificationsPage = () => {
   const [notifications, setNotifications] = useState([]);
   const [activeFilter, setActiveFilter] = useState('all');
   const [unreadCount, setUnreadCount] = useState(0);
   const [isLoading, setIsLoading] = useState(true);
+  const [socket, setSocket] = useState(null);
 
-  // Simulate fetching notifications
+  // Connect to WebSocket when component mounts
+  useEffect(() => {
+    const newSocket = io('ws://localhost:8000', {
+      path: 'crypto/ws/notifications/',
+      transports: ['websocket'],  // ensure only websocket is used (not polling)
+      query: {
+        token: localStorage.getItem('accessToken'),
+      },
+    });
+    
+    setSocket(newSocket);
+
+    return () => newSocket.close();
+  }, []);
+
+  // Listen for new notifications
+  useEffect(() => {
+    if (!socket) return;
+
+    socket.on('new_notification', (notification) => {
+      setNotifications(prev => [notification, ...prev]);
+      setUnreadCount(prev => prev + 1);
+    });
+
+    return () => {
+      socket.off('new_notification');
+    };
+  }, [socket]);
+
+  // Fetch initial notifications from Django
   useEffect(() => {
     const fetchNotifications = async () => {
-      // Simulate API call
-      setTimeout(() => {
-        const mockNotifications = [
-          {
-            id: 1,
-            type: 'trade',
-            title: 'New Trade Request',
-            message: 'User CryptoKing has requested to trade 0.5 BTC with you',
-            time: '2 mins ago',
-            read: false,
-            tradeId: 'TX-789456',
-            urgent: true
-          },
-          {
-            id: 2,
-            type: 'escrow',
-            title: 'Escrow Funded',
-            message: 'Funds for trade TX-123456 have been secured in escrow',
-            time: '1 hour ago',
-            read: false,
-            tradeId: 'TX-123456'
-          },
-          {
-            id: 3,
-            type: 'message',
-            title: 'New Message',
-            message: 'You have a new message from User BitTrader regarding trade TX-654321',
-            time: '3 hours ago',
-            read: true,
-            tradeId: 'TX-654321'
-          },
-          {
-            id: 4,
-            type: 'system',
-            title: 'Security Alert',
-            message: 'We detected a login from a new device in London, UK',
-            time: '1 day ago',
-            read: true
-          },
-          {
-            id: 5,
-            type: 'trade',
-            title: 'Trade Completed',
-            message: 'Trade TX-987654 has been successfully completed',
-            time: '2 days ago',
-            read: true,
-            tradeId: 'TX-987654'
-          },
-          {
-            id: 6,
-            type: 'escrow',
-            title: 'Escrow Release Required',
-            message: 'Please release escrow funds for trade TX-321654 as goods have been delivered',
-            time: '3 days ago',
-            read: false,
-            tradeId: 'TX-321654',
-            urgent: true
+      try {
+        const response = await axios.get('http://localhost:8000/crypto/api/notifications/', {
+          headers: {
+            'Authorization': `Bearer ${localStorage.getItem('accessToken')}`
           }
-        ];
-        setNotifications(mockNotifications);
-        setUnreadCount(mockNotifications.filter(n => !n.read).length);
+        });
+        
+        setNotifications(response.data.results);
+        setUnreadCount(response.data.unread_count);
         setIsLoading(false);
-      }, 800);
+      } catch (error) {
+        console.error('Error fetching notifications:', error);
+        setIsLoading(false);
+      }
     };
 
     fetchNotifications();
   }, []);
 
-  const markAsRead = (id) => {
-    const updatedNotifications = notifications.map(notification => 
-      notification.id === id ? { ...notification, read: true } : notification
-    );
-    setNotifications(updatedNotifications);
-    setUnreadCount(updatedNotifications.filter(n => !n.read).length);
+  const markAsRead = async (id) => {
+    try {
+      await axios.patch(`http://localhost:8000/crypto/api/notifications/${id}/mark_as_read/`, {}, {
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('accessToken')}`
+        }
+      });
+      
+      const updatedNotifications = notifications.map(notification => 
+        notification.id === id ? { ...notification, read: true } : notification
+      );
+      setNotifications(updatedNotifications);
+      setUnreadCount(updatedNotifications.filter(n => !n.read).length);
+    } catch (error) {
+      console.error('Error marking notification as read:', error);
+    }
   };
 
-  const markAllAsRead = () => {
-    const updatedNotifications = notifications.map(notification => ({
-      ...notification,
-      read: true
-    }));
-    setNotifications(updatedNotifications);
-    setUnreadCount(0);
+  const markAllAsRead = async () => {
+    try {
+      await axios.post('http://localhost:8000/crypto/mark_all_as_read/', {}, {
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('accessToken')}`
+        }
+      });
+      
+      const updatedNotifications = notifications.map(notification => ({
+        ...notification,
+        read: true
+      }));
+      setNotifications(updatedNotifications);
+      setUnreadCount(0);
+    } catch (error) {
+      console.error('Error marking all notifications as read:', error);
+    }
   };
 
-  const deleteNotification = (id) => {
-    const updatedNotifications = notifications.filter(notification => notification.id !== id);
-    setNotifications(updatedNotifications);
-    setUnreadCount(updatedNotifications.filter(n => !n.read).length);
+  const deleteNotification = async (id) => {
+    try {
+      await axios.delete(`http://localhost:8000/crypto/api/notifications/${id}/`, {
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('accessToken')}`
+        }
+      });
+      
+      const updatedNotifications = notifications.filter(notification => notification.id !== id);
+      setNotifications(updatedNotifications);
+      setUnreadCount(updatedNotifications.filter(n => !n.read).length);
+    } catch (error) {
+      console.error('Error deleting notification:', error);
+    }
   };
 
   const filteredNotifications = activeFilter === 'all' 
@@ -116,10 +129,45 @@ const NotificationsPage = () => {
         return <FiMessageSquare className="icon message-icon" />;
       case 'system':
         return <FiAlertTriangle className="icon system-icon" />;
+      case 'registration':
+        return <FiUser className="icon registration-icon" />;
+      case 'verification':
+        return <FiCheckCircle className="icon verification-icon" />;
+      case 'order':
+        return <FiShoppingCart className="icon order-icon" />;
+      case 'payment':
+        return <FiCreditCard className="icon payment-icon" />;
+      case 'security':
+        return <FiLock className="icon security-icon" />;
+      case 'email':
+        return <FiMail className="icon email-icon" />;
       default:
         return <FiBell className="icon default-icon" />;
     }
   };
+
+  // Format time to relative time (e.g., "2 minutes ago")
+  const formatTime = (timestamp) => {
+    const seconds = Math.floor((new Date() - new Date(timestamp)) / 1000);
+    
+    let interval = Math.floor(seconds / 31536000);
+    if (interval >= 1) return `${interval} year${interval === 1 ? '' : 's'} ago`;
+    
+    interval = Math.floor(seconds / 2592000);
+    if (interval >= 1) return `${interval} month${interval === 1 ? '' : 's'} ago`;
+    
+    interval = Math.floor(seconds / 86400);
+    if (interval >= 1) return `${interval} day${interval === 1 ? '' : 's'} ago`;
+    
+    interval = Math.floor(seconds / 3600);
+    if (interval >= 1) return `${interval} hour${interval === 1 ? '' : 's'} ago`;
+    
+    interval = Math.floor(seconds / 60);
+    if (interval >= 1) return `${interval} minute${interval === 1 ? '' : 's'} ago`;
+    
+    return 'Just now';
+  };
+
 
   return (
     <div className="notifications-container">

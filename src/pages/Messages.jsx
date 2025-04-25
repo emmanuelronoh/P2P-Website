@@ -17,6 +17,7 @@ const Messages = () => {
   const messageInputRef = useRef(null);
   const typingTimeoutRef = useRef(null);
 
+
   const [state, setState] = useState({
     chatRooms: [],
     currentChat: location.state?.chatRoomId ? {
@@ -37,6 +38,11 @@ const Messages = () => {
     isMobileView: window.innerWidth < 768,
     showChatList: window.innerWidth >= 768,
     showMobileMenu: false,
+    escrowStatus: null,
+    escrowAddress: null,
+    escrowDetails: null,
+    showEscrowActions: false,
+    isProcessingEscrow: false,
     darkMode: window.matchMedia('(prefers-color-scheme: dark)').matches
   });
 
@@ -561,6 +567,21 @@ const Messages = () => {
   }, [state.messages]);
 
   useEffect(() => {
+    if (state.currentChat?.tradeId) {
+      // Initial fetch
+      fetchEscrowStatus(state.currentChat.tradeId);
+
+      // Set up polling
+      const interval = setInterval(
+        () => fetchEscrowStatus(state.currentChat.tradeId),
+        15000 // Poll every 15 seconds
+      );
+
+      return () => clearInterval(interval);
+    }
+  }, [state.currentChat?.tradeId, fetchEscrowStatus]);
+
+  useEffect(() => {
     // Focus on input when chat changes
     if (messageInputRef.current && state.currentChat) {
       messageInputRef.current.focus();
@@ -574,6 +595,89 @@ const Messages = () => {
       room.last_message?.content?.toLowerCase().includes(state.searchTerm.toLowerCase())
     );
   });
+
+
+
+  const fetchEscrowStatus = useCallback(async (tradeId) => {
+    try {
+      const token = localStorage.getItem('accessToken');
+      const response = await fetch(
+        `http://localhost:8000/api/trades/${tradeId}/escrow-status/`,
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+      const data = await response.json();
+
+      setState(prev => ({
+        ...prev,
+        escrowStatus: data.status,
+        escrowAddress: data.escrow_address,
+        escrowDetails: data,
+        showEscrowActions: ['PENDING', 'FUNDED'].includes(data.status)
+      }));
+    } catch (error) {
+      console.error('Error fetching escrow status:', error);
+    }
+  }, []);
+
+  const verifyDeposit = async () => {
+    setState(prev => ({ ...prev, isProcessingEscrow: true }));
+    try {
+      const token = localStorage.getItem('accessToken');
+      const response = await fetch(
+        `http://localhost:8000/api/escrow/${state.escrowAddress}/verify-deposit/`,
+        {
+          method: 'POST',
+          headers: { Authorization: `Bearer ${token}` }
+        }
+      );
+      await response.json();
+      fetchEscrowStatus(state.currentChat.tradeId);
+    } catch (error) {
+      console.error('Error verifying deposit:', error);
+    } finally {
+      setState(prev => ({ ...prev, isProcessingEscrow: false }));
+    }
+  };
+
+  const releaseEscrow = async () => {
+    setState(prev => ({ ...prev, isProcessingEscrow: true }));
+    try {
+      const token = localStorage.getItem('accessToken');
+      const response = await fetch(
+        `http://localhost:8000/api/escrow/${state.escrowAddress}/release/`,
+        {
+          method: 'POST',
+          headers: { Authorization: `Bearer ${token}` }
+        }
+      );
+      await response.json();
+      fetchEscrowStatus(state.currentChat.tradeId);
+    } catch (error) {
+      console.error('Error releasing escrow:', error);
+    } finally {
+      setState(prev => ({ ...prev, isProcessingEscrow: false }));
+    }
+  };
+
+  const openDispute = async () => {
+    setState(prev => ({ ...prev, isProcessingEscrow: true }));
+    try {
+      const token = localStorage.getItem('accessToken');
+      const response = await fetch(
+        `http://localhost:8000/api/trades/${state.currentChat.tradeId}/dispute/`,
+        {
+          method: 'POST',
+          headers: { Authorization: `Bearer ${token}` }
+        }
+      );
+      await response.json();
+      fetchEscrowStatus(state.currentChat.tradeId);
+    } catch (error) {
+      console.error('Error opening dispute:', error);
+    } finally {
+      setState(prev => ({ ...prev, isProcessingEscrow: false }));
+    }
+  };
 
   const renderAttachment = (attachment) => {
     // Determine if this is a temporary attachment (before upload completes)
@@ -773,6 +877,42 @@ const Messages = () => {
               >
                 <FiPlus size={20} />
               </button>
+            </div>
+          )}
+          {state.currentChat?.tradeId && (
+            <div className="escrow-status-bar">
+              <div className={`status-indicator ${state.escrowStatus?.toLowerCase()}`}>
+                {state.escrowStatus || 'Loading...'}
+              </div>
+              {state.escrowAddress && (
+                <a
+                  href={`${BLOCKCHAIN_EXPLORER_URL}/address/${state.escrowAddress}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="view-on-blockchain"
+                >
+                  View Escrow
+                </a>
+              )}
+            </div>
+          )}
+          {state.currentChat?.orderDetails && (
+            <div className="trade-summary">
+              <h4>Trade Details</h4>
+              <div className="trade-details">
+                <div>
+                  <span>Amount:</span>
+                  <strong>{state.currentChat.orderDetails.amount} {state.currentChat.orderDetails.currency}</strong>
+                </div>
+                <div>
+                  <span>Price:</span>
+                  <strong>{state.currentChat.orderDetails.price} {state.currentChat.orderDetails.fiatCurrency}</strong>
+                </div>
+                <div>
+                  <span>Payment Method:</span>
+                  <strong>{state.currentChat.orderDetails.paymentMethod}</strong>
+                </div>
+              </div>
             </div>
           )}
         </div>
@@ -1031,6 +1171,40 @@ const Messages = () => {
                       )}
                     </button>
                   </div>
+                  {state.showEscrowActions && (
+                    <div className="escrow-actions">
+                      {/* Buyer actions */}
+                      {userIsBuyer && state.escrowStatus === 'PENDING' && (
+                        <button
+                          onClick={verifyDeposit}
+                          disabled={state.isProcessingEscrow}
+                        >
+                          {state.isProcessingEscrow ? 'Processing...' : 'I Paid'}
+                        </button>
+                      )}
+
+                      {/* Seller actions */}
+                      {userIsSeller && state.escrowStatus === 'FUNDED' && (
+                        <button
+                          onClick={releaseEscrow}
+                          disabled={state.isProcessingEscrow}
+                        >
+                          Release Funds
+                        </button>
+                      )}
+
+                      {/* Dispute button */}
+                      {(userIsBuyer || userIsSeller) &&
+                        ['PENDING', 'FUNDED'].includes(state.escrowStatus) && (
+                          <button
+                            onClick={openDispute}
+                            className="dispute-btn"
+                          >
+                            Open Dispute
+                          </button>
+                        )}
+                    </div>
+                  )}
                 </div>
               </div>
             </>

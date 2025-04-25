@@ -13,7 +13,7 @@ const FiatP2P = () => {
     const { isAuthenticated, loading: authLoading, logout } = useAuth();
     const navigate = useNavigate();
     const [darkMode, setDarkMode] = useState(window.matchMedia('(prefers-color-scheme: dark)').matches);
-    
+
     // Separate state for order placement and filtering
     const [orderState, setOrderState] = useState({
         selectedPayment: '',
@@ -73,19 +73,19 @@ const FiatP2P = () => {
 
     const loadData = async () => {
         if (authLoading || !isAuthenticated) return;
-    
+
         try {
             const token = localStorage.getItem('accessToken');
             if (!token) {
                 navigate('/login');
                 return;
             }
-    
+
             const headers = {
                 Authorization: `Bearer ${token}`,
                 'Content-Type': 'application/json'
             };
-    
+
             // Fetch all data in parallel
             const [ordersResponse, paymentMethodsResponse, userOrdersResponse, priceTrendsResponse] = await Promise.all([
                 axios.get('http://localhost:8000/escrow/orders/', { headers }),
@@ -93,12 +93,12 @@ const FiatP2P = () => {
                 axios.get('http://localhost:8000/escrow/user-orders/', { headers }),
                 axios.get('http://localhost:8000/escrow/price-trends/', { headers }),
             ]);
-    
+
             // Transform market orders
             const transformedOrders = ordersResponse.data.map(order => {
                 let userDisplay;
                 let userId;
-    
+
                 if (typeof order.user === 'object') {
                     userDisplay = order.user.username || order.user.email || String(order.user.id);
                     userId = order.user.id;
@@ -106,15 +106,13 @@ const FiatP2P = () => {
                     userDisplay = order.user || 'Unknown';
                     userId = null;
                 }
-    
+
                 // Handle payment methods - ensure we always get an array of method names
                 let paymentMethods = [];
                 if (Array.isArray(order.payment_methods)) {
-                    paymentMethods = order.payment_methods.map(method => 
-                        typeof method === 'object' ? method.name : method
-                    );
+                    paymentMethods = order.payment_methods; // Keep the full objects
                 }
-    
+
                 return {
                     id: order.id,
                     userId,
@@ -140,20 +138,20 @@ const FiatP2P = () => {
                     verificationLevel: order.verification_level || 1
                 };
             });
-    
+
             // Transform user orders
             const transformedUserOrders = userOrdersResponse.data.map(order => {
                 let paymentMethods = [];
                 if (Array.isArray(order.payment_methods)) {
-                    paymentMethods = order.payment_methods.map(method => 
+                    paymentMethods = order.payment_methods.map(method =>
                         typeof method === 'object' ? method.name : method
                     );
                 } else if (order.payment_method) {
-                    paymentMethods = [typeof order.payment_method === 'object' 
-                        ? order.payment_method.name 
+                    paymentMethods = [typeof order.payment_method === 'object'
+                        ? order.payment_method.name
                         : order.payment_method];
                 }
-    
+
                 return {
                     id: order.id,
                     type: order.order_type,
@@ -174,7 +172,7 @@ const FiatP2P = () => {
                     hasDispute: order.has_dispute
                 };
             });
-    
+
             setUiState(prev => ({
                 ...prev,
                 orders: transformedOrders,
@@ -183,7 +181,7 @@ const FiatP2P = () => {
                 priceTrends: priceTrendsResponse.data,
                 securityDeposit: 200
             }));
-    
+
         } catch (error) {
             console.error('Error loading data:', error);
             if (error.response?.status === 401) {
@@ -295,21 +293,21 @@ const FiatP2P = () => {
             alert(`Failed to initiate trade: ${error.response?.data?.message || error.message}`);
         }
     };
-    
+
     const handleCreateOrder = async (e) => {
         e.preventDefault();
         if (!orderState.termsAccepted) {
             alert('You must accept the terms and conditions');
             return;
         }
-    
+
         try {
             const token = localStorage.getItem('accessToken');
             if (!token) {
                 navigate('/login');
                 return;
             }
-    
+
             const orderData = {
                 order_type: uiState.activeTab,
                 amount: orderState.amount,
@@ -326,7 +324,7 @@ const FiatP2P = () => {
                     : 'This is a market order',
                 avg_release_time: '15 minutes'
             };
-    
+
             const response = await axios.post(
                 'http://localhost:8000/escrow/orders/',
                 orderData,
@@ -337,7 +335,7 @@ const FiatP2P = () => {
                     }
                 }
             );
-    
+
             // Reset the form first
             setOrderState(prev => ({
                 ...prev,
@@ -345,7 +343,7 @@ const FiatP2P = () => {
                 price: '',
                 selectedPayment: ''
             }));
-    
+
             // Then fetch fresh data from the server
             const refreshedOrders = await axios.get('http://localhost:8000/escrow/user-orders/', {
                 headers: {
@@ -353,20 +351,20 @@ const FiatP2P = () => {
                     'Content-Type': 'application/json'
                 }
             });
-    
+
             // Transform and update only the userOrders part of the state
             const transformedUserOrders = refreshedOrders.data.map(order => {
                 let paymentMethods = [];
                 if (Array.isArray(order.payment_methods)) {
-                    paymentMethods = order.payment_methods.map(method => 
+                    paymentMethods = order.payment_methods.map(method =>
                         typeof method === 'object' ? method.name : method
                     );
                 } else if (order.payment_method) {
-                    paymentMethods = [typeof order.payment_method === 'object' 
-                        ? order.payment_method.name 
+                    paymentMethods = [typeof order.payment_method === 'object'
+                        ? order.payment_method.name
                         : order.payment_method];
                 }
-    
+
                 return {
                     id: order.id,
                     type: order.order_type,
@@ -387,16 +385,16 @@ const FiatP2P = () => {
                     hasDispute: order.has_dispute
                 };
             });
-    
+
             setUiState(prev => ({
                 ...prev,
                 userOrders: transformedUserOrders,
                 showOrderDetails: response.data.id
             }));
-    
+
         } catch (error) {
             console.error('Error creating order:', error);
-    
+
             if (error.response?.status === 401) {
                 logout();
                 navigate('/login');
@@ -448,7 +446,7 @@ const FiatP2P = () => {
                                     >
                                         Limit
                                     </button>
-                                    
+
                                 </span>
                             </h2>
                         </div>

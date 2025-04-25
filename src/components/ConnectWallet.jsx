@@ -70,9 +70,9 @@ function ConnectWallet({ onWalletConnected }) {
 
     const handleConnectClick = () => {
         if (walletAddress) {
-            return; // Already connected, do nothing
+            return; 
         }
-        setShowModal(!showModal); // Toggle modal visibility
+        setShowModal(!showModal);
     };
 
     const connectWallet = async (providerType) => {
@@ -92,7 +92,7 @@ function ConnectWallet({ onWalletConnected }) {
         } catch (error) {
             console.error("Wallet connection failed:", error);
             setError(error.message || "Failed to connect wallet. Please try again.");
-            setShowModal(true); // Keep modal open if connection fails
+            setShowModal(true);
         }
     };
 

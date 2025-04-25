@@ -40,13 +40,11 @@ const Login = () => {
         setIsLoading(true);
     
         try {
-            // Create form data with current state values
             const formData = new FormData();
             formData.append('email', email);
             formData.append('password', password);
-            formData.append('trade_type', tradeType); // Use current tradeType directly
+            formData.append('trade_type', tradeType);
     
-            // Make login request
             const response = await axios.post(
                 "http://localhost:8000/api/auth/login/",
                 formData,
@@ -59,38 +57,45 @@ const Login = () => {
                 }
             );
     
-            // Verify we have the expected response data
-            if (!response.data?.accessToken) {
-                throw new Error("Authentication failed: No token received");
+            // Verify response structure
+            if (!response.data?.accessToken || !response.data?.refreshToken) {
+                throw new Error("Authentication failed: Tokens missing in response");
             }
     
-            // Store tokens
-            localStorage.setItem("accessToken", response.data.accessToken);
-            localStorage.setItem("refreshToken", response.data.refreshToken);
-
-            console.log("FULL RESPONSE:", response);
-
+            // Store tokens with error handling
+            try {
+                localStorage.setItem("accessToken", response.data.accessToken);
+                localStorage.setItem("refreshToken", response.data.refreshToken);
+                console.log("Tokens stored successfully in localStorage");
+            } catch (storageError) {
+                console.error("LocalStorage error:", storageError);
+                // Fallback to sessionStorage or memory if needed
+                sessionStorage.setItem("accessToken", response.data.accessToken);
+                sessionStorage.setItem("refreshToken", response.data.refreshToken);
+            }
     
-            // Update auth context and wait for it to complete
+            // Update auth context
             await authLogin({
                 token: response.data.accessToken,
                 user: response.data.user
             });
     
             // Debug logging
-            console.log("Login successful, tradeType:", tradeType);
-            console.log("Redirecting to:", tradeType === "crypto" ? "/market" : "/fiat-p2p");
+            console.log("Login successful, tokens:", {
+                accessToken: localStorage.getItem("accessToken"),
+                refreshToken: localStorage.getItem("refreshToken")
+            });
     
-            // Perform navigation after state updates
+            // Navigate after state updates
             setTimeout(() => {
                 navigate(tradeType === "crypto" ? "/market" : "/fiat-p2p");
             }, 0);
     
         } catch (err) {
             console.error("Login error:", err);
-            
+
             let errorMessage = "Login failed. Please try again.";
-            
+
             if (err.response) {
                 // Handle specific error messages from backend
                 if (err.response.data?.error) {
@@ -98,13 +103,13 @@ const Login = () => {
                 } else if (err.response.data?.detail) {
                     errorMessage = err.response.data.detail;
                 }
-                
+
                 // Handle email verification case
                 if (err.response.status === 403) {
                     navigate("/verify-email", { state: { email } });
                     return;
                 }
-                
+
                 // Handle account not found
                 if (err.response.status === 404) {
                     errorMessage = "Account not found. Please check your credentials or register.";
@@ -112,7 +117,7 @@ const Login = () => {
             } else if (err.message) {
                 errorMessage = err.message;
             }
-            
+
             setError(errorMessage);
             setShake(true);
             setTimeout(() => setShake(false), 500);
@@ -121,7 +126,7 @@ const Login = () => {
         }
     };
 
-    
+
     const triggerError = (message) => {
         setShake(true);
         setTimeout(() => setShake(false), 500);
@@ -139,7 +144,7 @@ const Login = () => {
             boxShadow: "0 1px 2px 0 rgba(0, 0, 0, 0.05)"
         },
         active: {
-            borderColor: "#6366f1",
+            borderColor: "#81C3DB",
             boxShadow: "0 0 0 3px rgba(99, 102, 241, 0.2)"
         },
         error: {

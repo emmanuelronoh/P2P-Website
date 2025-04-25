@@ -1,36 +1,94 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useContext } from 'react';
 import { FiCreditCard, FiArrowUp, FiArrowDown, FiLink, FiCopy, FiShield } from 'react-icons/fi';
-import { FaBitcoin, FaEthereum } from 'react-icons/fa';
+import { FaBitcoin, FaEthereum, FaSpinner } from 'react-icons/fa';
 import { SiLitecoin, SiDogecoin, SiTether } from 'react-icons/si';
+import { useAuth } from '../contexts/AuthContext';
+import { ethers } from 'ethers';
+import ConnectWalletModal from '../components/WalletConnectModal'; 
 import "../styles/wallet.css"
 
 const WalletPage = () => {
+  const { 
+    user, 
+    walletAddress, 
+    provider, 
+    signer, 
+    chainId, 
+    balance, 
+    disconnectWallet,
+    connectWallet 
+  } = useAuth();
+  
   const [activeTab, setActiveTab] = useState('crypto');
   const [connectedWallets, setConnectedWallets] = useState([]);
+  const [fiatAccounts, setFiatAccounts] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
   const [showConnectModal, setShowConnectModal] = useState(false);
-  const [walletToConnect, setWalletToConnect] = useState('');
 
-  // Mock data - in real app this would come from API
-  const cryptoWallets = [
-    { id: 1, currency: 'BTC', name: 'Bitcoin', balance: 0.42, address: '3FZbgi29cpjq2GjdwV8eyHuJJnkLtktZc5', connected: true },
-    { id: 2, currency: 'ETH', name: 'Ethereum', balance: 1.8, address: '0x71C7656EC7ab88b098defB751B7401B5f6d8976F', connected: true },
-    { id: 3, currency: 'USDT', name: 'Tether', balance: 1500, address: '0x71C7656EC7ab88b098defB751B7401B5f6d8976F', connected: true },
-  ];
+  // Fetch wallet data on component mount and when walletAddress changes
+  useEffect(() => {
+    const fetchWalletData = async () => {
+      try {
+        setLoading(true);
+        
+        if (walletAddress && provider) {
+          const cryptoWallets = [
+            { 
+              id: 1, 
+              currency: 'ETH', 
+              name: 'Ethereum Wallet', 
+              balance: parseFloat(ethers.utils.formatEther(balance || '0')).toFixed(4), 
+              address: walletAddress, 
+              connected: true,
+              chainId: chainId
+            }
+          ];
+          
+          setConnectedWallets(cryptoWallets);
+        } else {
+          setConnectedWallets([]);
+        }
+        
+        // Mock fiat accounts - in real app this would come from API
+        const mockFiatAccounts = [
+          { id: 1, currency: 'USD', name: 'Bank of America', last4: '4582', balance: 1250.42, connected: true },
+          { id: 2, currency: 'EUR', name: 'Revolut', last4: '7821', balance: 850.00, connected: false },
+        ];
+        
+        setFiatAccounts(mockFiatAccounts);
+        setError(null);
+      } catch (err) {
+        console.error('Failed to fetch wallet data:', err);
+        setError('Failed to load wallet data. Please try again.');
+      } finally {
+        setLoading(false);
+      }
+    };
+    
+    fetchWalletData();
+  }, [walletAddress, provider, balance, chainId]);
 
-  const fiatWallets = [
-    { id: 1, currency: 'USD', name: 'Bank of America', last4: '4582', balance: 1250.42, connected: true },
-    { id: 2, currency: 'EUR', name: 'Revolut', last4: '7821', balance: 850.00, connected: false },
-  ];
-
-  const connectWallet = (walletType) => {
-    setWalletToConnect(walletType);
-    setShowConnectModal(true);
-    // In real app, this would trigger wallet connection flow
+  const handleConnectWallet = async (walletType, address, walletProvider) => {
+    try {
+      await connectWallet(walletType, address, walletProvider);
+      setShowConnectModal(false);
+    } catch (error) {
+      console.error('Wallet connection error:', error);
+      setError('Failed to connect wallet. Please try again.');
+    }
   };
 
   const handleDisconnect = (walletId, type) => {
-    // In real app, this would call API to disconnect
-    alert(`Disconnected wallet ${walletId} (${type})`);
+    if (type === 'crypto') {
+      disconnectWallet();
+      setConnectedWallets([]);
+    } else {
+      // For fiat accounts, this would call your API
+      setFiatAccounts(fiatAccounts.map(acc => 
+        acc.id === walletId ? {...acc, connected: false} : acc
+      ));
+    }
   };
 
   const copyToClipboard = (text) => {
@@ -38,11 +96,52 @@ const WalletPage = () => {
     alert('Copied to clipboard!');
   };
 
+  const getNetworkName = (chainId) => {
+    switch(chainId) {
+      case 1: return 'Ethereum Mainnet';
+      case 5: return 'Goerli Testnet';
+      case 56: return 'Binance Smart Chain';
+      case 137: return 'Polygon';
+      default: return `Chain ID: ${chainId}`;
+    }
+  };
+
+  const getCurrencyIcon = (currency) => {
+    switch(currency) {
+      case 'BTC': return <FaBitcoin className="currency-icon btc" />;
+      case 'ETH': return <FaEthereum className="currency-icon eth" />;
+      case 'USDT': return <SiTether className="currency-icon usdt" />;
+      case 'LTC': return <SiLitecoin className="currency-icon ltc" />;
+      case 'DOGE': return <SiDogecoin className="currency-icon doge" />;
+      default: return <div className="currency-icon fiat">{currency}</div>;
+    }
+  };
+
+  if (loading) {
+    return (
+      <div className="wallet-container loading">
+        <FaSpinner className="spinner" />
+        <p>Loading wallet data...</p>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="wallet-container error">
+        <h1><FiCreditCard className="icon" /> Wallet Management</h1>
+        <div className="error-message">
+          <p>{error}</p>
+          <button onClick={() => window.location.reload()}>Retry</button>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="wallet-container">
       <div className="wallet-header">
-        <h1><FiCreditCard
-          className="icon" /> Wallet Management</h1>
+        <h1><FiCreditCard className="icon" /> Wallet Management</h1>
         <p className="disclaimer">
           <FiShield className="icon" /> <strong>Important:</strong> This platform never holds your funds.
           We only facilitate P2P transactions between connected wallets.
@@ -70,22 +169,26 @@ const WalletPage = () => {
             <h2>Connected Crypto Wallets</h2>
             <button
               className="connect-btn"
-              onClick={() => connectWallet('crypto')}
+              onClick={() => setShowConnectModal(true)}
             >
               <FiLink /> Connect New Wallet
             </button>
           </div>
 
-          {cryptoWallets.filter(w => w.connected).length > 0 ? (
+          {connectedWallets.length > 0 ? (
             <div className="wallet-grid">
-              {cryptoWallets.filter(w => w.connected).map(wallet => (
+              {connectedWallets.map(wallet => (
                 <div key={wallet.id} className="wallet-card">
                   <div className="wallet-header">
-                    {wallet.currency === 'BTC' && <FaBitcoin className="currency-icon btc" />}
-                    {wallet.currency === 'ETH' && <FaEthereum className="currency-icon eth" />}
-                    {wallet.currency === 'USDT' && <SiTether className="currency-icon USDT" />}
+                    {getCurrencyIcon(wallet.currency)}
                     <h3>{wallet.name}</h3>
                     <span className="balance">{wallet.balance} {wallet.currency}</span>
+                  </div>
+
+                  <div className="wallet-meta">
+                    <span className="network-badge">
+                      {getNetworkName(wallet.chainId)}
+                    </span>
                   </div>
 
                   <div className="wallet-address">
@@ -99,10 +202,16 @@ const WalletPage = () => {
                   </div>
 
                   <div className="wallet-actions">
-                    <button className="action-btn send">
+                    <button 
+                      className="action-btn send"
+                      onClick={() => alert('Send functionality would be implemented here')}
+                    >
                       <FiArrowUp /> Send
                     </button>
-                    <button className="action-btn receive">
+                    <button 
+                      className="action-btn receive"
+                      onClick={() => alert('Receive functionality would be implemented here')}
+                    >
                       <FiArrowDown /> Receive
                     </button>
                     <button
@@ -122,7 +231,7 @@ const WalletPage = () => {
               <p>Connect your external crypto wallets to start trading</p>
               <button
                 className="connect-btn primary"
-                onClick={() => connectWallet('crypto')}
+                onClick={() => setShowConnectModal(true)}
               >
                 <FiLink /> Connect Wallet
               </button>
@@ -146,18 +255,18 @@ const WalletPage = () => {
             <h2>Connected Fiat Accounts</h2>
             <button
               className="connect-btn"
-              onClick={() => connectWallet('fiat')}
+              onClick={() => alert('Fiat account connection would be implemented here')}
             >
               <FiLink /> Connect New Account
             </button>
           </div>
 
-          {fiatWallets.filter(w => w.connected).length > 0 ? (
+          {fiatAccounts.filter(w => w.connected).length > 0 ? (
             <div className="wallet-grid">
-              {fiatWallets.filter(w => w.connected).map(wallet => (
+              {fiatAccounts.filter(w => w.connected).map(wallet => (
                 <div key={wallet.id} className="wallet-card">
                   <div className="wallet-header">
-                    <div className="currency-icon fiat">{wallet.currency}</div>
+                    {getCurrencyIcon(wallet.currency)}
                     <h3>{wallet.name}</h3>
                     <span className="balance">{wallet.currency} {wallet.balance.toFixed(2)}</span>
                   </div>
@@ -190,7 +299,7 @@ const WalletPage = () => {
               <p>Connect your bank or payment method to start trading</p>
               <button
                 className="connect-btn primary"
-                onClick={() => connectWallet('fiat')}
+                onClick={() => alert('Fiat account connection would be implemented here')}
               >
                 <FiLink /> Connect Account
               </button>
@@ -211,52 +320,10 @@ const WalletPage = () => {
       )}
 
       {showConnectModal && (
-        <div className="modal-overlay">
-          <div className="connect-modal">
-            <h2>Connect {walletToConnect === 'crypto' ? 'Crypto Wallet' : 'Fiat Account'}</h2>
-            <p>
-              Select how you want to connect your {walletToConnect === 'crypto' ?
-                'cryptocurrency wallet' : 'bank or payment method'}:
-            </p>
-
-            {walletToConnect === 'crypto' ? (
-              <div className="connection-options">
-                <button className="option-btn">
-                  <FaBitcoin className="icon" /> Bitcoin Wallet
-                </button>
-                <button className="option-btn">
-                  <FaEthereum className="icon" /> Ethereum Wallet
-                </button>
-                <button className="option-btn">
-                  <SiTether className="icon" /> Tether Wallet
-                </button>
-                <button className="option-btn">
-                  <SiLitecoin className="icon" /> Litecoin Wallet
-                </button>
-                <button className="option-btn">
-                  <SiDogecoin className="icon" /> Dogecoin Wallet
-                </button>
-              </div>
-            ) : (
-              <div className="connection-options">
-                <button className="option-btn">Bank Account (ACH)</button>
-                <button className="option-btn">Credit/Debit Card</button>
-                <button className="option-btn">PayPal</button>
-                <button className="option-btn">Revolut</button>
-                <button className="option-btn">Wise</button>
-              </div>
-            )}
-
-            <div className="modal-actions">
-              <button
-                className="cancel-btn"
-                onClick={() => setShowConnectModal(false)}
-              >
-                Cancel
-              </button>
-            </div>
-          </div>
-        </div>
+        <ConnectWalletModal
+          onClose={() => setShowConnectModal(false)}
+          onConnect={handleConnectWallet}
+        />
       )}
     </div>
   );

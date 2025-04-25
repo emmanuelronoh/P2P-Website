@@ -26,12 +26,12 @@
   
   .title-icon {
     margin-right: 0.75rem;
-    color: #1e87f0;
+    color: #81C3DB;
   }
   
   .unread-count {
     margin-left: 0.75rem;
-    background-color: #1e87f0;
+    background-color: #81C3DB;
     color: white;
     font-size: 0.875rem;
     font-weight: 600;
@@ -81,12 +81,12 @@
   }
   
   .filter-tab.active {
-    background-color: #1e87f0;
+    background-color: #81C3DB;
     color: white;
   }
   
   .notifications-list {
-    background-color: white;
+    background-color: #f9fafb;
     border-radius: 0.75rem;
     box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
     overflow: hidden;
@@ -165,7 +165,7 @@
   }
   
   .notification-item.unread {
-    border-left-color: #1e87f0;
+    border-left-color: #81C3DB;
   }
   
   .notification-content {
@@ -192,7 +192,7 @@
   }
   
   .trade-icon {
-    color: #3b82f6;
+    color: #81C3DB;
   }
   
   .escrow-icon {
@@ -200,7 +200,7 @@
   }
   
   .message-icon {
-    color: #8b5cf6;
+    color: #81C3DB;
   }
   
   .system-icon {

@@ -272,6 +272,11 @@ const Market = () => {
         <p className="market-subtitle">
           Trade directly with other users with escrow protection
         </p>
+        <div className="header-actions">
+          <Link to="/CryptoListing" className="become-vendor-btn">
+            Become a Vendor
+          </Link>
+        </div>
       </div>
 
       <div className="filters-container">

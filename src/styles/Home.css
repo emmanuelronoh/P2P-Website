@@ -14,8 +14,8 @@
   --nav-shadow: 0 2px 20px rgba(0, 0, 0, 0.1);
   --input-bg: #ffffff;
   --input-border: #ddd;
-  --primary-gradient: linear-gradient(90deg, #FF6B00, #FFA800);
-  --secondary-gradient: linear-gradient(90deg, #6c5ce7, #1e87f0);
+  --primary-gradient: #FF8A00;
+  --secondary-gradient: linear-gradient(90deg, #81C3DB, #81C3DB);
   --floating-coin-opacity: 0.1;
   --wave-bg: radial-gradient(circle at 50% 0%, rgba(0, 150, 255, 0.1) 0%, transparent 70%);
   --faq-bg: linear-gradient(135deg, #f9f9ff 0%, #ffffff 100%);
@@ -326,7 +326,7 @@
   .hero-section {
     flex-direction: row;
     justify-content: space-between;
-    padding: 80px 40px 100px;
+    padding: 60px 40px 100px;
   }
 }
 
@@ -472,7 +472,7 @@
 
 .hero-image {
   position: relative;
-  width: 100%;
+  width: 40%;
   margin-left: 0px;
 }
 
@@ -501,14 +501,13 @@
   padding: 8px 0;
   text-align: center;
   font-weight: 600;
-  color: rgba(255, 255, 255, 0.8);
   cursor: pointer;
   transition: all 0.3s;
 }
 
 .preview-tab.active {
   background: white;
-  color: #FF6B00;
+  color: #010101;
 }
 
 .preview-content {
@@ -604,7 +603,7 @@
 .preview-find-buyers {
   width: 100%;
   padding: 12px;
-  background: var(--primary-gradient);
+  background: #81C3DB;
   border: none;
   border-radius: 8px;
   color: white;

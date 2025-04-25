@@ -6,23 +6,29 @@ import { useUserBalance } from "../hooks/useUserBalance";
 import SecurityVerification from "../components/SecurityVerification";
 import TradingLimitsInfo from "../components/TradingLimitsInfo";
 import PriceMovementIndicator from "../components/PriceMovementIndicator";
+import ErrorModal from "../components/ErrorModal";
+import LoadingOverlay from "../components/LoadingOverlay";
 import "../styles/Amount.css";
 
 const Amount = () => {
   const location = useLocation();
   const navigate = useNavigate();
   const { trader, tradeType, crypto } = location.state || {};
+  
+  // State management
   const [amount, setAmount] = useState("");
   const [isVerifying, setIsVerifying] = useState(false);
   const [verificationComplete, setVerificationComplete] = useState(false);
   const [inputError, setInputError] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
+  const [errorModal, setErrorModal] = useState({ show: false, message: "", details: "" });
 
   // Extract crypto symbol and name
   const [cryptoSymbol, cryptoName] = crypto?.split(" - ") || ["", ""];
 
   // Custom hooks for real-time data
-  const { currentPrice, priceChange24h } = useExchangeRate(cryptoSymbol, "KES");
-  const { availableBalance } = useUserBalance(cryptoSymbol);
+  const { currentPrice, priceChange24h, exchangeRateError } = useExchangeRate(cryptoSymbol, "KES");
+  const { availableBalance, balanceError } = useUserBalance(cryptoSymbol);
 
   // Calculate crypto amount based on fiat input
   const cryptoAmount = useMemo(() => (
@@ -32,9 +38,35 @@ const Amount = () => {
   // Validate trader data on mount
   useEffect(() => {
     if (!trader || !crypto) {
-      navigate("/notifications", { replace: true });
+      navigate("/notifications", { 
+        state: { 
+          type: "error",
+          message: "Incomplete Trade Information",
+          details: "Please select both a trader and cryptocurrency to continue."
+        },
+        replace: true 
+      });
     }
   }, [trader, crypto, navigate]);
+
+  // Handle external errors (exchange rate, balance)
+  useEffect(() => {
+    if (exchangeRateError) {
+      setErrorModal({
+        show: true,
+        message: "Exchange Rate Error",
+        details: exchangeRateError
+      });
+    }
+
+    if (balanceError) {
+      setErrorModal({
+        show: true,
+        message: "Balance Check Failed",
+        details: balanceError
+      });
+    }
+  }, [exchangeRateError, balanceError]);
 
   // Format amount with commas for display
   const formatDisplayAmount = useCallback((value) => {
@@ -72,11 +104,9 @@ const Amount = () => {
 
     if (validation.isValid) {
       setInputError("");
-      // Store the formatted value in state for display
       setAmount(formatDisplayAmount(numericValue));
     } else {
       setInputError(validation.message);
-      // Still allow typing but show error
       setAmount(formatDisplayAmount(numericValue));
     }
   };
@@ -87,41 +117,103 @@ const Amount = () => {
     setInputError("");
   };
 
-  // Handle proceed to trade
-  const handleProceed = async () => {
-    const numericAmount = parseFloat(amount.replace(/,/g, '') || 0);
+  // Validate all requirements before proceeding
+  const validateTradeRequirements = () => {
+    const numericAmount = parseFloat((amount.replace(/,/g, '')) || 0);
 
-    // Final validation before proceeding
+    // Basic amount validation
     if (!amount || numericAmount <= 0) {
       setInputError("Please enter a valid amount");
-      return;
+      return false;
     }
 
-    if (numericAmount < trader.minLimit || numericAmount > trader.maxLimit) {
-      setInputError(`Amount must be between ${formatCurrency(trader.minLimit, "KES")} and ${formatCurrency(trader.maxLimit, "KES")}`);
-      return;
+    // Balance validation
+    if (numericAmount > availableBalance) {
+      setInputError(`Amount exceeds your available balance of ${formatCurrency(availableBalance, "KES")}`);
+      return false;
     }
 
-    if (tradeType === "buy" && availableBalance < cryptoAmount) {
-      setInputError("Insufficient seller balance for this trade");
-      return;
+    // Wallet address validation
+    if (!localStorage.getItem('walletAddress')) {
+      setErrorModal({
+        show: true,
+        message: "Wallet Address Required",
+        details: "Please set your wallet address in your profile before proceeding with trades."
+      });
+      return false;
     }
 
-    if (!verificationComplete) {
-      setIsVerifying(true);
-      return;
-    }
+    return true;
+  };
 
-    navigate("/messages", {
-      state: {
-        trader,
-        tradeType,
-        crypto,
-        amount: numericAmount,
-        cryptoAmount,
-        currentPrice: trader?.price || currentPrice
+  // Handle proceed to trade
+  const handleProceed = async () => {
+    if (!validateTradeRequirements()) return;
+
+    setIsLoading(true);
+
+    try {
+      const numericAmount = parseFloat((amount || '0').replace(/,/g, ''));
+      const walletAddress = localStorage.getItem('walletAddress');
+
+      const response = await fetch(`http://localhost:8000/crypto/trade-offers/${trader.id}/accept/`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('accessToken')}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          amount: numericAmount,
+          crypto_amount: cryptoAmount,
+          wallet_address: walletAddress
+        })
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData?.error || errorData?.message || "Failed to process trade");
       }
-    });
+
+      const trade = await response.json();
+
+      // Verify the response contains required data
+      if (!trade.escrow_address || !trade.id) {
+        throw new Error("Invalid trade response from server");
+      }
+
+      navigate("/messages", {
+        state: {
+          trader,
+          tradeType,
+          crypto,
+          amount: numericAmount,
+          cryptoAmount,
+          currentPrice: trader?.price || currentPrice,
+          escrow_address: trade.escrow_address,
+          trade_id: trade.id
+        }
+      });
+    } catch (error) {
+      console.error("Trade Processing Error:", error);
+      setErrorModal({
+        show: true,
+        message: "Trade Processing Failed",
+        details: error.message
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  // Close error modal
+  const closeErrorModal = () => {
+    setErrorModal({ show: false, message: "", details: "" });
+  };
+
+  // Handle navigation to wallet settings
+  const navigateToWalletSettings = () => {
+    closeErrorModal();
+    navigate("/profile/settings", { state: { section: "wallet" } });
   };
 
   if (!trader || !crypto) {
@@ -140,6 +232,21 @@ const Amount = () => {
 
   return (
     <div className="trade-amount-container">
+      <LoadingOverlay isLoading={isLoading} message="Processing your trade..." />
+      
+      <ErrorModal
+        show={errorModal.show}
+        title={errorModal.message}
+        message={errorModal.details}
+        onClose={closeErrorModal}
+        actions={
+          errorModal.message === "Wallet Address Required" ? [
+            { text: "Go to Settings", handler: navigateToWalletSettings },
+            { text: "Cancel", handler: closeErrorModal }
+          ] : null
+        }
+      />
+
       <div className="trade-amount-card">
         <div className="trade-header">
           <h2>
@@ -204,6 +311,7 @@ const Amount = () => {
                 placeholder={`${formatCurrency(trader.minLimit, "KES", true)} - ${formatCurrency(trader.maxLimit, "KES", true)}`}
                 className={`amount-input ${inputError ? "invalid" : ""}`}
                 autoFocus
+                disabled={isLoading}
               />
               <div className="quick-amounts">
                 {[trader.minLimit, Math.round(trader.maxLimit / 2), trader.maxLimit].map((quickAmount) => (
@@ -211,6 +319,7 @@ const Amount = () => {
                     key={quickAmount}
                     onClick={() => handleQuickAmount(quickAmount)}
                     className="quick-amount-btn"
+                    disabled={isLoading}
                   >
                     {formatCurrency(quickAmount, "KES", true)}
                   </button>
@@ -244,11 +353,15 @@ const Amount = () => {
             <button
               className="proceed-btn"
               onClick={handleProceed}
-              disabled={!amount || !!inputError}
+              disabled={!amount || !!inputError || isLoading}
             >
               {verificationComplete ? "Confirm Trade" : "Verify and Proceed"}
             </button>
-            <button className="cancel-btn" onClick={() => navigate(-1)}>
+            <button 
+              className="cancel-btn" 
+              onClick={() => navigate(-1)}
+              disabled={isLoading}
+            >
               Cancel
             </button>
           </div>

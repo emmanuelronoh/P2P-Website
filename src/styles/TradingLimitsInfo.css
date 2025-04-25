@@ -22,7 +22,7 @@
   .limits-range {
     font-weight: 600;
     font-size: 0.875rem;
-    color: #2962ff;
+    color: #81C3DB;
   }
   
   .limits-progress-bar {
@@ -37,7 +37,7 @@
   .progress-indicator {
     position: absolute;
     height: 100%;
-    background-color: #2962ff;
+    background-color: #81C3DB;
     border-radius: 3px;
   }
   
@@ -51,11 +51,11 @@
   .min-label::before {
     content: "⬌";
     margin-right: 4px;
-    color: #2962ff;
+    color: #81C3DB;
   }
   
   .max-label::after {
     content: "⬌";
     margin-left: 4px;
-    color: #2962ff;
+    color: #81C3DB;
   }

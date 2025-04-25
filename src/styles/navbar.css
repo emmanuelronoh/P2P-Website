@@ -1,5 +1,5 @@
 :root {
-  --primary-color: #ff8a00;
+  --primay-color: #ff8a00;
   --secondary-color: #a29bfe;
   --accent-color: #FF6B00;
   --text-color: #2d3436;
@@ -82,15 +82,15 @@
 }
 
 .logo {
-  height: 50px;
-  width: auto;
+  height: 60px;
+  width: 60px;
 }
 
 .logo-contain {
 
   font-weight: 900;
   font-size: 1.7rem;
-  color: var(--primary-color) !important;
+  color: var(--primay-color) !important;
 
 }
 
@@ -221,9 +221,6 @@
   font-size: 1.2rem;
 }
 
-.notification-button {
-  font-size: 35px;
-}
 
 .notification-icon:hover, .message-icon:hover {
   color: var(--primary-color);
@@ -444,7 +441,6 @@
   display: none;
 }
 .connect-wallet-btn {
-  width: 100%;
   justify-content: center;
 }
 

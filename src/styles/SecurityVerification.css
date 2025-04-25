@@ -56,7 +56,7 @@
   }
   
   .button-group button:last-child {
-    background-color: #2962ff;
+    background-color: #81C3DB;
     color: white;
     border: none;
   }
@@ -71,7 +71,7 @@
   .resend-code button {
     background: none;
     border: none;
-    color: #007bff;
+    color: #81C3DB;
     cursor: pointer;
     padding: 0;
     margin-left: 5px;

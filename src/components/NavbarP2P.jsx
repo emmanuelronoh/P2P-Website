@@ -243,7 +243,7 @@ const Navbar = ({ toggleTheme, theme }) => {
                     >
                         <Link to="/home-fiat">
                             <img src={logo} alt="Cheetah P2P Logo" className="logo" />
-                            <span className="logo-text">Cheetah P2P</span>
+                            <span className="logo-text">CHEETAH P2P</span>
                         </Link>
                     </motion.div>
 

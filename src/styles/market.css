@@ -1,12 +1,12 @@
 /* Base Styles */
 :root {
     --primary-color: #6a11cb;
-    --secondary-color: #2575fc;
-    --buy-color: #00c853;
+    --secondary-color: #81C3DB;
+    --buy-color: #81C3DB;
     --sell-color: #ff3d00;
     --premium-color: #D4AF37;
     --online-color: #4caf50;
-    --offline-color: #f44336;
+    --offline-color: #5d3431;
     --text-color: #333;
     --light-text: #777;
     --bg-color: #f5f7fa;
@@ -37,6 +37,26 @@
     margin-bottom: 30px;
   }
   
+  .header-actions {
+    margin-top: 20px;
+  }
+  
+  .become-vendor-btn {
+    background: linear-gradient(135deg, #81C3DB);
+    color: white;
+    padding: 12px 24px;
+    border-radius: 30px;
+    font-weight: 600;
+    text-decoration: none;
+    display: inline-block;
+    transition: all 0.3s ease;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+  }
+  
+  .become-vendor-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.15);
+  }
   .market-header h1 {
     font-size: 2.2rem;
     color: var(--primary-color);
@@ -453,7 +473,7 @@
   }
   
   .trade-button.buy {
-    background: linear-gradient(135deg, var(--buy-color), #2e7d32);
+    background: #2e7d32;
   }
   
   .trade-button.sell {
@@ -635,9 +655,9 @@
 }
 
 .pagination-controls button.active {
-  background: #3a0ca3;
+  background: #81C3DB;
   color: white;
-  border-color: #3a0ca3;
+  border-color: #81C3DB;
 }
 
 .pagination-controls button:disabled {

@@ -12,7 +12,7 @@
   }
   
   .tutorial-content {
-    background-color: #0000;
+    background-color: #ffff;
     padding: 2rem;
     border-radius: 8px;
     max-width: 500px;
@@ -50,7 +50,7 @@
   }
   
   .tutorial-nav-btn.finish {
-    background-color: #2196F3;
+    background-color: #81C3DB;
     color: white;
   }
   
@@ -70,5 +70,5 @@
   }
   
   .step-indicator.active {
-    background-color: #2196F3;
+    background-color: #81C3DB;
   }
