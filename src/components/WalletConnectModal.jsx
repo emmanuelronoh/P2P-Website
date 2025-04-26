@@ -2,10 +2,16 @@ import React, { useState, useEffect } from 'react';
 import { FaWallet, FaChevronRight, FaTimes, FaSpinner, FaCheck, FaExclamationTriangle } from 'react-icons/fa';
 import { MetaMaskIcon, TrustWalletIcon, BinanceChainIcon, WalletConnectIcon, CoinbaseIcon } from './WalletIcons';
 import { QRCodeCanvas } from 'qrcode.react';
-import { ethers } from 'ethers';
+import { BrowserProvider } from 'ethers'; 
 import WalletConnect from '@walletconnect/client';
 import WalletConnectProvider from '@walletconnect/web3-provider';
+import axios from 'axios';
 import '../styles/ConnectWalletModal.css';
+
+// API configuration
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://127.0.0.1:8000/';
+const WALLET_CONNECT_ENDPOINT = `${API_BASE_URL}wallet-connect/connect/`;
+const WALLET_TRACK_ENDPOINT = `${API_BASE_URL}wallet-connect/track/`;
 
 const ConnectWalletModal = ({ onClose, onConnect }) => {
   const [selectedWallet, setSelectedWallet] = useState(null);
@@ -14,6 +20,7 @@ const ConnectWalletModal = ({ onClose, onConnect }) => {
   const [uri, setUri] = useState('');
   const [connector, setConnector] = useState(null);
   const [provider, setProvider] = useState(null);
+  const [userInfo, setUserInfo] = useState(null);
 
   const wallets = [
     { id: 'metamask', name: 'MetaMask', icon: <MetaMaskIcon />, recommended: true, mobile: true, desktop: true, injected: true },
@@ -22,6 +29,55 @@ const ConnectWalletModal = ({ onClose, onConnect }) => {
     { id: 'walletconnect', name: 'WalletConnect', icon: <WalletConnectIcon />, recommended: true, mobile: true, desktop: true, injected: false },
     { id: 'coinbase', name: 'Coinbase Wallet', icon: <CoinbaseIcon />, recommended: true, mobile: true, desktop: true, injected: true },
   ];
+
+  // Track wallet connection in backend
+  const trackWalletConnection = async (walletData) => {
+    try {
+      const response = await axios.post(WALLET_TRACK_ENDPOINT, walletData, {
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${localStorage.getItem('authToken')}`
+        }
+      });
+      return response.data;
+    } catch (error) {
+      console.error('Error tracking wallet connection:', error);
+    }
+  };
+
+  const verifyWalletConnection = async (address, signature, message) => {
+    try {
+      const response = await axios.post(WALLET_CONNECT_ENDPOINT, {
+        wallet_address: address,  // Changed from 'address' to 'wallet_address'
+        signature,
+        message  // Added the message field
+      }, {
+        headers: {
+          'Content-Type': 'application/json'
+        }
+      });
+      return response.data;
+    } catch (error) {
+      console.error('Error verifying wallet connection:', error);
+      throw new Error('Failed to verify wallet connection with server');
+    }
+  };
+
+  const requestSignature = async (provider, address) => {
+    try {
+      const signer = await provider.getSigner();
+      const message = `Please sign this message to verify your wallet connection. Nonce: ${Date.now()}`;
+      const signature = await signer.signMessage(message);
+      return { 
+        address,  // Include the address in the return object
+        message, 
+        signature 
+      };
+    } catch (error) {
+      console.error('Error requesting signature:', error);
+      throw new Error('User denied message signature');
+    }
+  };
 
   // Clean up on unmount
   useEffect(() => {
@@ -65,33 +121,75 @@ const ConnectWalletModal = ({ onClose, onConnect }) => {
     setErrorMessage('');
 
     try {
+      let connectionData;
       switch (walletId) {
         case 'metamask':
-          await connectMetaMask();
+          connectionData = await connectMetaMask();
           break;
         case 'trustwallet':
-          await connectTrustWallet();
+          connectionData = await connectTrustWallet();
           break;
         case 'binance':
-          await connectBinanceChain();
+          connectionData = await connectBinanceChain();
           break;
         case 'coinbase':
-          await connectCoinbaseWallet();
+          connectionData = await connectCoinbaseWallet();
           break;
         case 'walletconnect':
-          await connectWithWalletConnect();
+          connectionData = await connectWithWalletConnect();
           break;
         default:
-          await connectInjectedWallet();
+          connectionData = await connectInjectedWallet();
       }
+
+      await handleBackendVerification(connectionData);
     } catch (error) {
       console.error('Wallet connection error:', error);
       setConnectionState('error');
-      setErrorMessage(
-        error.message || 
-        error.reason || 
-        'Failed to connect wallet. Please try again or use a different wallet.'
+      setErrorMessage(error.message || error.reason || 'Failed to connect wallet. Please try again or use a different wallet.');
+    }
+  };
+
+  const handleBackendVerification = async (connectionData) => {
+    try {
+      setConnectionState('verifying');
+      
+      const { message, signature } = await requestSignature(
+        connectionData.provider,
+        connectionData.address
       );
+      
+      // REMOVED THE RECURSIVE CALL - this was causing the infinite loop
+      const verification = await verifyWalletConnection(
+        connectionData.address, 
+        signature,
+        message  // Added message parameter here
+      );
+      
+      await trackWalletConnection({
+        walletType: connectionData.wallet,
+        address: connectionData.address,
+        chainId: connectionData.chainId,
+        timestamp: new Date().toISOString(),
+        userAgent: navigator.userAgent,
+        verificationData: verification
+      });
+      
+      if (verification.user) {
+        setUserInfo(verification.user);
+      }
+      
+      setConnectionState('connected');
+      onConnect({
+        ...connectionData,
+        verification,
+        userInfo: verification.user
+      });
+    } catch (error) {
+      console.error('Verification error:', error);
+      setConnectionState('error');
+      setErrorMessage(error.message || 'Failed to verify wallet with our servers. Please try again.');
+      resetConnection();
     }
   };
 
@@ -101,9 +199,7 @@ const ConnectWalletModal = ({ onClose, onConnect }) => {
     }
     
     if (window.ethereum) {
-      // Handle cases where multiple wallets might be injected
       try {
-        // Request account access if needed
         await window.ethereum.request({ method: 'eth_requestAccounts' });
         return window.ethereum;
       } catch (error) {
@@ -114,21 +210,27 @@ const ConnectWalletModal = ({ onClose, onConnect }) => {
     throw new Error('No Ethereum provider found');
   };
 
-  // Inside ConnectWalletModal's connection handlers (like connectMetaMask):
-const connectMetaMask = async () => {
-  if (!isMetaMaskInstalled()) {
-    window.open('https://metamask.io/download.html', '_blank');
-    throw new Error('MetaMask not installed');
-  }
-  
-  const accounts = await window.ethereum.request({ method: 'eth_requestAccounts' });
-  if (accounts.length > 0) {
-    setConnectionState('connected');
-    onConnect('metamask', accounts[0], window.ethereum);
-  } else {
-    throw new Error('No accounts found');
-  }
-};
+  const connectMetaMask = async () => {
+    if (!isMetaMaskInstalled()) {
+      window.open('https://metamask.io/download.html', '_blank');
+      throw new Error('MetaMask not installed');
+    }
+    
+    const ethereum = await getEthereumProvider('metamask');
+    const provider = new BrowserProvider(ethereum);
+    const signer = await provider.getSigner();
+    const address = await signer.getAddress();
+    const network = await provider.getNetwork();
+    
+    setProvider(provider);
+    
+    return {
+      wallet: 'metamask',
+      address,
+      provider,
+      chainId: Number(network.chainId)
+    };
+  };
 
   const connectTrustWallet = async () => {
     if (!isTrustWalletInstalled()) {
@@ -137,23 +239,19 @@ const connectMetaMask = async () => {
     }
     
     const ethereum = await getEthereumProvider('trustwallet');
-    const provider = new ethers.providers.Web3Provider(ethereum);
-    
+    const provider = new BrowserProvider(ethereum);
+    const signer = await provider.getSigner();
+    const address = await signer.getAddress();
     const network = await provider.getNetwork();
-    const accounts = await provider.listAccounts();
-    
-    if (accounts.length === 0) {
-      throw new Error('No accounts found');
-    }
     
     setProvider(provider);
-    setConnectionState('connected');
-    onConnect({
+    
+    return {
       wallet: 'trustwallet',
-      address: accounts[0],
+      address,
       provider,
-      chainId: network.chainId
-    });
+      chainId: Number(network.chainId)
+    };
   };
 
   const connectBinanceChain = async () => {
@@ -172,16 +270,17 @@ const connectMetaMask = async () => {
       }
       
       const chainId = await binanceChain.request({ method: 'eth_chainId' });
-      const provider = new ethers.providers.Web3Provider(binanceChain);
+      const provider = new BrowserProvider(binanceChain);
+      const signer = await provider.getSigner();
       
       setProvider(provider);
-      setConnectionState('connected');
-      onConnect({
+      
+      return {
         wallet: 'binance',
         address: accounts[0],
         provider,
         chainId: parseInt(chainId)
-      });
+      };
     } catch (error) {
       throw new Error(error.message || 'Failed to connect Binance Chain Wallet');
     }
@@ -194,62 +293,46 @@ const connectMetaMask = async () => {
     }
     
     const ethereum = await getEthereumProvider('coinbase');
-    const provider = new ethers.providers.Web3Provider(ethereum);
-    
+    const provider = new BrowserProvider(ethereum);
+    const signer = await provider.getSigner();
+    const address = await signer.getAddress();
     const network = await provider.getNetwork();
-    const accounts = await provider.listAccounts();
-    
-    if (accounts.length === 0) {
-      throw new Error('No accounts found');
-    }
     
     setProvider(provider);
-    setConnectionState('connected');
-    onConnect({
+    
+    return {
       wallet: 'coinbase',
-      address: accounts[0],
+      address,
       provider,
-      chainId: network.chainId
-    });
+      chainId: Number(network.chainId)
+    };
   };
 
   const connectWithWalletConnect = async () => {
     try {
-      // WalletConnect v2 provider
       const walletConnectProvider = new WalletConnectProvider({
         rpc: {
           1: "https://mainnet.infura.io/v3/YOUR_INFURA_PROJECT_ID",
           56: "https://bsc-dataseed.binance.org/",
-          // Add other chain IDs as needed
         },
         qrcode: true,
       });
       
-      // Enable session (triggers QR Code modal)
       await walletConnectProvider.enable();
-      
-      const ethersProvider = new ethers.providers.Web3Provider(walletConnectProvider);
-      const signer = ethersProvider.getSigner();
+      const provider = new BrowserProvider(walletConnectProvider);
+      const signer = await provider.getSigner();
       const address = await signer.getAddress();
-      const network = await ethersProvider.getNetwork();
+      const network = await provider.getNetwork();
       
-      setProvider(ethersProvider);
-      setConnectionState('connected');
+      setProvider(provider);
       
-      onConnect({
+      return {
         wallet: 'walletconnect',
         address,
-        provider: ethersProvider,
-        chainId: network.chainId,
+        provider,
+        chainId: Number(network.chainId),
         walletConnectProvider
-      });
-      
-      // Handle disconnection
-      walletConnectProvider.on("disconnect", (code, reason) => {
-        console.log(`WalletConnect disconnected: ${reason} (${code})`);
-        resetConnection();
-      });
-      
+      };
     } catch (error) {
       console.error('WalletConnect error:', error);
       throw new Error('Failed to connect via WalletConnect');
@@ -261,7 +344,7 @@ const connectMetaMask = async () => {
     if (!walletType) {
       throw new Error('No injected wallet detected. Please install a wallet like MetaMask.');
     }
-    await handleWalletConnect(walletType);
+    return await handleWalletConnect(walletType);
   };
 
   const resetConnection = () => {
@@ -276,6 +359,7 @@ const connectMetaMask = async () => {
     setUri('');
     setErrorMessage('');
     setProvider(null);
+    setUserInfo(null);
   };
 
   const getWalletById = (id) => wallets.find(w => w.id === id);
@@ -325,6 +409,7 @@ const connectMetaMask = async () => {
               <div className="connection-icon">
                 {getWalletById(selectedWallet)?.icon || <FaWallet />}
                 {connectionState === 'connecting' && <div className="connection-pulse"></div>}
+                {connectionState === 'verifying' && <div className="connection-pulse verifying"></div>}
               </div>
               
               <h3>{getWalletById(selectedWallet)?.name}</h3>
@@ -355,6 +440,16 @@ const connectMetaMask = async () => {
                 </>
               )}
               
+              {connectionState === 'verifying' && (
+                <div className="connection-verifying">
+                  <p>Verifying wallet with our servers...</p>
+                  <div className="connection-status">
+                    <FaSpinner className="spinner" />
+                    <span>Please sign the message in your wallet</span>
+                  </div>
+                </div>
+              )}
+              
               {connectionState === 'connected' && (
                 <div className="connection-success">
                   <FaCheck className="success-icon" />
@@ -362,6 +457,11 @@ const connectMetaMask = async () => {
                   <p className="connection-address">
                     {provider?.provider?.selectedAddress || ''}
                   </p>
+                  {userInfo && (
+                    <div className="user-info">
+                      <p>Welcome back, {userInfo.username || 'user'}!</p>
+                    </div>
+                  )}
                 </div>
               )}
               

@@ -213,7 +213,7 @@ const Amount = () => {
   // Handle navigation to wallet settings
   const navigateToWalletSettings = () => {
     closeErrorModal();
-    navigate("/profile/settings", { state: { section: "wallet" } });
+    navigate("/wallet", { state: { section: "wallet" } });
   };
 
   if (!trader || !crypto) {
@@ -241,7 +241,7 @@ const Amount = () => {
         onClose={closeErrorModal}
         actions={
           errorModal.message === "Wallet Address Required" ? [
-            { text: "Go to Settings", handler: navigateToWalletSettings },
+            { text: "Go to Wallets", handler: navigateToWalletSettings },
             { text: "Cancel", handler: closeErrorModal }
           ] : null
         }

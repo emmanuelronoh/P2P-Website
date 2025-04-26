@@ -470,7 +470,6 @@ const CheetahXHome = () => {
                     <p>Join millions of users trading securely on Cheetah X</p>
                     <div className="cta-actions">
                         <button className="btn-primary">Sign Up Now - It's Free</button>
-                        <button className="btn-secondary">Download Mobile App</button>
                     </div>
                 </div>
             </section>
