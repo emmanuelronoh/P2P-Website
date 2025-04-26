@@ -1,5 +1,5 @@
 :root {
-  --primay-color: #ff8a00;
+  --primary-color: #ff8a00;
   --secondary-color: #a29bfe;
   --accent-color: #FF6B00;
   --text-color: #2d3436;
@@ -8,6 +8,7 @@
   --shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
   --border-radius: 8px;
   --transition: all 0.3s ease;
+  --navbar-height: 70px;
 }
 
 [data-theme="dark"] {
@@ -30,6 +31,7 @@
   overflow: hidden;
   font-size: 0.9rem;
   font-weight: 500;
+  z-index: 1100;
 }
 
 .ad-content {
@@ -50,12 +52,13 @@
   z-index: 2;
 }
 
-/* Navbar */
+/* Navbar Structure */
 .navbar {
   background-color: var(--card-bg);
   box-shadow: var(--shadow);
   position: sticky;
   top: 0;
+  height: var(--navbar-height);
   z-index: 1000;
   transition: var(--transition);
 }
@@ -68,38 +71,37 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 1rem 2rem;
+  padding: 0 2rem;
   max-width: 1400px;
   margin: 0 auto;
+  height: 100%;
   position: relative;
 }
 
+/* Logo Styles */
 .logo-container {
   display: flex;
   align-items: center;
   gap: 0.5rem;
-  z-index: 1001; /* Ensure logo stays above mobile menu */
+  z-index: 1001;
+  height: 100%;
 }
 
 .logo {
-  height: 60px;
-  width: 60px;
+  height: 80px;
+  width: 80px;
+  object-fit: contain;
 }
 
 .logo-contain {
-
   font-weight: 900;
-  font-size: 1.7rem;
-  color: var(--primay-color) !important;
-
+  font-size: 1.5rem;
+  color: #ff8a00;
+  white-space: nowrap;
 }
 
+/* Mobile Menu Button */
 .mobile-menu-btn {
-  position: absolute;
-  right: 10px; /* Moves it to the right */
-  top: 20px;
-  left: auto; /* Optional: clear left if it was set elsewhere */
-
   display: none;
   background: none;
   border: none;
@@ -107,15 +109,15 @@
   font-size: 1.5rem;
   cursor: pointer;
   z-index: 1001;
-
-  /* margin-left: auto; -- not needed with absolute positioning */
+  padding: 0.5rem;
 }
 
-/* Main navigation links - hidden on mobile by default */
+/* Navigation Links - Desktop */
 .nav-links {
   display: flex;
   align-items: center;
-  gap: 1.8rem;
+  gap: 1.5rem;
+  height: 100%;
 }
 
 .nav-link {
@@ -125,6 +127,8 @@
   color: var(--text-color);
   font-weight: 500;
   transition: var(--transition);
+  height: 100%;
+  padding: 0 0.5rem;
 }
 
 .nav-link:hover {
@@ -135,9 +139,12 @@
   font-size: 1rem;
 }
 
-/* Dropdown styles */
+/* Dropdown Styles */
 .dropdown-container {
   position: relative;
+  height: 100%;
+  display: flex;
+  align-items: center;
 }
 
 .dropdown-btn {
@@ -149,7 +156,8 @@
   color: var(--text-color);
   font-weight: 500;
   cursor: pointer;
-  padding: 0.5rem 0;
+  padding: 0;
+  height: 100%;
   transition: var(--transition);
 }
 
@@ -164,6 +172,7 @@
 .dropdown-arrow {
   transition: transform 0.2s ease;
   font-size: 0.8rem;
+  margin-left: 0.25rem;
 }
 
 .dropdown-arrow.rotate {
@@ -181,6 +190,12 @@
   z-index: 100;
   overflow: hidden;
   transform-origin: top center;
+  display: none;
+}
+
+.dropdown-container:hover .dropdown-content {
+  display: block;
+  animation: fadeIn 0.2s ease-out;
 }
 
 .dropdown-item {
@@ -206,14 +221,15 @@
   font-size: 0.9rem;
 }
 
-/* User actions */
+/* User Actions */
 .user-actions {
   display: flex;
   align-items: center;
   gap: 1rem;
 }
 
-.notification-icon, .message-icon {
+.notification-icon, 
+.message-icon {
   position: relative;
   cursor: pointer;
   color: var(--text-color);
@@ -222,49 +238,150 @@
 }
 
 
-.notification-icon:hover, .message-icon:hover {
-  color: var(--primary-color);
-}
-
-.notification-badge, .message-badge {
-  position: absolute;
-  top: -5px;
-  right: -5px;
-  background-color: var(--accent-color);
-  color: white;
-  border-radius: 50%;
-  width: 18px;
-  height: 18px;
+/* Wallet Connection Styles */
+.wallet-connected-container {
   display: flex;
   align-items: center;
-  justify-content: center;
-  font-size: 0.7rem;
-  font-weight: bold;
+  gap: 0.75rem;
+  position: relative;
 }
 
-.wallet-info {
-  display: flex;
-  flex-direction: column;
-  align-items: flex-end;
-}
-
-.wallet-balance {
-  font-size: 0.8rem;
-  color: var(--primary-color);
+.network-indicator {
+  padding: 0.25rem 0.5rem;
+  border-radius: 4px;
+  font-size: 0.75rem;
   font-weight: 600;
 }
 
-.wallet-address {
-  background: none;
-  border: none;
+.network-indicator span {
+  padding: 0.25rem 0.5rem;
+  border-radius: 4px;
+}
+
+.mainnet { background-color: rgba(0, 200, 0, 0.1); color: #00c800; }
+.testnet { background-color: rgba(255, 165, 0, 0.1); color: #ffa500; }
+.bsc { background-color: rgba(243, 186, 47, 0.1); color: #f3ba2f; }
+.custom-chain { background-color: rgba(100, 100, 255, 0.1); color: #6464ff; }
+.unknown-network { background-color: rgba(200, 200, 200, 0.1); color: #c8c8c8; }
+
+.wallet-balance {
+  font-weight: 600;
+  cursor: pointer;
+  color: var(--primary-color);
+  padding: 0.25rem 0.5rem;
+  border-radius: 4px;
+  background-color: rgba(108, 92, 231, 0.1);
+  transition: var(--transition);
+}
+
+.wallet-balance:hover {
+  background-color: rgba(108, 92, 231, 0.2);
+}
+
+.wallet-address-dropdown {
+  position: relative;
+}
+
+.wallet-address-btn {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  background: rgba(108, 92, 231, 0.1);
   color: var(--text-color);
-  font-size: 0.8rem;
+  border: none;
+  border-radius: 20px;
+  padding: 0.5rem 0.75rem;
   cursor: pointer;
   transition: var(--transition);
 }
 
-.wallet-address:hover {
-  color: var(--primary-color);
+.wallet-address-btn:hover {
+  background: rgba(108, 92, 231, 0.2);
+}
+
+.wallet-icon {
+  font-size: 1rem;
+}
+
+.address-short {
+  font-weight: 600;
+}
+
+.dropdown-chevron {
+  font-size: 0.7rem;
+  transition: transform 0.2s ease;
+  margin-left: 0.25rem;
+}
+
+.wallet-dropdown-menu {
+  position: absolute;
+  right: 0;
+  top: calc(100% + 0.5rem);
+  background: var(--card-bg);
+  border-radius: var(--border-radius);
+  box-shadow: var(--shadow);
+  padding: 1rem;
+  min-width: 240px;
+  z-index: 100;
+  opacity: 0;
+  visibility: hidden;
+  transform: translateY(10px);
+  transition: all 0.2s ease;
+}
+
+.wallet-address-dropdown:hover .wallet-dropdown-menu {
+  opacity: 1;
+  visibility: visible;
+  transform: translateY(0);
+}
+
+.wallet-dropdown-header {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  padding-bottom: 0.75rem;
+  margin-bottom: 0.75rem;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.1);
+}
+
+.full-address {
+  font-family: monospace;
+  font-size: 0.8rem;
+  word-break: break-all;
+}
+
+.network-badge {
+  align-self: flex-start;
+  padding: 0.25rem 0.5rem;
+  border-radius: 4px;
+  font-size: 0.7rem;
+  font-weight: 600;
+}
+
+.wallet-dropdown-item {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  width: 100%;
+  padding: 0.5rem;
+  background: none;
+  border: none;
+  color: var(--text-color);
+  cursor: pointer;
+  text-align: left;
+  border-radius: 4px;
+  transition: var(--transition);
+}
+
+.wallet-dropdown-item:hover {
+  background: rgba(0, 0, 0, 0.05);
+}
+
+.wallet-dropdown-item.disconnect {
+  color: #ff6b6b;
+  margin-top: 0.5rem;
+  padding-top: 0.75rem;
+  border-top: 1px solid rgba(0, 0, 0, 0.1);
 }
 
 .connect-wallet-btn {
@@ -274,7 +391,7 @@
   background: var(--primary-color);
   color: white;
   border: none;
-  border-radius: var(--border-radius);
+  border-radius: 20px;
   padding: 0.5rem 1rem;
   font-weight: 500;
   cursor: pointer;
@@ -286,11 +403,13 @@
   transform: translateY(-2px);
 }
 
+/* Auth Buttons */
 .auth-btn {
   padding: 0.5rem 1rem;
   border-radius: var(--border-radius);
   font-weight: 500;
   transition: var(--transition);
+  white-space: nowrap;
 }
 
 .login-btn {
@@ -314,17 +433,7 @@
   transform: translateY(-2px);
 }
 
-.profile-icon {
-  font-size: 1.5rem;
-  color: var(--text-color);
-  cursor: pointer;
-  transition: var(--transition);
-}
-
-.profile-icon:hover {
-  color: var(--primary-color);
-}
-
+/* Theme Toggle */
 .theme-toggle {
   background: none;
   border: none;
@@ -332,6 +441,7 @@
   font-size: 1.2rem;
   cursor: pointer;
   transition: var(--transition);
+  padding: 0.5rem;
 }
 
 .theme-toggle:hover {
@@ -339,113 +449,254 @@
   transform: rotate(15deg);
 }
 
-/* Responsive styles */
-@media (max-width: 992px) {
+/* Mobile Menu Styles */
+.mobile-menu-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.5);
+  z-index: 999;
+  opacity: 0;
+  visibility: hidden;
+  transition: var(--transition);
+}
+
+.mobile-menu-overlay.open {
+  opacity: 1;
+  visibility: visible;
+}
+
+.mobile-menu {
+  position: fixed;
+  top: 0;
+  right: -100%;
+  width: 85%;
+  max-width: 320px;
+  height: 100vh;
+  background-color: var(--card-bg);
+  z-index: 1000;
+  transition: right 0.3s ease;
+  display: flex;
+  flex-direction: column;
+  overflow-y: auto;
+}
+
+.mobile-menu.open {
+  right: 0;
+}
+
+.mobile-menu-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1rem;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.1);
+  margin-bottom: 1rem;
+  position: sticky;
+  top: 0;
+  background-color: var(--card-bg);
+  z-index: 1;
+}
+
+.mobile-menu-close {
+  background: none;
+  border: none;
+  font-size: 1.5rem;
+  color: var(--text-color);
+  cursor: pointer;
+}
+
+.mobile-wallet-info {
+  display: flex;
+  flex-direction: column;
+  padding: 0.5rem 0;
+}
+
+.mobile-wallet-balance {
+  font-weight: bold;
+  color: var(--primary-color);
+}
+
+.mobile-wallet-address {
+  font-size: 0.8rem;
+  opacity: 0.8;
+  word-break: break-all;
+}
+
+.mobile-menu-content {
+  flex: 1;
+  overflow-y: auto;
+  padding: 0 1rem;
+}
+
+.mobile-nav-link {
+  display: flex;
+  align-items: center;
+  padding: 1rem 0;
+  width: 100%;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+  color: var(--text-color);
+}
+
+.mobile-menu-footer {
+  padding: 1rem;
+  border-top: 1px solid rgba(0, 0, 0, 0.1);
+  margin-top: auto;
+  position: sticky;
+  bottom: 0;
+  background-color: var(--card-bg);
+}
+
+.mobile-theme-toggle {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  width: 100%;
+  padding: 0.75rem;
+  background: none;
+  border: none;
+  color: var(--text-color);
+  font-size: 1rem;
+  cursor: pointer;
+}
+
+.mobile-auth-buttons {
+  display: flex;
+  gap: 0.5rem;
+  margin-top: 1rem;
+}
+
+.mobile-login-btn,
+.mobile-register-btn {
+  flex: 1;
+  text-align: center;
+  padding: 0.75rem;
+}
+
+/* Mobile Dropdown Styles */
+.mobile-dropdown-container {
+  width: 100%;
+}
+
+.mobile-dropdown-btn {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  padding: 1rem 0;
+  background: none;
+  border: none;
+  color: var(--text-color);
+  cursor: pointer;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+}
+
+.mobile-dropdown-content {
+  width: 100%;
+  padding-left: 1rem;
+  max-height: 0;
+  overflow: hidden;
+  transition: max-height 0.3s ease;
+}
+
+.mobile-dropdown-container.open .mobile-dropdown-content {
+  max-height: 500px;
+}
+
+.mobile-dropdown-item {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.75rem 0;
+  color: var(--text-color);
+}
+
+/* Animations */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Responsive Breakpoints */
+@media (max-width: 1200px) {
   .navbar-container {
-    padding: 0.8rem 1rem;
+    padding: 0 1.5rem;
   }
   
+  .nav-links {
+    gap: 1rem;
+  }
+}
+
+@media (max-width: 992px) {
   .mobile-menu-btn {
-    display: block; /* Show hamburger */
-  }
-  
-  .logo-container {
-    order: 1;
-    flex: 1;
-  }
-  
-  .user-actions {
-    order: 3;
-    margin-left: auto;
-    padding-right: 10px;
+    display: block;
   }
   
   .nav-links,
-  .user-actions {
+  .user-actions .desktop-only {
     display: none;
   }
   
-  .nav-links.open {
-    display: flex;
-    flex-direction: column;
-    position: fixed;
-    top: 0;
-    right: 0;
-    width: 80%;
-    max-width: 300px;
-    height: 100vh;
-    background-color: var(--card-bg);
-    padding: 5rem 1.5rem 2rem;
-    box-shadow: -5px 0 15px rgba(0, 0, 0, 0.1);
-    z-index: 1000;
-    overflow-y: auto;
+  .logo-contain {
+    font-size: 1.3rem;
   }
+  
+  .connect-wallet-btn span:not(.mobile-only) {
+    display: none;
+  }
+  
+  .connect-wallet-btn .mobile-only {
+    display: inline;
+  }
+}
 
-  .nav-links.open + .user-actions {
-    display: flex;
-    flex-direction: column;
-    position: fixed;
-    top: auto;
-    bottom: 2rem;
-    right: 0;
-    width: 80%;
-    max-width: 300px;
-    padding: 0 1.5rem;
-    background-color: var(--card-bg);
-    gap: 1rem;
+@media (max-width: 768px) {
+  .navbar-container {
+    padding: 0 1rem;
   }
   
-  .wallet-info {
-    display: none;
+  .logo {
+    height: 35px;
+    width: 35px;
+  }
+  
+  .logo-contain {
+    font-size: 1.2rem;
+  }
+  
+  .mobile-menu {
+    width: 90%;
+  }
+}
+
+@media (max-width: 480px) {
+  .navbar-container {
+    padding: 0 0.75rem;
+  }
+  
+  .logo-contain {
+    font-size: 1.1rem;
+  }
+  
+  .mobile-menu {
+    width: 100%;
+    max-width: none;
   }
   
   .auth-btn {
     padding: 0.5rem;
     font-size: 0.9rem;
   }
-}
-
-@media (max-width: 480px) {
-  .logo-contain {
-    font-size: 1.2rem;
-    margin-left: 20px !important;
-  }
-  
-  .logo {
-    height: 35px;
-  }
-}
-
-/* Dropdown mobile styles */
-@media (max-width: 992px) {
-  .dropdown-btn {
-    width: 100%;
-    justify-content: space-between;
-    padding: 1rem 0;
-  }
-  
-  .dropdown-content {
-    position: static;
-    width: 100%;
-    box-shadow: none;
-    background-color: transparent;
-    padding-left: 1rem;
-  }
-  
-  .dropdown-item {
-    padding: 0.75rem 0;
-  }
-}
-
-.wallet-info {
-  display: none;
-}
-.connect-wallet-btn {
-  justify-content: center;
-}
-
-.theme-toggle {
-  margin-top: 1rem;
 }
 
 /* Wallet Modal Styles */
@@ -459,7 +710,7 @@
   display: flex;
   justify-content: center;
   align-items: center;
-  z-index: 1000;
+  z-index: 1100;
   backdrop-filter: blur(5px);
 }
 
@@ -470,11 +721,19 @@
   max-width: 400px;
   box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
   overflow: hidden;
+  transform: translateY(20px);
+  opacity: 0;
+  transition: all 0.3s ease;
+}
+
+.wallet-modal.open {
+  transform: translateY(0);
+  opacity: 1;
 }
 
 .wallet-modal-header {
   padding: 20px;
-  border-bottom: 1px solid var(--border-color);
+  border-bottom: 1px solid rgba(0, 0, 0, 0.1);
   display: flex;
   justify-content: space-between;
   align-items: center;
@@ -484,6 +743,7 @@
   margin: 0;
   font-size: 1.25rem;
   font-weight: 600;
+  color: var(--text-color);
 }
 
 .wallet-modal-close {
@@ -491,7 +751,7 @@
   border: none;
   font-size: 1.2rem;
   cursor: pointer;
-  color: var(--text-secondary);
+  color: var(--text-color);
 }
 
 .wallet-modal-body {
@@ -505,7 +765,8 @@
 .wallet-section-title {
   margin: 0 0 12px 0;
   font-size: 0.9rem;
-  color: var(--text-secondary);
+  color: var(--text-color);
+  opacity: 0.7;
   text-transform: uppercase;
   letter-spacing: 0.5px;
 }
@@ -520,16 +781,16 @@
   display: flex;
   align-items: center;
   padding: 12px 16px;
-  background-color: var(--bg-secondary);
-  border: 1px solid var(--border-color);
-  border-radius: 8px;
+  background-color: var(--card-bg);
+  border: 1px solid rgba(0, 0, 0, 0.1);
+  border-radius: var(--border-radius);
   width: 100%;
   cursor: pointer;
-  transition: all 0.2s ease;
+  transition: var(--transition);
 }
 
 .wallet-option:hover {
-  background-color: var(--bg-tertiary);
+  background-color: rgba(0, 0, 0, 0.05);
   transform: translateY(-1px);
 }
 
@@ -544,15 +805,17 @@
 
 .wallet-arrow {
   margin-left: auto;
-  color: var(--text-secondary);
+  color: var(--text-color);
+  opacity: 0.5;
 }
 
 .wallet-modal-footer {
   padding: 16px 20px;
-  border-top: 1px solid var(--border-color);
+  border-top: 1px solid rgba(0, 0, 0, 0.1);
   text-align: center;
   font-size: 0.9rem;
-  color: var(--text-secondary);
+  color: var(--text-color);
+  opacity: 0.7;
 }
 
 .wallet-modal-footer a {
@@ -565,8 +828,8 @@
 }
 
 /* Wallet icons */
-.icon-metamask { color: #f6851b; font-weight: bold; }
-.icon-trustwallet { color: #3375bb; font-weight: bold; }
-.icon-binance { color: #f3ba2f; font-weight: bold; }
-.icon-walletconnect { color: #3b99fc; font-weight: bold; }
-.icon-coinbase { color: #1652f0; font-weight: bold; }
+.icon-metamask { color: #f6851b; }
+.icon-trustwallet { color: #3375bb; }
+.icon-binance { color: #f3ba2f; }
+.icon-walletconnect { color: #3b99fc; }
+.icon-coinbase { color: #1652f0; }

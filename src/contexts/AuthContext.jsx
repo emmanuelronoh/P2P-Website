@@ -1,14 +1,14 @@
-import React, { createContext, useContext, useEffect, useState, useCallback } from 'react';
+import { createContext, useContext, useState, useEffect, useCallback } from 'react';
 import axios from 'axios';
 
-export const AuthContext = createContext();
+const AuthContext = createContext();
 
-export function AuthProvider({ children }) {
+export const AuthProvider = ({ children }) => {
   const [state, setState] = useState({
     user: null,
     isAuthenticated: false,
     loading: true,
-    error: null,
+    error: null
   });
 
   const verifyToken = useCallback(async () => {
@@ -17,7 +17,7 @@ export function AuthProvider({ children }) {
       if (!token) return false;
 
       const response = await axios.get('http://127.0.0.1:8000/api/auth/validate-token', {
-        headers: { Authorization: `Bearer ${token}` },
+        headers: { Authorization: `Bearer ${token}` }
       });
 
       return response.data.valid;
@@ -29,7 +29,7 @@ export function AuthProvider({ children }) {
   const initializeAuth = useCallback(async () => {
     const isValid = await verifyToken();
     if (!isValid) {
-      setState((prev) => ({ ...prev, loading: false }));
+      setState(prev => ({ ...prev, loading: false }));
       return;
     }
 
@@ -39,14 +39,14 @@ export function AuthProvider({ children }) {
         user: JSON.parse(userData),
         isAuthenticated: true,
         loading: false,
-        error: null,
+        error: null
       });
     } catch (e) {
       setState({
         user: null,
         isAuthenticated: false,
         loading: false,
-        error: 'Failed to parse user data',
+        error: 'Failed to parse user data'
       });
     }
   }, [verifyToken]);
@@ -61,12 +61,12 @@ export function AuthProvider({ children }) {
         user: authData.user,
         isAuthenticated: true,
         loading: false,
-        error: null,
+        error: null
       });
     } catch (error) {
-      setState((prev) => ({
+      setState(prev => ({
         ...prev,
-        error: 'Failed to update authentication state',
+        error: 'Failed to update authentication state'
       }));
       throw error;
     }
@@ -81,7 +81,7 @@ export function AuthProvider({ children }) {
       user: null,
       isAuthenticated: false,
       loading: false,
-      error: null,
+      error: null
     });
   }, []);
 
@@ -95,28 +95,16 @@ export function AuthProvider({ children }) {
         ...state,
         login,
         logout,
-        verifyToken,
+        verifyToken
       }}
     >
       {children}
     </AuthContext.Provider>
   );
-}
+};
 
-// Move loadData outside of AuthProvider if you want it to be independent
-export function loadData() {
-  const userData = localStorage.getItem('userData');
-  try {
-    return JSON.parse(userData);
-  } catch (e) {
-    return null;
-  }
-}
+export const useAuth = () => useContext(AuthContext);
 
-// ✅ Export the custom hook
-export function useAuth() {
-  return useContext(AuthContext);
-}
 // import React, { createContext, useContext, useEffect, useState, useCallback, useMemo } from 'react';
 // import axios from 'axios';
 

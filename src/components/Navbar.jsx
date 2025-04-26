@@ -1,4 +1,3 @@
-
 import { useState, useEffect, useRef, useCallback } from "react";
 import { Link, useNavigate, useLocation } from "react-router-dom";
 import { ethers } from 'ethers';
@@ -29,6 +28,28 @@ import { motion, AnimatePresence } from "framer-motion";
 import logo from "../assets/cheetah-logo.png";
 import "../styles/navbar.css";
 import ConnectWalletModal from './WalletConnectModal';
+
+// Custom hook to track window size
+const useWindowSize = () => {
+  const [windowSize, setWindowSize] = useState({
+    width: typeof window !== 'undefined' ? window.innerWidth : 0,
+    height: typeof window !== 'undefined' ? window.innerHeight : 0,
+  });
+
+  useEffect(() => {
+    const handleResize = () => {
+      setWindowSize({
+        width: window.innerWidth,
+        height: window.innerHeight,
+      });
+    };
+
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
+
+  return windowSize;
+};
 
 // Advertisement component
 const AdvertisementBar = () => {
@@ -71,20 +92,8 @@ const AdvertisementBar = () => {
 const DropdownMenu = ({ title, items, icon: Icon }) => {
   const [isOpen, setIsOpen] = useState(false);
   const dropdownRef = useRef(null);
-  const [isMobile, setIsMobile] = useState(window.innerWidth < 992);
-  const { user, isAuthenticated, loading: authLoading } = useAuth();
 
-
-
-  useEffect(() => {
-    const handleResize = () => {
-      setIsMobile(window.innerWidth < 992);
-    };
-
-    window.addEventListener("resize", handleResize);
-    return () => window.removeEventListener("resize", handleResize);
-  }, []);
-
+  // Close dropdown when clicking outside
   useEffect(() => {
     const handleClickOutside = (event) => {
       if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
@@ -96,12 +105,19 @@ const DropdownMenu = ({ title, items, icon: Icon }) => {
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
+  // Close dropdown when route changes
+  const location = useLocation();
+  useEffect(() => {
+    setIsOpen(false);
+  }, [location.pathname]);
+
   return (
     <div className="dropdown-container" ref={dropdownRef}>
       <button
         className="dropdown-btn"
         onClick={() => setIsOpen(!isOpen)}
-        onMouseEnter={!isMobile ? () => setIsOpen(true) : undefined}
+        aria-expanded={isOpen}
+        aria-haspopup="true"
       >
         {Icon && <Icon className="dropdown-icon" />}
         {title}
@@ -111,12 +127,11 @@ const DropdownMenu = ({ title, items, icon: Icon }) => {
       <AnimatePresence>
         {isOpen && (
           <motion.div
-            initial={{ opacity: 0, y: isMobile ? 0 : 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: isMobile ? 0 : -10 }}
+            initial={{ opacity: 0, height: 0 }}
+            animate={{ opacity: 1, height: "auto" }}
+            exit={{ opacity: 0, height: 0 }}
             transition={{ duration: 0.2 }}
             className="dropdown-content"
-            onMouseLeave={!isMobile ? () => setIsOpen(false) : undefined}
           >
             {items.map((item, index) => (
               <Link
@@ -127,9 +142,10 @@ const DropdownMenu = ({ title, items, icon: Icon }) => {
                   setIsOpen(false);
                   if (item.action) item.action();
                 }}
+                aria-label={item.label}
               >
                 {item.icon && <item.icon className="dropdown-item-icon" />}
-                {item.label}
+                <span>{item.label}</span>
               </Link>
             ))}
           </motion.div>
@@ -141,6 +157,9 @@ const DropdownMenu = ({ title, items, icon: Icon }) => {
 
 // Main Navbar component
 const Navbar = ({ toggleTheme, theme }) => {
+  const { width } = useWindowSize();
+  const isMobile = width < 992; // Define your breakpoint
+
   const {
     user,
     isAuthenticated,
@@ -157,15 +176,15 @@ const Navbar = ({ toggleTheme, theme }) => {
   const navigate = useNavigate();
   const location = useLocation();
   const [showWalletModal, setShowWalletModal] = useState(false);
-  const [key, setKey] = useState(0);
   const [provider, setProvider] = useState(null);
   const [signer, setSigner] = useState(null);
   const [chainId, setChainId] = useState(null);
 
 
-  // Improved wallet connection handler
-  const handleWalletConnect = async (walletType, address, provider) => {
+  const handleWalletConnect = async (connectionData) => {
     try {
+      const { walletType, address, provider, chainId, verification } = connectionData;
+
       if (!address) throw new Error('No wallet address provided');
 
       setWalletAddress(address);
@@ -176,26 +195,21 @@ const Navbar = ({ toggleTheme, theme }) => {
         const ethersProvider = new ethers.providers.Web3Provider(provider);
         const signer = ethersProvider.getSigner();
         setSigner(signer);
-
-        // Get network/chain info
-        const network = await ethersProvider.getNetwork();
-        setChainId(network.chainId);
+        setChainId(chainId);
 
         // Listen for account changes
         if (provider.on) {
           provider.on('accountsChanged', (accounts) => {
             if (accounts.length === 0) {
-              // Wallet disconnected
               handleWalletDisconnect();
             } else {
-              // Account changed
               setWalletAddress(accounts[0]);
             }
           });
 
           provider.on('chainChanged', (chainId) => {
             setChainId(parseInt(chainId, 16));
-            window.location.reload(); // Recommended by MetaMask docs
+            window.location.reload();
           });
 
           provider.on('disconnect', () => {
@@ -204,12 +218,10 @@ const Navbar = ({ toggleTheme, theme }) => {
         }
       }
 
-      // Fetch balance after connection
       await fetchBalance(address);
       setShowWalletModal(false);
     } catch (error) {
       console.error('Wallet connection error:', error);
-      // You might want to add error state and display it to the user
     }
   };
 
@@ -222,7 +234,6 @@ const Navbar = ({ toggleTheme, theme }) => {
     setBalance("0.00");
   };
 
-  // Modified fetchBalance to work with actual provider
   const fetchBalance = async (address) => {
     if (!provider || !address) return;
 
@@ -236,15 +247,12 @@ const Navbar = ({ toggleTheme, theme }) => {
     }
   };
 
-  // Add this effect to check for connected wallet on load
+  // Check for connected wallet on load
   useEffect(() => {
     const checkConnectedWallet = async () => {
-      // Check if wallet is connected in localStorage
       const savedAddress = localStorage.getItem("walletAddress");
       if (savedAddress) {
         setWalletAddress(savedAddress);
-
-        // Check if we have a provider (like MetaMask) already connected
         if (window.ethereum && window.ethereum.selectedAddress) {
           const provider = window.ethereum;
           await handleWalletConnect('metamask', savedAddress, provider);
@@ -255,20 +263,7 @@ const Navbar = ({ toggleTheme, theme }) => {
     checkConnectedWallet();
   }, []);
 
-  useEffect(() => {
-    setKey(prevKey => prevKey + 1);
-  }, [isAuthenticated, location.pathname]);
-
-
-
-  // Handle wallet connection
-  const handleWalletConnected = useCallback((address) => {
-    setWalletAddress(address);
-    localStorage.setItem("walletAddress", address);
-    fetchBalance(address);
-  }, []);
-
-  // Handle logout using context
+  // Handle logout
   const handleLogout = useCallback(async () => {
     try {
       await logout();
@@ -286,10 +281,6 @@ const Navbar = ({ toggleTheme, theme }) => {
     window.addEventListener("scroll", handleScroll);
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
-
-  useEffect(() => {
-    // This will force a re-render when the route changes
-  }, [location.pathname]);
 
   // Menu items configuration
   const marketItems = [
@@ -322,6 +313,178 @@ const Navbar = ({ toggleTheme, theme }) => {
       { label: "Register", path: "/register", icon: FaUserPlus }
     ];
 
+  // Desktop Navigation Component
+  const DesktopNavigation = () => (
+    <nav className="nav-links">
+      <DropdownMenu title="Market" items={marketItems} icon={FaChartLine} />
+
+      {isAuthenticated && (
+        <>
+          <Link to="/market" className="nav-link">
+            <FaExchangeAlt className="nav-icon" />
+            Trade
+          </Link>
+          <Link to="/wallet" className="nav-link">
+            <FaWallet className="nav-icon" />
+            Wallet
+          </Link>
+        </>
+      )}
+
+      <DropdownMenu title="Help" items={helpItems} icon={FaQuestionCircle} />
+    </nav>
+  );
+
+  // Mobile Navigation Component
+  const MobileNavigation = () => (
+    <nav className={`nav-links ${menuOpen ? "open" : ""}`}>
+      <div className="mobile-menu-header">
+        {isAuthenticated && walletAddress && (
+          <div className="mobile-wallet-info">
+            <span className="mobile-wallet-balance">{balance} ETH</span>
+            <span className="mobile-wallet-address">
+              {`${walletAddress.substring(0, 6)}...${walletAddress.substring(walletAddress.length - 4)}`}
+            </span>
+          </div>
+        )}
+        <button className="mobile-menu-close" onClick={() => setMenuOpen(false)}>
+          <FaTimes />
+        </button>
+      </div>
+
+      <div className="mobile-menu-content">
+        <DropdownMenu title="Market" items={marketItems} icon={FaChartLine} />
+
+        {isAuthenticated && (
+          <>
+            <Link to="/market" className="nav-link mobile-nav-link">
+              <FaExchangeAlt className="nav-icon" />
+              Trade
+            </Link>
+            <Link to="/wallet" className="nav-link mobile-nav-link">
+              <FaWallet className="nav-icon" />
+              Wallet
+            </Link>
+          </>
+        )}
+
+        <DropdownMenu title="Help" items={helpItems} icon={FaQuestionCircle} />
+
+        {isAuthenticated && (
+          <DropdownMenu
+            title="Account"
+            items={accountItems}
+            icon={FaUserCircle}
+          />
+        )}
+      </div>
+
+      <div className="mobile-menu-footer">
+        <button className="theme-toggle mobile-theme-toggle" onClick={toggleTheme}>
+          {theme === "light" ? <FaMoon /> : <FaSun />}
+          {theme === "light" ? "Dark Mode" : "Light Mode"}
+        </button>
+
+        {!isAuthenticated && (
+          <div className="mobile-auth-buttons">
+            <Link to="/login" className="auth-btn mobile-login-btn">
+              Sign In
+            </Link>
+            <Link to="/register" className="auth-btn mobile-register-btn">
+              Register
+            </Link>
+          </div>
+        )}
+      </div>
+    </nav>
+  );
+
+  // Wallet Info Component
+  const WalletInfo = () => {
+    if (!walletAddress) return (
+      <button
+        className="connect-wallet-btn"
+        onClick={() => setShowWalletModal(true)}
+        aria-label="Connect wallet"
+      >
+        <FaWallet className="wallet-icon" />
+        {!isMobile ? "Connect Wallet" : "Connect"}
+      </button>
+    );
+
+    return (
+      <div className="wallet-connected-container">
+        {!isMobile && (
+          <>
+            <div className="network-indicator">
+              {chainId === 1 ? (
+                <span className="mainnet">Mainnet</span>
+              ) : chainId === 5 ? (
+                <span className="testnet">Goerli</span>
+              ) : chainId === 56 ? (
+                <span className="bsc">BSC</span>
+              ) : chainId ? (
+                <span className="custom-chain">Chain {chainId}</span>
+              ) : (
+                <span className="unknown-network">Unknown</span>
+              )}
+            </div>
+            <div className="wallet-balance" onClick={() => navigate('/wallet')}>
+              {parseFloat(balance).toFixed(4)} ETH
+            </div>
+          </>
+        )}
+
+        <div className="wallet-address-dropdown">
+          <button
+            className="wallet-address-btn"
+            onClick={() => navigate('/wallet')}
+            aria-label="Wallet address"
+          >
+            <FaWallet className="wallet-icon" />
+            <span className="address-short">
+              {`${walletAddress.substring(0, 4)}...${walletAddress.substring(walletAddress.length - 4)}`}
+            </span>
+            {!isMobile && <FaChevronDown className="dropdown-chevron" />}
+          </button>
+
+          {!isMobile && (
+            <div className="wallet-dropdown-menu">
+              <div className="wallet-dropdown-header">
+                <span className="full-address" title={walletAddress}>
+                  {walletAddress}
+                </span>
+                <span className="network-badge">
+                  {chainId === 1 ? 'Mainnet' :
+                    chainId === 5 ? 'Goerli' :
+                      chainId === 56 ? 'BSC' :
+                        chainId ? `Chain ${chainId}` : 'Unknown'}
+                </span>
+              </div>
+              <button
+                className="wallet-dropdown-item"
+                onClick={() => navigate('/wallet')}
+              >
+                <FaWallet /> Wallet Dashboard
+              </button>
+              <button
+                className="wallet-dropdown-item"
+                onClick={() => navigate('/transactions')}
+              >
+                <FaExchangeAlt /> Transactions
+              </button>
+              <button
+                className="wallet-dropdown-item disconnect"
+                onClick={handleWalletDisconnect}
+              >
+                <FaSignOutAlt /> Disconnect
+              </button>
+            </div>
+          )}
+        </div>
+      </div>
+    );
+  };
 
   return (
     <>
@@ -341,41 +504,21 @@ const Navbar = ({ toggleTheme, theme }) => {
             </Link>
           </motion.div>
 
-          {/* Mobile menu button */}
-          <button
-            className="mobile-menu-btn"
-            onClick={() => setMenuOpen(!menuOpen)}
-          >
-            {menuOpen ? <FaTimes /> : <FaBars />}
-          </button>
+          {/* Mobile menu button - only on mobile */}
+          {isMobile && (
+            <button
+              className="mobile-menu-btn"
+              onClick={() => setMenuOpen(!menuOpen)}
+            >
+              {menuOpen ? <FaTimes /> : <FaBars />}
+            </button>
+          )}
 
-          {/* Navigation */}
-          <nav className={`nav-links ${menuOpen ? "open" : ""}`}>
-            <DropdownMenu
-              title="Market"
-              items={marketItems}
-              icon={FaChartLine}
-            />
+          {/* Desktop Navigation - only on desktop */}
+          {!isMobile && <DesktopNavigation />}
 
-            {isAuthenticated && (
-              <>
-                <Link to="/market" className="nav-link">
-                  <FaExchangeAlt className="nav-icon" />
-                  Trade
-                </Link>
-                <Link to="/wallet" className="nav-link">
-                  <FaWallet className="nav-icon" />
-                  Wallet
-                </Link>
-              </>
-            )}
-
-            <DropdownMenu
-              title="Help"
-              items={helpItems}
-              icon={FaQuestionCircle}
-            />
-          </nav>
+          {/* Mobile Navigation - only on mobile when open */}
+          {isMobile && <MobileNavigation />}
 
           {/* User actions */}
           <div className="user-actions">
@@ -383,84 +526,43 @@ const Navbar = ({ toggleTheme, theme }) => {
               <>
                 <button
                   className="notification-button"
-                  onClick={() => navigate('/amount')}
+                  onClick={() => navigate('/notifications')}
                 >
                   <FaBell />
                 </button>
 
-
-                {/* Messages */}
                 <div
                   className="message-icon"
                   onClick={() => navigate("/messages")}
                 >
                   <IoMdChatbubbles />
                   {unreadMessages > 0 && (
-                    <motion.span
-                      className="message-badge"
-                      initial={{ scale: 0 }}
-                      animate={{ scale: 1 }}
-                      key={unreadMessages}
-                    >
-                      {unreadMessages}
-                    </motion.span>
+                    <span className="message-badge">{unreadMessages}</span>
                   )}
                 </div>
 
-                {/* Wallet */}
-                {walletAddress ? (
-                  <div className="wallet-info">
-                    <span className="wallet-balance">
-                      {balance} ETH
-                    </span>
-                    <div className="wallet-network">
-                      {chainId === 1 ? 'Mainnet' :
-                        chainId === 5 ? 'Goerli' :
-                          chainId === 56 ? 'BSC' :
-                            chainId ? `Chain ${chainId}` : 'Unknown'}
-                    </div>
-                    <button
-                      className="wallet-address"
-                      onClick={() => navigate("/wallet")}
-                      title={walletAddress}
-                    >
-                      {`${walletAddress.substring(0, 6)}...${walletAddress.substring(walletAddress.length - 4)}`}
-                    </button>
-                    <button
-                      className="wallet-disconnect"
-                      onClick={handleWalletDisconnect}
-                    >
-                      Disconnect
-                    </button>
-                  </div>
-                ) : (
-                  <button
-                    className="connect-wallet-btn"
-                    onClick={() => setShowWalletModal(true)}
-                  >
-                    <FaWallet />
-                    Connect Wallet
-                  </button>
-                )}
+                <WalletInfo />
 
-                {/* Profile dropdown */}
-                <DropdownMenu
-                  title={<FaUserCircle className="profile-icon" />}
-                  items={accountItems}
-                />
+                {!isMobile && (
+                  <DropdownMenu
+                    title={<FaUserCircle className="profile-icon" />}
+                    items={accountItems}
+                  />
+                )}
               </>
             ) : (
-              <>
-                <Link to="/login" className="auth-btn login-btn">
-                  Sign In
-                </Link>
-                <Link to="/register" className="auth-btn register-btn">
-                  Register
-                </Link>
-              </>
+              !isMobile && (
+                <>
+                  <Link to="/login" className="auth-btn login-btn">
+                    Sign In
+                  </Link>
+                  <Link to="/register" className="auth-btn register-btn">
+                    Register
+                  </Link>
+                </>
+              )
             )}
 
-            {/* Theme toggle */}
             <button
               className="theme-toggle"
               onClick={toggleTheme}
@@ -470,14 +572,12 @@ const Navbar = ({ toggleTheme, theme }) => {
             </button>
           </div>
         </div>
-
       </header>
+
       {showWalletModal && (
         <ConnectWalletModal
           onClose={() => setShowWalletModal(false)}
-          onConnect={(walletType, address, provider) =>
-            handleWalletConnect(walletType, address, provider)
-          }
+          onConnect={handleWalletConnect}
         />
       )}
     </>

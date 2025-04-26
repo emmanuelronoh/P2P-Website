@@ -3,12 +3,13 @@ import {
   BrowserRouter as Router,
   Routes,
   Route,
-  Outlet
+  Outlet,
+  useNavigate
 } from "react-router-dom";
 import AOS from 'aos';
 import 'aos/dist/aos.css';
-import { useNavigate } from "react-router-dom";
-import { useAuth, AuthProvider } from './contexts/AuthContext';
+import { AuthProvider, useAuth } from './contexts/AuthContext'; // Added useAuth import
+import { WalletProvider } from './contexts/walletContext';
 import Home from "./pages/Home";
 import HomeFiat from "./pages/Home-fiat";
 import NavbarP2P from "./components/NavbarP2P";
@@ -66,12 +67,14 @@ function AppWrapper() {
 
   return (
     <AuthProvider>
-      <AppInner theme={theme} toggleTheme={toggleTheme} />
+      <WalletProvider>
+        <AppInner theme={theme} toggleTheme={toggleTheme} />
+      </WalletProvider>
     </AuthProvider>
   );
 }
 
-// Layout component for main routes with standard Navbar and Footer
+// Layout components
 function MainLayout({ theme, toggleTheme }) {
   return (
     <>
@@ -84,7 +87,6 @@ function MainLayout({ theme, toggleTheme }) {
   );
 }
 
-// Layout component for P2P routes with NavbarP2P and Footer
 function P2PLayout({ theme, toggleTheme }) {
   return (
     <>
@@ -97,7 +99,6 @@ function P2PLayout({ theme, toggleTheme }) {
   );
 }
 
-// Layout component for message pages (with Navbar but no Footer)
 function MessagesLayout({ theme, toggleTheme }) {
   return (
     <>
@@ -109,7 +110,6 @@ function MessagesLayout({ theme, toggleTheme }) {
   );
 }
 
-// Layout component for P2P message pages (with NavbarP2P but no Footer)
 function P2PMessagesLayout({ theme, toggleTheme }) {
   return (
     <>
@@ -121,7 +121,6 @@ function P2PMessagesLayout({ theme, toggleTheme }) {
   );
 }
 
-// Layout component for full-page routes (without Navbar/Footer)
 function FullPageLayout() {
   return (
     <div className="full-page-layout">
@@ -144,37 +143,15 @@ function AppInner({ theme, toggleTheme }) {
   return (
     <Router>
       <Routes>
-        {/* Main routes with standard Navbar and Footer */}
         <Route element={<MainLayout theme={theme} toggleTheme={toggleTheme} />}>
           <Route path="/" element={<Home />} />
-          <Route
-            path="/dashboard"
-            element={
-              <PrivateRoute>
-                <Dashboard />
-              </PrivateRoute>
-            }
-          />
+          <Route path="/dashboard" element={<PrivateRoute><Dashboard /></PrivateRoute>} />
           <Route path="/register" element={<Register />} />
-          <Route
-            path="/login"
-            element={
-              <PublicOnlyRoute>
-                <Login />
-              </PublicOnlyRoute>
-            }
-          />
+          <Route path="/login" element={<PublicOnlyRoute><Login /></PublicOnlyRoute>} />
           <Route path="/verify-otp" element={<VerifyOTP />} />
           <Route path="/forgot-password" element={<ForgotPassword />} />
           <Route path="/reset-password/:uidb64/:token" element={<ResetPassword />} />
-          <Route
-            path="/wallet"
-            element={
-              <PrivateRoute>
-                <Wallet />
-              </PrivateRoute>
-            }
-          />
+          <Route path="/wallet" element={<PrivateRoute><Wallet /></PrivateRoute>} />
           <Route path="/market" element={<Market />} />
           <Route path="/profile/:username" element={<Profile />} />
           <Route path="/notifications" element={<Notifications />} />
@@ -190,12 +167,10 @@ function AppInner({ theme, toggleTheme }) {
           <Route path="/profile-details-users/:userId" element={<ProfileDetails />} />
         </Route>
 
-        {/* Message routes without Footer */}
         <Route element={<MessagesLayout theme={theme} toggleTheme={toggleTheme} />}>
           <Route path="/messages" element={<Messages />} />
         </Route>
 
-        {/* P2P routes with NavbarP2P and Footer */}
         <Route element={<P2PLayout theme={theme} toggleTheme={toggleTheme} />}>
           <Route path="/fiat-p2p" element={<FiatP2P />} />
           <Route path="/chat" element={<Chat />} />
@@ -209,16 +184,14 @@ function AppInner({ theme, toggleTheme }) {
           <Route path="/profile-details-user/:userId" element={<ProfileDetails />} />
         </Route>
 
-        {/* P2P Message routes without Footer */}
         <Route element={<P2PMessagesLayout theme={theme} toggleTheme={toggleTheme} />}>
           <Route path="/messages-p2p" element={<MessagesP2p />} />
           <Route path="/chat-room-fiat" element={<MessagesP2p />} />
           <Route path="/chat-room-fiat-crypto" element={<MessagesP2p />} />
         </Route>
 
-        {/* Full-page routes without Navbar/Footer */}
         <Route element={<FullPageLayout />}>
-          {/* Add any full-page routes here */}
+          {/* Full-page routes */}
         </Route>
       </Routes>
     </Router>

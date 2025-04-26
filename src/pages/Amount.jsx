@@ -120,20 +120,20 @@ const Amount = () => {
   // Validate all requirements before proceeding
   const validateTradeRequirements = () => {
     const numericAmount = parseFloat((amount.replace(/,/g, '')) || 0);
-
+  
     // Basic amount validation
     if (!amount || numericAmount <= 0) {
       setInputError("Please enter a valid amount");
       return false;
     }
-
+  
     // Balance validation
     if (numericAmount > availableBalance) {
       setInputError(`Amount exceeds your available balance of ${formatCurrency(availableBalance, "KES")}`);
       return false;
     }
-
-    // Wallet address validation
+  
+    // Current user's wallet address validation
     if (!localStorage.getItem('walletAddress')) {
       setErrorModal({
         show: true,
@@ -142,7 +142,17 @@ const Amount = () => {
       });
       return false;
     }
-
+  
+    // Trader's wallet address validation
+    if (!trader.walletAddress) {
+      setErrorModal({
+        show: true,
+        message: "Trade Cannot Be Processed",
+        details: "The trader has not set up their wallet address. Please choose another trader."
+      });
+      return false;
+    }
+  
     return true;
   };
 
@@ -222,7 +232,7 @@ const Amount = () => {
         <div className="error-card">
           <h2>Incomplete Trade Information</h2>
           <p>Please go back and select both a trader and cryptocurrency to continue.</p>
-          <button className="back-btn" onClick={() => navigate("/trade")}>
+          <button className="back-btn" onClick={() => navigate("/market")}>
             Back to Trade Listings
           </button>
         </div>
@@ -242,6 +252,10 @@ const Amount = () => {
         actions={
           errorModal.message === "Wallet Address Required" ? [
             { text: "Go to Wallets", handler: navigateToWalletSettings },
+            { text: "Cancel", handler: closeErrorModal }
+          ] : 
+          errorModal.message === "Trade Cannot Be Processed" ? [
+            { text: "Choose Another Trader", handler: () => { closeErrorModal(); navigate("/market"); } },
             { text: "Cancel", handler: closeErrorModal }
           ] : null
         }

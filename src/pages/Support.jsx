@@ -3,6 +3,9 @@ import '../styles/Support.css';
 import { motion, AnimatePresence } from 'framer-motion';
 import { FiSend, FiCheckCircle, FiAlertCircle, FiChevronDown } from 'react-icons/fi';
 
+// API configuration
+const API_BASE_URL = 'http://localhost:8000/users/support';
+
 const Support = () => {
   const [formData, setFormData] = useState({
     name: '',
@@ -15,6 +18,11 @@ const Support = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitStatus, setSubmitStatus] = useState(null);
   const [showAdditionalFields, setShowAdditionalFields] = useState(false);
+  const [isLiveChatAvailable, setIsLiveChatAvailable] = useState(false);
+  const [supportStats, setSupportStats] = useState({
+    responseTime: '30min',
+    satisfactionRate: '98%'
+  });
   const formRef = useRef(null);
   
   // Animation variants
@@ -49,20 +57,55 @@ const Support = () => {
     }));
   };
   
+  // Fetch support statistics from backend
+  const fetchSupportStats = async () => {
+    try {
+      const response = await fetch(`${API_BASE_URL}/stats`);
+      if (!response.ok) throw new Error('Failed to fetch stats');
+      const data = await response.json();
+      setSupportStats({
+        responseTime: data.averageResponseTime || '30min',
+        satisfactionRate: data.satisfactionRate || '98%'
+      });
+    } catch (error) {
+      console.error('Error fetching support stats:', error);
+      // Use default values if API fails
+    }
+  };
+  
+  // Check live chat availability
+  const checkLiveChatAvailability = async () => {
+    try {
+      const response = await fetch(`${API_BASE_URL}/live-chat/status`);
+      if (!response.ok) throw new Error('Failed to check chat status');
+      const data = await response.json();
+      setIsLiveChatAvailable(data.isAvailable || false);
+    } catch (error) {
+      console.error('Error checking live chat status:', error);
+      setIsLiveChatAvailable(false);
+    }
+  };
+  
+  // Handle form submission
   const handleSubmit = async (e) => {
     e.preventDefault();
     setIsSubmitting(true);
+    setSubmitStatus(null);
     
     try {
-      // Simulate API call
-      await new Promise(resolve => setTimeout(resolve, 1500));
+      const response = await fetch(`${API_BASE_URL}/submit/`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(formData),
+      });
       
-      // Here you would typically send to your backend
-      // const response = await fetch('/api/support', {
-      //   method: 'POST',
-      //   headers: { 'Content-Type': 'application/json' },
-      //   body: JSON.stringify(formData)
-      // });
+      if (!response.ok) {
+        throw new Error(response.statusText || 'Submission failed');
+      }
+      
+      const data = await response.json();
       
       setSubmitStatus('success');
       setFormData({
@@ -74,11 +117,13 @@ const Support = () => {
         urgency: 'normal'
       });
       
-      // Reset form after success
+      // Reset status after 4 seconds
       setTimeout(() => {
         setSubmitStatus(null);
       }, 4000);
+      
     } catch (error) {
+      console.error('Error submitting support request:', error);
       setSubmitStatus('error');
       setTimeout(() => {
         setSubmitStatus(null);
@@ -88,13 +133,61 @@ const Support = () => {
     }
   };
   
-  // Auto-scroll to form on load
+  // Initialize component
   useEffect(() => {
+    // Fetch initial data when component mounts
+    fetchSupportStats();
+    checkLiveChatAvailability();
+    
+    // Auto-scroll to form on load
     window.scrollTo({
-      top: formRef.current.offsetTop - 100,
+      top: formRef.current?.offsetTop - 100 || 0,
       behavior: 'smooth'
     });
+    
+    // Set up periodic checks for live chat availability (every 5 minutes)
+    const chatCheckInterval = setInterval(checkLiveChatAvailability, 300000);
+    
+    return () => {
+      clearInterval(chatCheckInterval);
+    };
   }, []);
+  
+  // Handle live chat button click
+  const handleLiveChatClick = async () => {
+    if (!isLiveChatAvailable) {
+      alert('Live chat is currently unavailable. Please try again later or submit your request via the form.');
+      return;
+    }
+    
+    try {
+      // Initiate live chat session
+      const response = await fetch(`${API_BASE_URL}/live-chat/initiate`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          name: formData.name || 'Anonymous User',
+          email: formData.email || '',
+          category: formData.category
+        }),
+      });
+      
+      if (!response.ok) {
+        throw new Error('Failed to initiate live chat');
+      }
+      
+      const data = await response.json();
+      
+      // In a real app, you would connect to the live chat system here
+      alert(`Live chat session started! Session ID: ${data.sessionId}`);
+      
+    } catch (error) {
+      console.error('Error initiating live chat:', error);
+      alert('Failed to start live chat. Please try again later.');
+    }
+  };
   
   return (
     <div className="support-container">
@@ -140,7 +233,7 @@ const Support = () => {
                 animate={{ scale: 1 }}
                 transition={{ delay: 0.6 }}
               >
-                <span className="fast-response">30</span>min
+                <span className="fast-response">{supportStats.responseTime}</span>
               </motion.div>
               <div className="stat-label">Average Response Time</div>
             </div>
@@ -151,7 +244,7 @@ const Support = () => {
                 animate={{ scale: 1 }}
                 transition={{ delay: 0.8 }}
               >
-                98%
+                {supportStats.satisfactionRate}
               </motion.div>
               <div className="stat-label">Satisfaction Rate</div>
             </div>
@@ -324,10 +417,11 @@ const Support = () => {
         <p>For urgent matters regarding active transactions, please contact our live support.</p>
         <motion.button
           className="live-chat-btn"
+          onClick={handleLiveChatClick}
           whileHover={{ scale: 1.05, boxShadow: '0 5px 15px rgba(0, 0, 0, 0.1)' }}
           whileTap={{ scale: 0.95 }}
         >
-          Start Live Chat
+          {isLiveChatAvailable ? 'Start Live Chat' : 'Live Chat Unavailable'}
         </motion.button>
       </motion.div>
     </div>

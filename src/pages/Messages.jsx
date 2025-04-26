@@ -566,20 +566,6 @@ const Messages = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [state.messages]);
 
-  useEffect(() => {
-    if (state.currentChat?.tradeId) {
-      // Initial fetch
-      fetchEscrowStatus(state.currentChat.tradeId);
-
-      // Set up polling
-      const interval = setInterval(
-        () => fetchEscrowStatus(state.currentChat.tradeId),
-        15000 // Poll every 15 seconds
-      );
-
-      return () => clearInterval(interval);
-    }
-  }, [state.currentChat?.tradeId, fetchEscrowStatus]);
 
   useEffect(() => {
     // Focus on input when chat changes
@@ -598,6 +584,7 @@ const Messages = () => {
 
 
 
+  // Move this before the useEffect hooks that use it
   const fetchEscrowStatus = useCallback(async (tradeId) => {
     try {
       const token = localStorage.getItem('accessToken');
@@ -618,6 +605,22 @@ const Messages = () => {
       console.error('Error fetching escrow status:', error);
     }
   }, []);
+
+  // Then the useEffect that uses it
+  useEffect(() => {
+    if (state.currentChat?.tradeId) {
+      // Initial fetch
+      fetchEscrowStatus(state.currentChat.tradeId);
+
+      // Set up polling
+      const interval = setInterval(
+        () => fetchEscrowStatus(state.currentChat.tradeId),
+        15000 // Poll every 15 seconds
+      );
+
+      return () => clearInterval(interval);
+    }
+  }, [state.currentChat?.tradeId, fetchEscrowStatus]);
 
   const verifyDeposit = async () => {
     setState(prev => ({ ...prev, isProcessingEscrow: true }));
