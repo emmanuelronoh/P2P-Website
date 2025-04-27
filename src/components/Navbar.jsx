@@ -29,7 +29,6 @@ import logo from "../assets/cheetah-logo.png";
 import "../styles/navbar.css";
 import ConnectWalletModal from './WalletConnectModal';
 
-// Custom hook to track window size
 const useWindowSize = () => {
   const [windowSize, setWindowSize] = useState({
     width: typeof window !== 'undefined' ? window.innerWidth : 0,
@@ -51,7 +50,6 @@ const useWindowSize = () => {
   return windowSize;
 };
 
-// Advertisement component
 const AdvertisementBar = () => {
   const ads = [
     "🔥 Limited Time Offer: 0% Trading Fees This Week!",
@@ -88,12 +86,16 @@ const AdvertisementBar = () => {
   );
 };
 
-// Dropdown menu component
 const DropdownMenu = ({ title, items, icon: Icon }) => {
   const [isOpen, setIsOpen] = useState(false);
   const dropdownRef = useRef(null);
+  const { width } = useWindowSize();
+  const isMobile = width < 992;
 
-  // Close dropdown when clicking outside
+  const toggleDropdown = () => {
+    setIsOpen(!isOpen);
+  };
+
   useEffect(() => {
     const handleClickOutside = (event) => {
       if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
@@ -105,22 +107,56 @@ const DropdownMenu = ({ title, items, icon: Icon }) => {
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
-  // Close dropdown when route changes
   const location = useLocation();
   useEffect(() => {
     setIsOpen(false);
   }, [location.pathname]);
 
+  if (isMobile) {
+    return (
+      <div className="dropdown-container" ref={dropdownRef}>
+        <button
+          className="mobile-dropdown-btn"
+          onClick={toggleDropdown}
+          aria-expanded={isOpen}
+          aria-haspopup="true"
+        >
+          {Icon && <Icon className="dropdown-icon" />}
+          <span>{title}</span>
+          <FaChevronDown className={`dropdown-arrow ${isOpen ? "rotate" : ""}`} />
+        </button>
+
+        <div className={`mobile-dropdown-content ${isOpen ? "open" : ""}`}>
+          {items.map((item, index) => (
+            <Link
+              key={index}
+              to={item.path}
+              className="mobile-dropdown-item"
+              onClick={() => {
+                setIsOpen(false);
+                if (item.action) item.action();
+              }}
+              aria-label={item.label}
+            >
+              {item.icon && <item.icon className="dropdown-item-icon" />}
+              <span>{item.label}</span>
+            </Link>
+          ))}
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="dropdown-container" ref={dropdownRef}>
       <button
-        className="dropdown-btn"
+        className={`dropdown-btn ${isMobile ? 'mobile-dropdown-btn' : ''}`}
         onClick={() => setIsOpen(!isOpen)}
         aria-expanded={isOpen}
         aria-haspopup="true"
       >
         {Icon && <Icon className="dropdown-icon" />}
-        {title}
+        {!isMobile && title}
         <FaChevronDown className={`dropdown-arrow ${isOpen ? "rotate" : ""}`} />
       </button>
 
@@ -131,13 +167,13 @@ const DropdownMenu = ({ title, items, icon: Icon }) => {
             animate={{ opacity: 1, height: "auto" }}
             exit={{ opacity: 0, height: 0 }}
             transition={{ duration: 0.2 }}
-            className="dropdown-content"
+            className={`dropdown-content ${isMobile ? 'mobile-dropdown-content' : ''}`}
           >
             {items.map((item, index) => (
               <Link
                 key={index}
                 to={item.path}
-                className="dropdown-item"
+                className={`dropdown-item ${isMobile ? 'mobile-dropdown-item' : ''}`}
                 onClick={() => {
                   setIsOpen(false);
                   if (item.action) item.action();
@@ -155,10 +191,9 @@ const DropdownMenu = ({ title, items, icon: Icon }) => {
   );
 };
 
-// Main Navbar component
-const Navbar = ({ toggleTheme, theme }) => {
+const Navbar = ({ theme, toggleTheme }) => {
   const { width } = useWindowSize();
-  const isMobile = width < 992; // Define your breakpoint
+  const isMobile = width < 992;
 
   const {
     user,
@@ -180,7 +215,6 @@ const Navbar = ({ toggleTheme, theme }) => {
   const [signer, setSigner] = useState(null);
   const [chainId, setChainId] = useState(null);
 
-
   const handleWalletConnect = async (connectionData) => {
     try {
       const { walletType, address, provider, chainId, verification } = connectionData;
@@ -197,7 +231,6 @@ const Navbar = ({ toggleTheme, theme }) => {
         setSigner(signer);
         setChainId(chainId);
 
-        // Listen for account changes
         if (provider.on) {
           provider.on('accountsChanged', (accounts) => {
             if (accounts.length === 0) {
@@ -247,7 +280,6 @@ const Navbar = ({ toggleTheme, theme }) => {
     }
   };
 
-  // Check for connected wallet on load
   useEffect(() => {
     const checkConnectedWallet = async () => {
       const savedAddress = localStorage.getItem("walletAddress");
@@ -263,7 +295,6 @@ const Navbar = ({ toggleTheme, theme }) => {
     checkConnectedWallet();
   }, []);
 
-  // Handle logout
   const handleLogout = useCallback(async () => {
     try {
       await logout();
@@ -273,7 +304,6 @@ const Navbar = ({ toggleTheme, theme }) => {
     }
   }, [logout, navigate]);
 
-  // Scroll effect
   useEffect(() => {
     const handleScroll = () => {
       setIsScrolled(window.scrollY > 10);
@@ -282,7 +312,6 @@ const Navbar = ({ toggleTheme, theme }) => {
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
 
-  // Menu items configuration
   const marketItems = [
     { label: "Crypto Pairs", path: "/market/crypto", icon: FaCoins },
     { label: "Stocks", path: "/market/stocks", icon: FaChartLine },
@@ -313,93 +342,6 @@ const Navbar = ({ toggleTheme, theme }) => {
       { label: "Register", path: "/register", icon: FaUserPlus }
     ];
 
-  // Desktop Navigation Component
-  const DesktopNavigation = () => (
-    <nav className="nav-links">
-      <DropdownMenu title="Market" items={marketItems} icon={FaChartLine} />
-
-      {isAuthenticated && (
-        <>
-          <Link to="/market" className="nav-link">
-            <FaExchangeAlt className="nav-icon" />
-            Trade
-          </Link>
-          <Link to="/wallet" className="nav-link">
-            <FaWallet className="nav-icon" />
-            Wallet
-          </Link>
-        </>
-      )}
-
-      <DropdownMenu title="Help" items={helpItems} icon={FaQuestionCircle} />
-    </nav>
-  );
-
-  // Mobile Navigation Component
-  const MobileNavigation = () => (
-    <nav className={`nav-links ${menuOpen ? "open" : ""}`}>
-      <div className="mobile-menu-header">
-        {isAuthenticated && walletAddress && (
-          <div className="mobile-wallet-info">
-            <span className="mobile-wallet-balance">{balance} ETH</span>
-            <span className="mobile-wallet-address">
-              {`${walletAddress.substring(0, 6)}...${walletAddress.substring(walletAddress.length - 4)}`}
-            </span>
-          </div>
-        )}
-        <button className="mobile-menu-close" onClick={() => setMenuOpen(false)}>
-          <FaTimes />
-        </button>
-      </div>
-
-      <div className="mobile-menu-content">
-        <DropdownMenu title="Market" items={marketItems} icon={FaChartLine} />
-
-        {isAuthenticated && (
-          <>
-            <Link to="/market" className="nav-link mobile-nav-link">
-              <FaExchangeAlt className="nav-icon" />
-              Trade
-            </Link>
-            <Link to="/wallet" className="nav-link mobile-nav-link">
-              <FaWallet className="nav-icon" />
-              Wallet
-            </Link>
-          </>
-        )}
-
-        <DropdownMenu title="Help" items={helpItems} icon={FaQuestionCircle} />
-
-        {isAuthenticated && (
-          <DropdownMenu
-            title="Account"
-            items={accountItems}
-            icon={FaUserCircle}
-          />
-        )}
-      </div>
-
-      <div className="mobile-menu-footer">
-        <button className="theme-toggle mobile-theme-toggle" onClick={toggleTheme}>
-          {theme === "light" ? <FaMoon /> : <FaSun />}
-          {theme === "light" ? "Dark Mode" : "Light Mode"}
-        </button>
-
-        {!isAuthenticated && (
-          <div className="mobile-auth-buttons">
-            <Link to="/login" className="auth-btn mobile-login-btn">
-              Sign In
-            </Link>
-            <Link to="/register" className="auth-btn mobile-register-btn">
-              Register
-            </Link>
-          </div>
-        )}
-      </div>
-    </nav>
-  );
-
-  // Wallet Info Component
   const WalletInfo = () => {
     if (!walletAddress) return (
       <button
@@ -469,7 +411,7 @@ const Navbar = ({ toggleTheme, theme }) => {
               </button>
               <button
                 className="wallet-dropdown-item"
-                onClick={() => navigate('/transactions')}
+                onClick={() => navigate('/dashboard')}
               >
                 <FaExchangeAlt /> Transactions
               </button>
@@ -492,7 +434,6 @@ const Navbar = ({ toggleTheme, theme }) => {
 
       <header className={`navbar ${isScrolled ? "scrolled" : ""}`}>
         <div className="navbar-container">
-          {/* Logo */}
           <motion.div
             className="logo-container"
             whileHover={{ scale: 1.05 }}
@@ -500,77 +441,204 @@ const Navbar = ({ toggleTheme, theme }) => {
           >
             <Link to="/">
               <img src={logo} alt="Cheetah P2P Logo" className="logo" />
-              <span className="logo-contain">CHEETAH P2P</span>
+              <span className="logo-text">CHEETAH P2P</span>
             </Link>
           </motion.div>
 
-          {/* Mobile menu button - only on mobile */}
-          {isMobile && (
-            <button
-              className="mobile-menu-btn"
-              onClick={() => setMenuOpen(!menuOpen)}
-            >
-              {menuOpen ? <FaTimes /> : <FaBars />}
-            </button>
-          )}
+          {!isMobile ? (
+            <>
+              <nav className="nav-links">
+                <DropdownMenu title="Market" items={marketItems} icon={FaChartLine} />
 
-          {/* Desktop Navigation - only on desktop */}
-          {!isMobile && <DesktopNavigation />}
+                {isAuthenticated && (
+                  <>
+                    <Link to="/market" className="nav-link">
+                      <FaExchangeAlt className="nav-icon" />
+                      Trade
+                    </Link>
+                    <Link to="/wallet" className="nav-link">
+                      <FaWallet className="nav-icon" />
+                      Wallet
+                    </Link>
+                  </>
+                )}
 
-          {/* Mobile Navigation - only on mobile when open */}
-          {isMobile && <MobileNavigation />}
+                <DropdownMenu title="Help" items={helpItems} icon={FaQuestionCircle} />
+              </nav>
 
-          {/* User actions */}
-          <div className="user-actions">
-            {isAuthenticated ? (
-              <>
+              <div className="user-actions">
+                {isAuthenticated ? (
+                  <>
+                    <button
+                      className="notification-button"
+                      onClick={() => navigate('/notifications')}
+                    >
+                      <FaBell />
+                    </button>
+
+                    <div
+                      className="message-icon"
+                      onClick={() => navigate("/messages")}
+                    >
+                      <IoMdChatbubbles />
+                      {unreadMessages > 0 && (
+                        <span className="message-badge">{unreadMessages}</span>
+                      )}
+                    </div>
+
+                    <WalletInfo />
+
+                    <DropdownMenu
+                      title={<FaUserCircle className="profile-icon" />}
+                      items={accountItems}
+                    />
+                  </>
+                ) : (
+                  <>
+                    <Link to="/login" className="auth-btn login-btn">
+                      Sign In
+                    </Link>
+                    <Link to="/register" className="auth-btn register-btn">
+                      Register
+                    </Link>
+                  </>
+                )}
+
                 <button
-                  className="notification-button"
-                  onClick={() => navigate('/notifications')}
+                  className="theme-toggle"
+                  onClick={toggleTheme}
+                  aria-label="Toggle theme"
                 >
-                  <FaBell />
+                  {theme === "light" ? <FaMoon /> : <FaSun />}
                 </button>
+              </div>
+            </>
+          ) : (
+            <>
+              <button
+                className="mobile-menu-btn"
+                onClick={() => setMenuOpen(!menuOpen)}
+                aria-label={menuOpen ? "Close menu" : "Open menu"}
+              >
+                {menuOpen ? <FaTimes /> : <FaBars />}
+              </button>
 
-                <div
-                  className="message-icon"
-                  onClick={() => navigate("/messages")}
-                >
-                  <IoMdChatbubbles />
-                  {unreadMessages > 0 && (
-                    <span className="message-badge">{unreadMessages}</span>
+
+              <AnimatePresence>
+                {menuOpen && (
+                  <>
+                    <motion.div
+                      className="mobile-menu-overlay"
+                      initial={{ opacity: 0 }}
+                      animate={{ opacity: 1 }}
+                      exit={{ opacity: 0 }}
+                      onClick={() => setMenuOpen(false)}
+                    />
+
+                    <motion.div
+                      className="mobile-menu"
+                      initial={{ x: '100%' }}
+                      animate={{ x: menuOpen ? 0 : '100%' }}
+                      exit={{ x: '100%' }}
+                      transition={{ type: 'tween' }}
+                    >
+                    </motion.div>
+                  </>
+                )}
+              </AnimatePresence>
+
+              <motion.div
+                className={`mobile-menu ${menuOpen ? "open" : ""}`}
+                initial={{ x: '100%' }}
+                animate={{ x: menuOpen ? 0 : '100%' }}
+                transition={{ type: 'tween' }}
+              >
+                <div className="mobile-menu-header">
+                  {isAuthenticated && walletAddress && (
+                    <div className="mobile-wallet-info">
+                      <span className="mobile-wallet-balance">{balance} ETH</span>
+                      <span className="mobile-wallet-address">
+                        {`${walletAddress.substring(0, 6)}...${walletAddress.substring(walletAddress.length - 4)}`}
+                      </span>
+                    </div>
+                  )}
+                  <button
+                    className="mobile-menu-close"
+                    onClick={() => setMenuOpen(false)}
+                    aria-label="Close menu"
+                  >
+                    <FaTimes />
+                  </button>
+                </div>
+
+                <div className="mobile-menu-content">
+                  <DropdownMenu title="Market" items={marketItems} icon={FaChartLine} />
+
+                  {isAuthenticated && (
+                    <>
+                      <Link
+                        to="/market"
+                        className="mobile-nav-link"
+                        onClick={() => setMenuOpen(false)}
+                      >
+                        <FaExchangeAlt className="nav-icon" />
+                        Trade
+                      </Link>
+                      <Link
+                        to="/wallet"
+                        className="mobile-nav-link"
+                        onClick={() => setMenuOpen(false)}
+                      >
+                        <FaWallet className="nav-icon" />
+                        Wallet
+                      </Link>
+                    </>
+                  )}
+
+                  <DropdownMenu title="Help" items={helpItems} icon={FaQuestionCircle} />
+
+                  {isAuthenticated && (
+                    <DropdownMenu
+                      title="Account"
+                      items={accountItems}
+                      icon={FaUserCircle}
+                    />
                   )}
                 </div>
 
-                <WalletInfo />
+                <div className="mobile-menu-footer">
+                  <WalletInfo />
 
-                {!isMobile && (
-                  <DropdownMenu
-                    title={<FaUserCircle className="profile-icon" />}
-                    items={accountItems}
-                  />
-                )}
-              </>
-            ) : (
-              !isMobile && (
-                <>
-                  <Link to="/login" className="auth-btn login-btn">
-                    Sign In
-                  </Link>
-                  <Link to="/register" className="auth-btn register-btn">
-                    Register
-                  </Link>
-                </>
-              )
-            )}
+                  <button
+                    className="theme-toggle mobile-theme-toggle"
+                    onClick={toggleTheme}
+                  >
+                    {theme === "light" ? <FaMoon /> : <FaSun />}
+                    {theme === "light" ? "Dark Mode" : "Light Mode"}
+                  </button>
 
-            <button
-              className="theme-toggle"
-              onClick={toggleTheme}
-              aria-label="Toggle theme"
-            >
-              {theme === "light" ? <FaMoon /> : <FaSun />}
-            </button>
-          </div>
+                  {!isAuthenticated && (
+                    <div className="mobile-auth-buttons">
+                      <Link
+                        to="/login"
+                        className="auth-btn mobile-login-btn"
+                        onClick={() => setMenuOpen(false)}
+                      >
+                        Sign In
+                      </Link>
+                      <Link
+                        to="/register"
+                        className="auth-btn mobile-register-btn"
+                        onClick={() => setMenuOpen(false)}
+                      >
+                        Register
+                      </Link>
+                    </div>
+                  )}
+                </div>
+              </motion.div>
+            </>
+          )}
         </div>
       </header>
 

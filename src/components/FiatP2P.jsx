@@ -13,6 +13,9 @@ const FiatP2P = () => {
     const { isAuthenticated, loading: authLoading, logout } = useAuth();
     const navigate = useNavigate();
     const [darkMode, setDarkMode] = useState(window.matchMedia('(prefers-color-scheme: dark)').matches);
+    const handleLearnMoreClick = () => {
+        navigate('/tutorials');
+    };
 
     // Separate state for order placement and filtering
     const [orderState, setOrderState] = useState({
@@ -236,7 +239,7 @@ const FiatP2P = () => {
         );
         if (relevantOrders.length === 0) return 0;
         const total = relevantOrders.reduce((sum, order) => sum + order.price, 0);
-        return (total / relevantOrders.length).toFixed(4);
+        return total / relevantOrders.length;
     };
 
     // Get payment method details
@@ -427,7 +430,7 @@ const FiatP2P = () => {
                         </button>
                     </div>
                     <div className="market-stats">
-                        <span>Market Rate: 1 {filterState.sellCurrency} = {calculateMarketPrice()} {filterState.receiveCurrency}</span>
+                        <span>Market Rate: 1 {filterState.sellCurrency} = {calculateMarketPrice().toFixed(2)} {filterState.receiveCurrency}</span>
                         <span>24h Volume: {uiState.marketStats.volume || '0'} {filterState.sellCurrency}</span>
                     </div>
                 </div>
@@ -827,7 +830,7 @@ const FiatP2P = () => {
                                                     </div>
                                                 </td>
                                                 <td className="price-cell">
-                                                    <strong>1 {order.sellCurrency} = {order.price} {order.receiveCurrency}</strong>
+                                                    <strong>1 {order.sellCurrency} = {Number(order.price).toFixed(2)} {order.receiveCurrency}</strong>
                                                 </td>
                                                 <td className="available-cell">
                                                     <strong>{order.available}</strong>
@@ -909,7 +912,7 @@ const FiatP2P = () => {
                                             </div>
                                         </td>
                                         <td className="price">
-                                            1 {order.sellCurrency} = {order.price} {order.receiveCurrency}
+                                            1 {order.sellCurrency} = {Number(order.price).toFixed(2)} {order.receiveCurrency}
                                         </td>
                                         <td className="total">
                                             {order.type === 'buy'
@@ -982,7 +985,7 @@ const FiatP2P = () => {
                                         </div>
                                         <div className="detail-item">
                                             <span>Exchange Rate</span>
-                                            <strong>1 {order.sellCurrency} = {order.price} {order.receiveCurrency}</strong>
+                                            <strong>1 {order.sellCurrency} = {Number(order.price).toFixed(2)} {order.receiveCurrency}</strong>
                                         </div>
                                         <div className="detail-item">
                                             <span>Total Value</span>
@@ -1065,7 +1068,7 @@ const FiatP2P = () => {
                         <h3>Secure P2P Trading with Escrow Protection</h3>
                         <p>All trades are protected by CheetahX escrow system. Your funds are held securely until the transaction is completed.</p>
                     </div>
-                    <button className="learn-more-btn">
+                    <button className="learn-more-btn" onClick={handleLearnMoreClick}>
                         How It Works
                     </button>
                 </div>

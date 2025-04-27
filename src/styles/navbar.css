@@ -88,15 +88,15 @@
 }
 
 .logo {
-  height: 80px;
-  width: 80px;
+  height: 40px;
+  width: 40px;
   object-fit: contain;
 }
 
-.logo-contain {
+.logo-text {
   font-weight: 900;
-  font-size: 1.5rem;
-  color: #ff8a00;
+  font-size: 1.3rem;
+  color: var(--primary-color);
   white-space: nowrap;
 }
 
@@ -228,15 +228,39 @@
   gap: 1rem;
 }
 
-.notification-icon, 
+.notification-button, 
 .message-icon {
   position: relative;
   cursor: pointer;
   color: var(--text-color);
   transition: var(--transition);
   font-size: 1.2rem;
+  background: none;
+  border: none;
+  padding: 0.5rem;
 }
 
+.message-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.message-badge {
+  position: absolute;
+  top: -5px;
+  right: -5px;
+  background-color: var(--accent-color);
+  color: white;
+  border-radius: 50%;
+  width: 18px;
+  height: 18px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.7rem;
+  font-weight: bold;
+}
 
 /* Wallet Connection Styles */
 .wallet-connected-container {
@@ -458,33 +482,26 @@
   bottom: 0;
   background-color: rgba(0, 0, 0, 0.5);
   z-index: 999;
-  opacity: 0;
-  visibility: hidden;
-  transition: var(--transition);
-}
-
-.mobile-menu-overlay.open {
-  opacity: 1;
-  visibility: visible;
 }
 
 .mobile-menu {
   position: fixed;
   top: 0;
-  right: -100%;
+  right: 0;
   width: 85%;
   max-width: 320px;
   height: 100vh;
   background-color: var(--card-bg);
   z-index: 1000;
-  transition: right 0.3s ease;
   display: flex;
   flex-direction: column;
   overflow-y: auto;
+  transform: translateX(100%);
+  transition: transform 0.3s ease;
 }
 
 .mobile-menu.open {
-  right: 0;
+  transform: translateX(0);
 }
 
 .mobile-menu-header {
@@ -538,47 +555,7 @@
   width: 100%;
   border-bottom: 1px solid rgba(0, 0, 0, 0.05);
   color: var(--text-color);
-}
-
-.mobile-menu-footer {
-  padding: 1rem;
-  border-top: 1px solid rgba(0, 0, 0, 0.1);
-  margin-top: auto;
-  position: sticky;
-  bottom: 0;
-  background-color: var(--card-bg);
-}
-
-.mobile-theme-toggle {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 0.5rem;
-  width: 100%;
-  padding: 0.75rem;
-  background: none;
-  border: none;
-  color: var(--text-color);
-  font-size: 1rem;
-  cursor: pointer;
-}
-
-.mobile-auth-buttons {
-  display: flex;
-  gap: 0.5rem;
-  margin-top: 1rem;
-}
-
-.mobile-login-btn,
-.mobile-register-btn {
-  flex: 1;
-  text-align: center;
-  padding: 0.75rem;
-}
-
-/* Mobile Dropdown Styles */
-.mobile-dropdown-container {
-  width: 100%;
+  gap: 0.75rem;
 }
 
 .mobile-dropdown-btn {
@@ -592,6 +569,7 @@
   color: var(--text-color);
   cursor: pointer;
   border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+  gap: 0.75rem;
 }
 
 .mobile-dropdown-content {
@@ -612,6 +590,58 @@
   gap: 0.75rem;
   padding: 0.75rem 0;
   color: var(--text-color);
+}
+
+.mobile-menu-footer {
+  padding: 1rem;
+  border-top: 1px solid rgba(0, 0, 0, 0.1);
+  margin-top: auto;
+  position: sticky;
+  bottom: 0;
+  background-color: var(--card-bg);
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.mobile-theme-toggle {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  width: 100%;
+  padding: 0.75rem;
+  background: none;
+  border: none;
+  color: var(--text-color);
+  font-size: 1rem;
+  cursor: pointer;
+}
+
+.mobile-auth-buttons {
+  display: flex;
+  gap: 0.5rem;
+  margin-top: 0.5rem;
+}
+
+.mobile-login-btn,
+.mobile-register-btn {
+  flex: 1;
+  text-align: center;
+  padding: 0.75rem;
+  border-radius: var(--border-radius);
+}
+
+.mobile-login-btn {
+  background: none;
+  border: 1px solid var(--primary-color);
+  color: var(--primary-color);
+}
+
+.mobile-register-btn {
+  background: var(--primary-color);
+  color: white;
+  border: 1px solid var(--primary-color);
 }
 
 /* Animations */
@@ -643,12 +673,12 @@
   }
   
   .nav-links,
-  .user-actions .desktop-only {
+  .user-actions > *:not(.mobile-menu-btn) {
     display: none;
   }
   
-  .logo-contain {
-    font-size: 1.3rem;
+  .logo-text {
+    font-size: 1.2rem;
   }
   
   .connect-wallet-btn span:not(.mobile-only) {
@@ -657,6 +687,10 @@
   
   .connect-wallet-btn .mobile-only {
     display: inline;
+  }
+
+  .mobile-menu-overlay {
+    display: block;
   }
 }
 
@@ -670,8 +704,8 @@
     width: 35px;
   }
   
-  .logo-contain {
-    font-size: 1.2rem;
+  .logo-text {
+    font-size: 1.1rem;
   }
   
   .mobile-menu {
@@ -684,8 +718,8 @@
     padding: 0 0.75rem;
   }
   
-  .logo-contain {
-    font-size: 1.1rem;
+  .logo-text {
+    font-size: 1rem;
   }
   
   .mobile-menu {
@@ -825,6 +859,41 @@
 
 .wallet-modal-footer a:hover {
   text-decoration: underline;
+}
+
+/* Mobile dropdown specific styles */
+.mobile-dropdown-content {
+  width: 100%;
+  padding-left: 1rem;
+  max-height: 0;
+  overflow: hidden;
+  transition: max-height 0.3s ease;
+}
+
+.mobile-dropdown-content.open {
+  max-height: 500px;
+}
+
+.mobile-dropdown-btn {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  padding: 1rem 0;
+  background: none;
+  border: none;
+  color: var(--text-color);
+  cursor: pointer;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+  gap: 0.75rem;
+}
+
+.mobile-dropdown-item {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.75rem 0;
+  color: var(--text-color);
 }
 
 /* Wallet icons */

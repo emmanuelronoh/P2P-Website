@@ -66,6 +66,7 @@ const Login = () => {
             try {
                 localStorage.setItem("accessToken", response.data.accessToken);
                 localStorage.setItem("refreshToken", response.data.refreshToken);
+                localStorage.setItem("tradeType", tradeType);
                 console.log("Tokens stored successfully in localStorage");
             } catch (storageError) {
                 console.error("LocalStorage error:", storageError);

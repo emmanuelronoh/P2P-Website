@@ -1,4 +1,3 @@
-
 import { useState, useEffect, useRef, useCallback } from "react";
 import { Link, useNavigate, useLocation } from "react-router-dom";
 import { useAuth } from '../contexts/AuthContext';
@@ -65,12 +64,11 @@ const AdvertisementBar = () => {
 };
 
 // Dropdown menu component
-const DropdownMenu = ({ title, items, icon: Icon }) => {
+const DropdownMenu = ({ title, items, icon: Icon, onMobileClose }) => {
     const [isOpen, setIsOpen] = useState(false);
     const dropdownRef = useRef(null);
     const [isMobile, setIsMobile] = useState(window.innerWidth < 992);
     const { user, isAuthenticated, loading: authLoading } = useAuth();
-
 
     useEffect(() => {
         const handleResize = () => {
@@ -89,8 +87,17 @@ const DropdownMenu = ({ title, items, icon: Icon }) => {
         };
 
         document.addEventListener("mousedown", handleClickOutside);
-        return () => document.removeEventListener("mousedown", handleClickOutside);
+        document.addEventListener("touchstart", handleClickOutside);
+        return () => {
+            document.removeEventListener("mousedown", handleClickOutside);
+            document.removeEventListener("touchstart", handleClickOutside);
+        };
     }, []);
+
+    const handleItemClick = () => {
+        setIsOpen(false);
+        if (isMobile && onMobileClose) onMobileClose();
+    };
 
     return (
         <div className="dropdown-container" ref={dropdownRef}>
@@ -98,6 +105,8 @@ const DropdownMenu = ({ title, items, icon: Icon }) => {
                 className="dropdown-btn"
                 onClick={() => setIsOpen(!isOpen)}
                 onMouseEnter={!isMobile ? () => setIsOpen(true) : undefined}
+                aria-expanded={isOpen}
+                aria-haspopup="true"
             >
                 {Icon && <Icon className="dropdown-icon" />}
                 {title}
@@ -120,12 +129,12 @@ const DropdownMenu = ({ title, items, icon: Icon }) => {
                                 to={item.path}
                                 className="dropdown-item"
                                 onClick={() => {
-                                    setIsOpen(false);
+                                    handleItemClick();
                                     if (item.action) item.action();
                                 }}
                             >
                                 {item.icon && <item.icon className="dropdown-item-icon" />}
-                                {item.label}
+                                <span className="dropdown-item-text">{item.label}</span>
                             </Link>
                         ))}
                     </motion.div>
@@ -153,12 +162,16 @@ const Navbar = ({ toggleTheme, theme }) => {
     const location = useLocation();
     const [key, setKey] = useState(0);
     const [showTutorial, setShowTutorial] = useState(false);
-
+    const navbarRef = useRef(null);
 
     useEffect(() => {
         setKey(prevKey => prevKey + 1);
     }, [isAuthenticated, location.pathname]);
 
+    // Close menu when route changes
+    useEffect(() => {
+        setMenuOpen(false);
+    }, [location.pathname]);
 
     // Fetch user balance
     const fetchBalance = async (address) => {
@@ -174,6 +187,7 @@ const Navbar = ({ toggleTheme, theme }) => {
 
     const startTutorial = () => {
         setShowTutorial(true);
+        setMenuOpen(false);
     };
 
     // Handle logout using context
@@ -181,6 +195,7 @@ const Navbar = ({ toggleTheme, theme }) => {
         try {
             await logout();
             navigate("/");
+            setMenuOpen(false);
         } catch (error) {
             console.error("Logout error:", error);
         }
@@ -195,9 +210,21 @@ const Navbar = ({ toggleTheme, theme }) => {
         return () => window.removeEventListener("scroll", handleScroll);
     }, []);
 
+    // Close menu when clicking outside
     useEffect(() => {
-        // This will force a re-render when the route changes
-    }, [location.pathname]);
+        const handleClickOutside = (event) => {
+            if (navbarRef.current && !navbarRef.current.contains(event.target)) {
+                setMenuOpen(false);
+            }
+        };
+
+        document.addEventListener("mousedown", handleClickOutside);
+        document.addEventListener("touchstart", handleClickOutside);
+        return () => {
+            document.removeEventListener("mousedown", handleClickOutside);
+            document.removeEventListener("touchstart", handleClickOutside);
+        };
+    }, []);
 
     // Menu items configuration
     const marketItems = [
@@ -228,32 +255,34 @@ const Navbar = ({ toggleTheme, theme }) => {
             { label: "Register", path: "/register", icon: FaUserPlus }
         ];
 
-
     return (
         <>
             <AdvertisementBar />
 
-            <header className={`navbar ${isScrolled ? "scrolled" : ""}`}>
+            <header className={`navbar ${isScrolled ? "scrolled" : ""} ${menuOpen ? "menu-open" : ""}`} ref={navbarRef}>
                 <div className="navbar-container">
-                    {/* Logo */}
-                    <motion.div
-                        className="logo-container"
-                        whileHover={{ scale: 1.05 }}
-                        transition={{ type: "spring", stiffness: 400, damping: 10 }}
-                    >
-                        <Link to="/home-fiat">
-                            <img src={logo} alt="Cheetah P2P Logo" className="logo" />
-                            <span className="logo-text">CHEETAH P2P</span>
-                        </Link>
-                    </motion.div>
+                    {/* Logo and mobile menu button */}
+                    <div className="logo-mobile-container">
+                        <motion.div
+                            className="logo-container"
+                            whileHover={{ scale: 1.05 }}
+                            transition={{ type: "spring", stiffness: 400, damping: 10 }}
+                        >
+                            <Link to="/home-fiat">
+                                <img src={logo} alt="Cheetah P2P Logo" className="logo" />
+                                <span className="logo-text">CHEETAH P2P</span>
+                            </Link>
+                        </motion.div>
 
-                    {/* Mobile menu button */}
-                    <button
-                        className="mobile-menu-btn"
-                        onClick={() => setMenuOpen(!menuOpen)}
-                    >
-                        {menuOpen ? <FaTimes /> : <FaBars />}
-                    </button>
+                        <button
+                            className="mobile-menu-btn"
+                            onClick={() => setMenuOpen(!menuOpen)}
+                            aria-label="Toggle menu"
+                            aria-expanded={menuOpen}
+                        >
+                            {menuOpen ? <FaTimes size={24} /> : <FaBars size={24} />}
+                        </button>
+                    </div>
 
                     {/* Navigation */}
                     <nav className={`nav-links ${menuOpen ? "open" : ""}`}>
@@ -261,40 +290,75 @@ const Navbar = ({ toggleTheme, theme }) => {
                             title="Market"
                             items={marketItems}
                             icon={FaChartLine}
+                            onMobileClose={() => setMenuOpen(false)}
                         />
 
                         {isAuthenticated && (
-                            <>
-                                <Link to="/fiat-p2p" className="nav-link">
-                                    <FaExchangeAlt className="nav-icon" />
-                                    Trade
-                                </Link>
-                            </>
+                            <Link 
+                                to="/fiat-p2p" 
+                                className="nav-link"
+                                onClick={() => setMenuOpen(false)}
+                            >
+                                <FaExchangeAlt className="nav-icon" />
+                                <span className="nav-link-text">Trade</span>
+                            </Link>
                         )}
 
                         <DropdownMenu
                             title="Help"
                             items={helpItems}
                             icon={FaQuestionCircle}
+                            onMobileClose={() => setMenuOpen(false)}
                         />
+
+                        {/* Mobile-only auth links */}
+                        {!isAuthenticated && (
+                            <div className="mobile-auth-links">
+                                <Link 
+                                    to="/login" 
+                                    className="auth-btn login-btn mobile-auth-btn"
+                                    onClick={() => setMenuOpen(false)}
+                                >
+                                    Sign In
+                                </Link>
+                                <Link 
+                                    to="/register" 
+                                    className="auth-btn register-btn mobile-auth-btn"
+                                    onClick={() => setMenuOpen(false)}
+                                >
+                                    Register
+                                </Link>
+                            </div>
+                        )}
                     </nav>
 
                     {/* User actions */}
-                    <div className="user-actions">
+                    <div className={`user-actions ${menuOpen ? "open" : ""}`}>
                         {isAuthenticated ? (
                             <>
                                 {/* Notifications */}
                                 <button
                                     className="notification-button"
-                                    onClick={() => navigate('/notifications-p2p')}
+                                    onClick={() => {
+                                        navigate('/notifications-p2p');
+                                        setMenuOpen(false);
+                                    }}
+                                    aria-label="Notifications"
                                 >
                                     <FaBell />
+                                    {notifications > 0 && (
+                                        <span className="notification-badge">{notifications}</span>
+                                    )}
                                 </button>
 
                                 {/* Messages */}
                                 <div
                                     className="message-icon"
-                                    onClick={() => navigate("/messages-p2p")}
+                                    onClick={() => {
+                                        navigate("/messages-p2p");
+                                        setMenuOpen(false);
+                                    }}
+                                    aria-label="Messages"
                                 >
                                     <IoMdChatbubbles />
                                     {unreadMessages > 0 && (
@@ -309,7 +373,10 @@ const Navbar = ({ toggleTheme, theme }) => {
                                     )}
                                 </div>
 
-                                <button className="tutorial-btn" onClick={startTutorial}>
+                                <button 
+                                    className="tutorial-btn" 
+                                    onClick={startTutorial}
+                                >
                                     How It Works
                                 </button>
 
@@ -317,14 +384,15 @@ const Navbar = ({ toggleTheme, theme }) => {
                                 <DropdownMenu
                                     title={<FaUserCircle className="profile-icon" />}
                                     items={accountItems}
+                                    onMobileClose={() => setMenuOpen(false)}
                                 />
                             </>
                         ) : (
                             <>
-                                <Link to="/login" className="auth-btn login-btn">
+                                <Link to="/login" className="auth-btn login-btn desktop-auth-btn">
                                     Sign In
                                 </Link>
-                                <Link to="/register" className="auth-btn register-btn">
+                                <Link to="/register" className="auth-btn register-btn desktop-auth-btn">
                                     Register
                                 </Link>
                             </>
@@ -340,13 +408,20 @@ const Navbar = ({ toggleTheme, theme }) => {
                         </button>
                     </div>
                 </div>
-
             </header>
+            
+            {/* Overlay for mobile menu */}
+            {menuOpen && (
+                <div 
+                    className="mobile-menu-overlay" 
+                    onClick={() => setMenuOpen(false)}
+                />
+            )}
+            
             <TutorialModal
                 showTutorial={showTutorial}
                 closeTutorial={() => setShowTutorial(false)}
             />
-
         </>
     );
 };
