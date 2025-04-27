@@ -9,38 +9,35 @@ export default defineConfig({
   base: './',
   resolve: {
     alias: {
-      // These are needed for Web3/walletconnect compatibility
-      util: 'rollup-plugin-node-polyfills/polyfills/util',
-      sys: 'util',
-      events: 'rollup-plugin-node-polyfills/polyfills/events',
-      stream: 'rollup-plugin-node-polyfills/polyfills/stream',
-      path: 'rollup-plugin-node-polyfills/polyfills/path',
-      querystring: 'rollup-plugin-node-polyfills/polyfills/qs',
-      punycode: 'rollup-plugin-node-polyfills/polyfills/punycode',
-      url: 'rollup-plugin-node-polyfills/polyfills/url',
-      string_decoder: 'rollup-plugin-node-polyfills/polyfills/string-decoder',
-      http: 'rollup-plugin-node-polyfills/polyfills/http',
-      https: 'rollup-plugin-node-polyfills/polyfills/http',
-      os: 'rollup-plugin-node-polyfills/polyfills/os',
-      assert: 'rollup-plugin-node-polyfills/polyfills/assert',
-      constants: 'rollup-plugin-node-polyfills/polyfills/constants',
-      _stream_duplex: 'rollup-plugin-node-polyfills/polyfills/readable-stream/duplex',
-      _stream_passthrough: 'rollup-plugin-node-polyfills/polyfills/readable-stream/passthrough',
-      _stream_readable: 'rollup-plugin-node-polyfills/polyfills/readable-stream/readable',
-      _stream_writable: 'rollup-plugin-node-polyfills/polyfills/readable-stream/writable',
-      _stream_transform: 'rollup-plugin-node-polyfills/polyfills/readable-stream/transform',
-      process: 'rollup-plugin-node-polyfills/polyfills/process-es6',
-      buffer: 'rollup-plugin-node-polyfills/polyfills/buffer-es6',
+      util: 'util/',
+      sys: 'util/',
+      events: 'events/',
+      stream: 'stream-browserify',
+      path: 'path-browserify',
+      querystring: 'querystring-es3',
+      punycode: 'punycode/',
+      url: 'url/',
+      string_decoder: 'string_decoder/',
+      http: 'stream-http',
+      https: 'https-browserify',
+      os: 'os-browserify/browser',
+      assert: 'assert/',
+      constants: 'constants-browserify',
+      _stream_duplex: 'readable-stream/duplex',
+      _stream_passthrough: 'readable-stream/passthrough',
+      _stream_readable: 'readable-stream/readable',
+      _stream_writable: 'readable-stream/writable',
+      _stream_transform: 'readable-stream/transform',
+      process: 'process/browser',
+      buffer: 'buffer/',
       crypto: 'crypto-browserify',
     },
   },
   optimizeDeps: {
     esbuildOptions: {
-      // Node.js global to browser globalThis
       define: {
         global: 'globalThis',
       },
-      // Enable esbuild polyfill plugins
       plugins: [
         NodeGlobalsPolyfillPlugin({
           process: true,
@@ -53,12 +50,10 @@ export default defineConfig({
   build: {
     rollupOptions: {
       plugins: [
-        // Enable rollup polyfills plugin
         rollupNodePolyFill(),
       ],
       output: {
         manualChunks: {
-          // Split large dependencies into separate chunks
           ethers: ['ethers'],
           walletconnect: ['@walletconnect/client'],
           react: ['react', 'react-dom'],
@@ -66,10 +61,9 @@ export default defineConfig({
           framer: ['framer-motion'],
         },
       },
-      chunkSizeWarningLimit: 1500, // Increase chunk size warning limit
     },
     commonjsOptions: {
-      transformMixedEsModules: true, // Required for some Web3 dependencies
+      transformMixedEsModules: true,
     },
   },
 });
