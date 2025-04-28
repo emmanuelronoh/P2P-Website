@@ -114,16 +114,16 @@ const DropdownMenu = ({ title, items, icon: Icon }) => {
 
   if (isMobile) {
     return (
-      <div className="dropdown-container" ref={dropdownRef}>
+      <div className="mobile-dropdown-container" ref={dropdownRef}>
         <button
           className="mobile-dropdown-btn"
           onClick={toggleDropdown}
           aria-expanded={isOpen}
           aria-haspopup="true"
         >
-          {Icon && <Icon className="dropdown-icon" />}
+          {Icon && <Icon className="mobile-dropdown-icon" />}
           <span>{title}</span>
-          <FaChevronDown className={`dropdown-arrow ${isOpen ? "rotate" : ""}`} />
+          <FaChevronDown className={`mobile-dropdown-arrow ${isOpen ? "rotate" : ""}`} />
         </button>
 
         <div className={`mobile-dropdown-content ${isOpen ? "open" : ""}`}>
@@ -138,7 +138,7 @@ const DropdownMenu = ({ title, items, icon: Icon }) => {
               }}
               aria-label={item.label}
             >
-              {item.icon && <item.icon className="dropdown-item-icon" />}
+              {item.icon && <item.icon className="mobile-dropdown-item-icon" />}
               <span>{item.label}</span>
             </Link>
           ))}
@@ -148,16 +148,16 @@ const DropdownMenu = ({ title, items, icon: Icon }) => {
   }
 
   return (
-    <div className="dropdown-container" ref={dropdownRef}>
+    <div className="desktop-dropdown-container" ref={dropdownRef}>
       <button
-        className={`dropdown-btn ${isMobile ? 'mobile-dropdown-btn' : ''}`}
+        className="desktop-dropdown-btn"
         onClick={() => setIsOpen(!isOpen)}
         aria-expanded={isOpen}
         aria-haspopup="true"
       >
-        {Icon && <Icon className="dropdown-icon" />}
-        {!isMobile && title}
-        <FaChevronDown className={`dropdown-arrow ${isOpen ? "rotate" : ""}`} />
+        {Icon && <Icon className="desktop-dropdown-icon" />}
+        {title}
+        <FaChevronDown className={`desktop-dropdown-arrow ${isOpen ? "rotate" : ""}`} />
       </button>
 
       <AnimatePresence>
@@ -167,20 +167,20 @@ const DropdownMenu = ({ title, items, icon: Icon }) => {
             animate={{ opacity: 1, height: "auto" }}
             exit={{ opacity: 0, height: 0 }}
             transition={{ duration: 0.2 }}
-            className={`dropdown-content ${isMobile ? 'mobile-dropdown-content' : ''}`}
+            className="desktop-dropdown-content"
           >
             {items.map((item, index) => (
               <Link
                 key={index}
                 to={item.path}
-                className={`dropdown-item ${isMobile ? 'mobile-dropdown-item' : ''}`}
+                className="desktop-dropdown-item"
                 onClick={() => {
                   setIsOpen(false);
                   if (item.action) item.action();
                 }}
                 aria-label={item.label}
               >
-                {item.icon && <item.icon className="dropdown-item-icon" />}
+                {item.icon && <item.icon className="desktop-dropdown-item-icon" />}
                 <span>{item.label}</span>
               </Link>
             ))}
@@ -443,7 +443,6 @@ const Navbar = ({ theme, toggleTheme }) => {
               <img src={logo} alt="Cheetah P2P Logo" className="logo" />
               <span className="logo-text">CHEETAH P2P</span>
             </Link>
-
           </motion.div>
 
           {!isMobile ? (
@@ -524,7 +523,6 @@ const Navbar = ({ theme, toggleTheme }) => {
                 {menuOpen ? <FaTimes /> : <FaBars />}
               </button>
 
-
               <AnimatePresence>
                 {menuOpen && (
                   <>
@@ -543,101 +541,93 @@ const Navbar = ({ theme, toggleTheme }) => {
                       exit={{ x: '100%' }}
                       transition={{ type: 'tween' }}
                     >
+                      <div className="mobile-menu-header">
+                        {isAuthenticated && walletAddress && (
+                          <div className="mobile-wallet-info">
+                            <span className="mobile-wallet-balance">{balance} ETH</span>
+                            <span className="mobile-wallet-address">
+                              {`${walletAddress.substring(0, 6)}...${walletAddress.substring(walletAddress.length - 4)}`}
+                            </span>
+                          </div>
+                        )}
+                        <button
+                          className="mobile-menu-close"
+                          onClick={() => setMenuOpen(false)}
+                          aria-label="Close menu"
+                        >
+                          <FaTimes />
+                        </button>
+                      </div>
+
+                      <div className="mobile-menu-content">
+                        <DropdownMenu title="Market" items={marketItems} icon={FaChartLine} />
+
+                        {isAuthenticated && (
+                          <>
+                            <Link
+                              to="/market"
+                              className="mobile-nav-link"
+                              onClick={() => setMenuOpen(false)}
+                            >
+                              <FaExchangeAlt className="nav-icon" />
+                              Trade
+                            </Link>
+                            <Link
+                              to="/wallet"
+                              className="mobile-nav-link"
+                              onClick={() => setMenuOpen(false)}
+                            >
+                              <FaWallet className="nav-icon" />
+                              Wallet
+                            </Link>
+                          </>
+                        )}
+
+                        <DropdownMenu title="Help" items={helpItems} icon={FaQuestionCircle} />
+
+                        {isAuthenticated && (
+                          <DropdownMenu
+                            title="Account"
+                            items={accountItems}
+                            icon={FaUserCircle}
+                          />
+                        )}
+                      </div>
+
+                      <div className="mobile-menu-footer">
+                        <WalletInfo />
+
+                        <button
+                          className="theme-toggle mobile-theme-toggle"
+                          onClick={toggleTheme}
+                        >
+                          {theme === "light" ? <FaMoon /> : <FaSun />}
+                          {theme === "light" ? "Dark Mode" : "Light Mode"}
+                        </button>
+
+                        {!isAuthenticated && (
+                          <div className="mobile-auth-buttons">
+                            <Link
+                              to="/login"
+                              className="auth-btn mobile-login-btn"
+                              onClick={() => setMenuOpen(false)}
+                            >
+                              Sign In
+                            </Link>
+                            <Link
+                              to="/register"
+                              className="auth-btn mobile-register-btn"
+                              onClick={() => setMenuOpen(false)}
+                            >
+                              Register
+                            </Link>
+                          </div>
+                        )}
+                      </div>
                     </motion.div>
                   </>
                 )}
               </AnimatePresence>
-
-              <motion.div
-                className={`mobile-menu ${menuOpen ? "open" : ""}`}
-                initial={{ x: '100%' }}
-                animate={{ x: menuOpen ? 0 : '100%' }}
-                transition={{ type: 'tween' }}
-              >
-                <div className="mobile-menu-header">
-                  {isAuthenticated && walletAddress && (
-                    <div className="mobile-wallet-info">
-                      <span className="mobile-wallet-balance">{balance} ETH</span>
-                      <span className="mobile-wallet-address">
-                        {`${walletAddress.substring(0, 6)}...${walletAddress.substring(walletAddress.length - 4)}`}
-                      </span>
-                    </div>
-                  )}
-                  <button
-                    className="mobile-menu-close"
-                    onClick={() => setMenuOpen(false)}
-                    aria-label="Close menu"
-                  >
-                    <FaTimes />
-                  </button>
-                </div>
-
-                <div className="mobile-menu-content">
-                  <DropdownMenu title="Market" items={marketItems} icon={FaChartLine} />
-
-                  {isAuthenticated && (
-                    <>
-                      <Link
-                        to="/market"
-                        className="mobile-nav-link"
-                        onClick={() => setMenuOpen(false)}
-                      >
-                        <FaExchangeAlt className="nav-icon" />
-                        Trade
-                      </Link>
-                      <Link
-                        to="/wallet"
-                        className="mobile-nav-link"
-                        onClick={() => setMenuOpen(false)}
-                      >
-                        <FaWallet className="nav-icon" />
-                        Wallet
-                      </Link>
-                    </>
-                  )}
-
-                  <DropdownMenu title="Help" items={helpItems} icon={FaQuestionCircle} />
-
-                  {isAuthenticated && (
-                    <DropdownMenu
-                      title="Account"
-                      items={accountItems}
-                      icon={FaUserCircle}
-                    />
-                  )}
-                </div>
-
-                <div className="mobile-menu-footer">
-                  <WalletInfo />
-
-                  <button
-                    className="theme-toggle mobile-theme-toggle"
-                    onClick={toggleTheme}
-                  >
-                    {theme === "light" ? <FaMoon /> : <FaSun />}
-                    {theme === "light" ? "Dark Mode" : "Light Mode"}
-                  </button>
-
-                  {!isAuthenticated && (
-                    <div className="mobile-auth-buttons">
-                      <Link
-                        to="/login"
-                        className="auth-btn mobile-login-btn"
-                        onClick={() => setMenuOpen(false)}
-                      >
-                        Sign In
-                      </Link>
-                      <Link
-                        to="/register"
-                        className="auth-btn mobile-register-btn"
-                        onClick={() => setMenuOpen(false)}
-                      >
-                        Register
-                      </Link>
-                    </div>
-                  )}
-                </div>
-              </motion.div>
             </>
           )}
         </div>

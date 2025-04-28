@@ -85,8 +85,18 @@ const CheetahXHome = () => {
                     </p>
 
                     <div className="hero-actions">
-                        <button className="btn-primary">Start Trading</button>
-                        <button className="btn-secondary">Watch Demo</button>
+                        <button
+                            className="btn-primary"
+                            onClick={() => navigate('/register')}
+                        >
+                            Start Trading
+                        </button>
+                        <button
+                            className="btn-secondary"
+                            onClick={() => navigate('/tutorials')}
+                        >
+                            Watch Demo
+                        </button>
                     </div>
 
                     <div className="hero-stats">
@@ -465,11 +475,15 @@ const CheetahXHome = () => {
                     <h2>Ready to Experience the Future of P2P Trading?</h2>
                     <p>Join millions of users trading securely on Cheetah X</p>
                     <div className="cta-actions">
-                        <button className="btn-primary">Sign Up Now - It's Free</button>
+                        <button
+                            className="btn-primary"
+                            onClick={() => navigate('/register')}
+                        >
+                            Sign Up Now - It's Free
+                        </button>
                     </div>
                 </div>
             </section>
-
 
         </div>
     );

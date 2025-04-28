@@ -85,10 +85,16 @@ const CheetahXHome = () => {
                     </p>
 
                     <div className="hero-actions">
-                        <button className="btn-primary" onClick={() => navigate('/login')}>
+                        <button
+                            className="btn-primary"
+                            onClick={() => navigate('/register')}
+                        >
                             Start Trading
                         </button>
-                        <button className="btn-secondary" onClick={() => navigate('/login')}>
+                        <button
+                            className="btn-secondary"
+                            onClick={() => navigate('/tutorials')}
+                        >
                             Watch Demo
                         </button>
                     </div>
@@ -473,7 +479,6 @@ const CheetahXHome = () => {
                     </div>
                 </div>
             </section>
-
 
         </div>
     );
