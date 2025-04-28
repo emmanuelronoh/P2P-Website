@@ -107,7 +107,7 @@ const Login = () => {
 
                 // Handle email verification case
                 if (err.response.status === 403) {
-                    navigate("/verify-email", { state: { email } });
+                    navigate("/verify-otp", { state: { email } });
                     return;
                 }
 
