@@ -1,4 +1,6 @@
 import React, { useState, useEffect } from "react";
+import { Buffer } from 'buffer';
+import process from 'process';
 import {
   BrowserRouter as Router,
   Routes,
@@ -25,7 +27,6 @@ import MessagesP2p from "./pages/Messages-p2p";
 import Wallet from "./pages/Wallet";
 import Vendor from "./pages/Vendor";
 import Amount from "./pages/Amount";
-import Chat from "./pages/ChatApi";
 import VerifyOTP from "./components/VerifyOTP";
 import FiatP2P from "./components/FiatP2P";
 import BuyCrypto from "./pages/BuyCrypto";
@@ -63,6 +64,9 @@ function AppWrapper() {
     });
   }, []);
 
+  window.Buffer = Buffer;
+  window.process = process;
+
   useEffect(() => {
     // Apply theme to document element and save to localStorage
     document.documentElement.setAttribute("data-theme", theme);
@@ -88,7 +92,7 @@ function AppWrapper() {
 // Layout components
 function MainLayout() {
   const { theme } = React.useContext(ThemeContext);
-  
+
   return (
     <div className={`app ${theme}`}>
       <Navbar />
@@ -102,7 +106,7 @@ function MainLayout() {
 
 function P2PLayout() {
   const { theme } = React.useContext(ThemeContext);
-  
+
   return (
     <div className={`app ${theme}`}>
       <NavbarP2P />
@@ -116,7 +120,7 @@ function P2PLayout() {
 
 function MessagesLayout() {
   const { theme } = React.useContext(ThemeContext);
-  
+
   return (
     <div className={`app ${theme}`}>
       <Navbar />
@@ -129,7 +133,7 @@ function MessagesLayout() {
 
 function P2PMessagesLayout() {
   const { theme } = React.useContext(ThemeContext);
-  
+
   return (
     <div className={`app ${theme}`}>
       <NavbarP2P />
@@ -142,7 +146,7 @@ function P2PMessagesLayout() {
 
 function FullPageLayout() {
   const { theme } = React.useContext(ThemeContext);
-  
+
   return (
     <div className={`full-page-layout ${theme}`}>
       <Outlet />
@@ -194,7 +198,6 @@ function AppInner() {
 
         <Route element={<P2PLayout />}>
           <Route path="/fiat-p2p" element={<FiatP2P />} />
-          <Route path="/chat" element={<Chat />} />
           <Route path="/home-fiat" element={<HomeFiat />} />
           <Route path="/notifications-p2p" element={<NotificationsPage />} />
           <Route path="/dashboard-fiat" element={<DashboardFiatPage />} />

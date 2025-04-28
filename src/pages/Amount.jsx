@@ -166,7 +166,7 @@ const Amount = () => {
       const numericAmount = parseFloat((amount || '0').replace(/,/g, ''));
       const walletAddress = localStorage.getItem('walletAddress');
 
-      const response = await fetch(`http://localhost:8000/crypto/trade-offers/${trader.id}/accept/`, {
+      const response = await fetch(`https://cheetahx.onrender.com/crypto/trade-offers/${trader.id}/accept/`, {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${localStorage.getItem('accessToken')}`,

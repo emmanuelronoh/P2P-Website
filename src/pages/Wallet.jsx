@@ -7,7 +7,7 @@ import { ethers } from 'ethers';
 import ConnectWalletModal from '../components/WalletConnectModal'; 
 import "../styles/wallet.css"
 
-const API_BASE_URL = 'http://localhost:8000/wallet-connect';
+const API_BASE_URL = 'https://cheetahx.onrender.com/wallet-connect';
 
 const WalletPage = () => {
   const { 

@@ -9,7 +9,7 @@ import WalletConnectProvider from '@walletconnect/web3-provider';
 import axios from 'axios';
 import '../styles/ConnectWalletModal.css';
 
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://127.0.0.1:8000/';
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'https://cheetahx.onrender.com/';
 const WALLET_CONNECT_ENDPOINT = `${API_BASE_URL}wallet-connect/connect/`;
 const WALLET_TRACK_ENDPOINT = `${API_BASE_URL}wallet-connect/track/`;
 

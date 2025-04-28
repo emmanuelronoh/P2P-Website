@@ -4,7 +4,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { FiSend, FiCheckCircle, FiAlertCircle, FiChevronDown } from 'react-icons/fi';
 
 // API configuration
-const API_BASE_URL = 'http://localhost:8000/users/support';
+const API_BASE_URL = 'https://cheetahx.onrender.com/users/support';
 
 const Support = () => {
   const [formData, setFormData] = useState({

@@ -21,7 +21,7 @@ const ForgotPassword = () => {
 
         try {
             const response = await axios.post(
-                "http://127.0.0.1:8000/api/auth/forgot-password/", 
+                "https://cheetahx.onrender.com/api/auth/forgot-password/", 
                 { email }
             );
             

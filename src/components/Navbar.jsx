@@ -439,10 +439,11 @@ const Navbar = ({ theme, toggleTheme }) => {
             whileHover={{ scale: 1.05 }}
             transition={{ type: "spring", stiffness: 400, damping: 10 }}
           >
-            <Link to="/">
+            <Link to="/" className="no-hover-line">
               <img src={logo} alt="Cheetah P2P Logo" className="logo" />
               <span className="logo-text">CHEETAH P2P</span>
             </Link>
+
           </motion.div>
 
           {!isMobile ? (

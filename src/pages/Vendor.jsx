@@ -1,26 +1,45 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import axios from 'axios';
 import '../styles/Vendor.css';
 
+const POLL_INTERVAL = 15000; // 15 seconds
+const MAX_POLL_ATTEMPTS = 20; // ~5 minutes total
+
 const VendorVerification = () => {
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState(null);
-  const [success, setSuccess] = useState(false);
+  // Combined state for better organization
+  const [state, setState] = useState({
+    loading: false,
+    error: null,
+    success: false,
+    verificationStatus: null,
+    verificationUrl: null,
+    verificationId: null,
+    pollCount: 0,
+    verificationResult: null
+  });
+
   const [formData, setFormData] = useState({
     email: '',
     phone: '',
     termsAccepted: false
   });
+
   const [formErrors, setFormErrors] = useState({});
   const [shake, setShake] = useState(false);
 
+  // Get access token from localStorage
+  const getAccessToken = () => {
+    return localStorage.getItem('accessToken');
+  };
+
+  // Handle error animation
   useEffect(() => {
-    if (error) {
+    if (state.error) {
       setShake(true);
       const timer = setTimeout(() => setShake(false), 500);
       return () => clearTimeout(timer);
     }
-  }, [error]);
+  }, [state.error]);
 
   const handleChange = (e) => {
     const { name, value, type, checked } = e.target;
@@ -34,44 +53,165 @@ const VendorVerification = () => {
     const errors = {};
     if (!formData.email) errors.email = 'Email is required';
     else if (!/^\S+@\S+\.\S+$/.test(formData.email)) errors.email = 'Email is invalid';
-    
+
     if (!formData.phone) errors.phone = 'Phone number is required';
     else if (!/^[\d\s\+\-\(\)]{10,}$/.test(formData.phone)) errors.phone = 'Phone number is invalid';
-    
+
     if (!formData.termsAccepted) errors.termsAccepted = 'You must accept the terms';
-    
+
     setFormErrors(errors);
     return Object.keys(errors).length === 0;
   };
 
+  const checkVerificationStatus = useCallback(async (verificationId) => {
+    try {
+      const accessToken = getAccessToken();
+      const response = await axios.get(
+        `https://sumsub-cheetahx-kyc.onrender.com/api/verification-status/${verificationId}`,
+        {
+          headers: {
+            'Authorization': `Bearer ${accessToken}`
+          }
+        }
+      );
+      
+      setState(prev => ({
+        ...prev,
+        verificationStatus: response.data.status,
+        verificationResult: response.data.result,
+        pollCount: prev.pollCount + 1
+      }));
+
+      return response.data.status;
+    } catch (err) {
+      console.error('Status check failed:', err);
+      setState(prev => ({
+        ...prev,
+        error: err.response?.data?.error || 'Failed to check verification status'
+      }));
+      return null;
+    }
+  }, []);
+
+  // Polling effect
+  useEffect(() => {
+    let pollingInterval;
+    
+    const shouldPoll = state.verificationId && 
+      !['completed', 'rejected'].includes(state.verificationStatus) &&
+      state.pollCount < MAX_POLL_ATTEMPTS;
+
+    if (shouldPoll) {
+      pollingInterval = setInterval(async () => {
+        const status = await checkVerificationStatus(state.verificationId);
+        if (status && ['completed', 'rejected'].includes(status)) {
+          clearInterval(pollingInterval);
+        }
+      }, POLL_INTERVAL);
+    }
+
+    return () => clearInterval(pollingInterval);
+  }, [state.verificationId, state.verificationStatus, state.pollCount, checkVerificationStatus]);
+
   const startVerification = async (regenerate = false) => {
     if (!validateForm()) return;
     
-    setLoading(true);
-    setError(null);
-    setSuccess(false);
+    setState(prev => ({ 
+      ...prev, 
+      loading: true, 
+      error: null,
+      pollCount: 0
+    }));
     
     try {
+      const accessToken = getAccessToken();
       const endpoint = regenerate 
-        ? 'http://localhost:3001/api/regenerate-sumsub-link' 
-        : 'http://localhost:3001/api/generate-sumsub-link';
+        ? 'https://sumsub-cheetahx-kyc.onrender.com/api/regenerate-sumsub-link'
+        : 'https://sumsub-cheetahx-kyc.onrender.com/api/generate-sumsub-link';
       
       const response = await axios.post(endpoint, {
-        userId: formData.email, // Using email as userId
+        userId: formData.email,
         levelName: 'kyc_verification'
+      }, {
+        headers: {
+          'Authorization': `Bearer ${accessToken}`
+        }
       });
 
-      setSuccess(true);
+      setState(prev => ({
+        ...prev,
+        verificationUrl: response.data.url,
+        verificationId: response.data.verificationId,
+        loading: false,
+        success: true
+      }));
       
-      // Open SumSub in a new tab after a brief delay for better UX
-      setTimeout(() => {
-        window.open(response.data.url, '_blank', 'noopener,noreferrer');
-      }, 1000);
+      window.open(response.data.url, '_blank', 'noopener,noreferrer');
       
     } catch (err) {
-      setError(err.response?.data?.error || err.message || 'Verification failed');
-    } finally {
-      setLoading(false);
+      setState(prev => ({
+        ...prev,
+        error: err.response?.data?.error || err.message || 'Verification failed',
+        loading: false
+      }));
+    }
+  };
+
+  const renderVerificationStatus = () => {
+    switch (state.verificationStatus) {
+      case 'completed':
+        return (
+          <div className="verification-complete">
+            <div className="success-icon large">
+              <svg viewBox="0 0 24 24">
+                <path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41L9 16.17z"/>
+              </svg>
+            </div>
+            <h3>Verification Complete!</h3>
+            <p>Your vendor account has been successfully verified.</p>
+            <button className="primary-button" onClick={() => window.location.reload()}>
+              Continue to Dashboard
+            </button>
+          </div>
+        );
+      case 'rejected':
+        return (
+          <div className="verification-rejected">
+            <div className="error-icon large">!</div>
+            <h3>Verification Rejected</h3>
+            <p>{state.verificationResult?.rejectionReason || 
+              'Please try again or contact support for more information.'}
+            </p>
+            <button 
+              className="primary-button" 
+              onClick={() => startVerification(true)}
+            >
+              Try Again
+            </button>
+          </div>
+        );
+      default:
+        return (
+          <div className="verification-success">
+            <div className="success-icon">
+              <svg viewBox="0 0 24 24">
+                <path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41L9 16.17z"/>
+              </svg>
+            </div>
+            <h3>Verification Started Successfully!</h3>
+            <p>
+              {state.pollCount > 0 
+                ? 'Verification in progress...'
+                : 'Your verification window should open automatically.'}
+            </p>
+            <button 
+              className="primary-button"
+              onClick={() => window.open(state.verificationUrl, '_blank')}
+            >
+              Reopen Verification
+            </button>
+          </div>
+        );
     }
   };
 
@@ -82,19 +222,23 @@ const VendorVerification = () => {
           <h2>Vendor Identity Verification</h2>
           <p>Complete your verification to start selling on our platform</p>
         </div>
-        
+
         <div className="verification-progress">
-          <div className={`progress-step ${success ? 'completed' : 'active'}`}>
+          <div className={`progress-step ${state.success ? 'completed' : 'active'}`}>
             <div className="step-number">1</div>
             <div className="step-label">Enter Details</div>
           </div>
-          <div className={`progress-step ${success ? 'active' : ''}`}>
+          <div className={`progress-step ${
+            state.success ? 
+              (state.verificationStatus === 'completed' ? 'completed' : 'active') 
+              : ''
+          }`}>
             <div className="step-number">2</div>
             <div className="step-label">Verify Identity</div>
           </div>
         </div>
-        
-        {!success ? (
+
+        {!state.success ? (
           <div className="verification-form">
             <div className={`form-group ${formErrors.email ? 'error' : ''}`}>
               <label htmlFor="email">Email Address</label>
@@ -105,11 +249,11 @@ const VendorVerification = () => {
                 value={formData.email}
                 onChange={handleChange}
                 placeholder="your@email.com"
-                disabled={loading}
+                disabled={state.loading}
               />
               {formErrors.email && <span className="error-message">{formErrors.email}</span>}
             </div>
-            
+
             <div className={`form-group ${formErrors.phone ? 'error' : ''}`}>
               <label htmlFor="phone">Phone Number</label>
               <input
@@ -119,11 +263,11 @@ const VendorVerification = () => {
                 value={formData.phone}
                 onChange={handleChange}
                 placeholder="+1 (123) 456-7890"
-                disabled={loading}
+                disabled={state.loading}
               />
               {formErrors.phone && <span className="error-message">{formErrors.phone}</span>}
             </div>
-            
+
             <div className={`form-group checkbox-group ${formErrors.termsAccepted ? 'error' : ''}`}>
               <input
                 type="checkbox"
@@ -131,64 +275,50 @@ const VendorVerification = () => {
                 name="termsAccepted"
                 checked={formData.termsAccepted}
                 onChange={handleChange}
-                disabled={loading}
+                disabled={state.loading}
               />
               <label htmlFor="termsAccepted">
-                I accept the <a href="/terms" target="_blank" rel="noopener noreferrer">Terms of Service</a> and 
+                I accept the <a href="/terms" target="_blank" rel="noopener noreferrer">Terms of Service</a> and
                 <a href="/privacy" target="_blank" rel="noopener noreferrer">Privacy Policy</a>
               </label>
               {formErrors.termsAccepted && <span className="error-message">{formErrors.termsAccepted}</span>}
             </div>
-            
+
             <div className="form-actions">
               <button
                 className="primary-button"
                 onClick={() => startVerification(false)}
-                disabled={loading}
+                disabled={state.loading}
               >
-                {loading ? (
+                {state.loading ? (
                   <>
                     <span className="spinner"></span>
                     Processing...
                   </>
                 ) : 'Start Verification'}
               </button>
-              
+
               <button
                 className="secondary-button"
                 onClick={() => startVerification(true)}
-                disabled={loading}
+                disabled={state.loading}
               >
                 Restart Verification
               </button>
             </div>
           </div>
         ) : (
-          <div className="verification-success">
-            <div className="success-icon">
-              <svg viewBox="0 0 24 24">
-                <path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41L9 16.17z"/>
-              </svg>
-            </div>
-            <h3>Verification Started Successfully!</h3>
-            <p>Your verification window should open automatically. If it doesn't, please check your pop-up blocker.</p>
-            <button 
-              className="primary-button"
-              onClick={() => startVerification(false)}
-            >
-              Reopen Verification
-            </button>
-          </div>
+          renderVerificationStatus()
         )}
-        
-        {error && (
+
+        {state.error && (
           <div className="error-message-container">
             <div className="error-icon">!</div>
-            <div>{error}</div>
+            <div>{state.error}</div>
           </div>
         )}
       </div>
-      
+
       <div className="verification-help">
         <h4>Need help with verification?</h4>
         <p>Contact our support team at <a href="mailto:admin@cheetahxofficial.com">admin@cheetahxofficial.com</a></p>

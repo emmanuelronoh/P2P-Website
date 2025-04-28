@@ -268,10 +268,11 @@ const Navbar = ({ toggleTheme, theme }) => {
                             whileHover={{ scale: 1.05 }}
                             transition={{ type: "spring", stiffness: 400, damping: 10 }}
                         >
-                            <Link to="/home-fiat">
+                            <Link to="/" className="no-hover-line">
                                 <img src={logo} alt="Cheetah P2P Logo" className="logo" />
                                 <span className="logo-text">CHEETAH P2P</span>
                             </Link>
+
                         </motion.div>
 
                         <button
@@ -294,8 +295,8 @@ const Navbar = ({ toggleTheme, theme }) => {
                         />
 
                         {isAuthenticated && (
-                            <Link 
-                                to="/fiat-p2p" 
+                            <Link
+                                to="/fiat-p2p"
                                 className="nav-link"
                                 onClick={() => setMenuOpen(false)}
                             >
@@ -314,15 +315,15 @@ const Navbar = ({ toggleTheme, theme }) => {
                         {/* Mobile-only auth links */}
                         {!isAuthenticated && (
                             <div className="mobile-auth-links">
-                                <Link 
-                                    to="/login" 
+                                <Link
+                                    to="/login"
                                     className="auth-btn login-btn mobile-auth-btn"
                                     onClick={() => setMenuOpen(false)}
                                 >
                                     Sign In
                                 </Link>
-                                <Link 
-                                    to="/register" 
+                                <Link
+                                    to="/register"
                                     className="auth-btn register-btn mobile-auth-btn"
                                     onClick={() => setMenuOpen(false)}
                                 >
@@ -373,8 +374,8 @@ const Navbar = ({ toggleTheme, theme }) => {
                                     )}
                                 </div>
 
-                                <button 
-                                    className="tutorial-btn" 
+                                <button
+                                    className="tutorial-btn"
                                     onClick={startTutorial}
                                 >
                                     How It Works
@@ -409,15 +410,15 @@ const Navbar = ({ toggleTheme, theme }) => {
                     </div>
                 </div>
             </header>
-            
+
             {/* Overlay for mobile menu */}
             {menuOpen && (
-                <div 
-                    className="mobile-menu-overlay" 
+                <div
+                    className="mobile-menu-overlay"
                     onClick={() => setMenuOpen(false)}
                 />
             )}
-            
+
             <TutorialModal
                 showTutorial={showTutorial}
                 closeTutorial={() => setShowTutorial(false)}

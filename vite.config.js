@@ -1,67 +1,46 @@
 import { defineConfig } from 'vite';
 import react from '@vitejs/plugin-react';
-import { NodeGlobalsPolyfillPlugin } from '@esbuild-plugins/node-globals-polyfill';
-import { NodeModulesPolyfillPlugin } from '@esbuild-plugins/node-modules-polyfill';
-import rollupNodePolyFill from 'rollup-plugin-node-polyfills';
+import { nodePolyfills } from 'vite-plugin-node-polyfills';
 
 export default defineConfig({
-  plugins: [react()],
-  base: './',
+  plugins: [
+    react(),
+    nodePolyfills({
+      include: ['buffer', 'process', 'util'],
+      globals: {
+        Buffer: true,
+        process: true,
+      },
+    }),
+  ],
+  define: {
+    'process.env.NODE_ENV': JSON.stringify(process.env.NODE_ENV),
+    'process.env': JSON.stringify({}), // Provide empty env variables
+    global: 'globalThis',
+  },
   resolve: {
     alias: {
-      util: 'util/',
-      sys: 'util/',
-      events: 'events/',
-      stream: 'stream-browserify',
-      path: 'path-browserify',
-      querystring: 'querystring-es3',
-      punycode: 'punycode/',
-      url: 'url/',
-      string_decoder: 'string_decoder/',
-      http: 'stream-http',
-      https: 'https-browserify',
-      os: 'os-browserify/browser',
-      assert: 'assert/',
-      constants: 'constants-browserify',
-      _stream_duplex: 'readable-stream/duplex',
-      _stream_passthrough: 'readable-stream/passthrough',
-      _stream_readable: 'readable-stream/readable',
-      _stream_writable: 'readable-stream/writable',
-      _stream_transform: 'readable-stream/transform',
+      buffer: 'buffer',
       process: 'process/browser',
-      buffer: 'buffer/',
-      crypto: 'crypto-browserify',
     },
   },
   optimizeDeps: {
+    include: [
+      'buffer',
+      'process',
+      'util',
+      'ethereumjs-util',
+      '@walletconnect/web3-provider',
+      'eth-block-tracker',
+      'safe-event-emitter',
+    ],
     esbuildOptions: {
       define: {
         global: 'globalThis',
       },
-      plugins: [
-        NodeGlobalsPolyfillPlugin({
-          process: true,
-          buffer: true,
-        }),
-        NodeModulesPolyfillPlugin(),
-      ],
     },
   },
   build: {
-    rollupOptions: {
-      plugins: [
-        rollupNodePolyFill(),
-      ],
-      output: {
-        manualChunks: {
-          ethers: ['ethers'],
-          walletconnect: ['@walletconnect/client'],
-          react: ['react', 'react-dom'],
-          reactRouter: ['react-router-dom'],
-          framer: ['framer-motion'],
-        },
-      },
-    },
     commonjsOptions: {
       transformMixedEsModules: true,
     },
