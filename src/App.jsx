@@ -2,7 +2,6 @@ import React, { useState, useEffect } from "react";
 import { Buffer } from 'buffer';
 import process from 'process';
 import {
-  BrowserRouter as Router,
   Routes,
   Route,
   Outlet,
@@ -29,14 +28,12 @@ import Vendor from "./pages/Vendor";
 import Amount from "./pages/Amount";
 import VerifyOTP from "./components/VerifyOTP";
 import FiatP2P from "./components/FiatP2P";
-import BuyCrypto from "./pages/BuyCrypto";
 import Support from "./pages/Support";
 import Tutorials from "./pages/Tutorials";
 import Faq from "./pages/Faq-page";
 import Profile from "./pages/Profile";
 import Notifications from "./pages/Notifications";
 import NotificationsPage from "./pages/NotificationsFiat";
-import SellCrypto from "./pages/SellCrypto";
 import ProfileDetails from "./pages/ProfileDetails";
 import Market from "./pages/Market";
 import ForgotPassword from "./components/ForgotPassword";
@@ -166,7 +163,6 @@ function AppInner() {
   }
 
   return (
-    <Router>
       <Routes>
         <Route element={<MainLayout />}>
           <Route path="/" element={<Home />} />
@@ -218,7 +214,6 @@ function AppInner() {
           {/* Full-page routes */}
         </Route>
       </Routes>
-    </Router>
   );
 }
 

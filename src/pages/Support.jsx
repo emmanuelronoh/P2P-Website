@@ -1,3 +1,4 @@
+
 import React, { useState, useRef, useEffect } from 'react';
 import '../styles/Support.css';
 import { motion, AnimatePresence } from 'framer-motion';

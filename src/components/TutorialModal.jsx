@@ -1,4 +1,5 @@
-import React, { useState } from 'react';
+import React from "react";
+import { useState } from 'react';
 import '../styles/TutorialModal.css'; // We'll create this CSS file next
 
 const TutorialModal = ({ showTutorial, closeTutorial }) => {

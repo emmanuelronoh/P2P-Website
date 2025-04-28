@@ -1,3 +1,4 @@
+import React from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { useState, useEffect, useMemo, useCallback } from "react";
 import { formatCurrency, validateInput, calculateCryptoAmount } from "../utils/tradingUtils";

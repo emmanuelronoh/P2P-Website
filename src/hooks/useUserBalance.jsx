@@ -1,3 +1,4 @@
+import React from "react";
 // src/hooks/useUserBalance.js
 import { useState, useEffect } from 'react';
 

@@ -1,3 +1,4 @@
+import React from "react";
 // src/hooks/useExchangeRate.js
 import { useState, useEffect } from 'react';
 

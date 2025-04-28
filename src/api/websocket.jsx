@@ -1,3 +1,4 @@
+import React from "react";
 // Create a single WebSocket service
 // services/chatSocket.js
 let socket = null;

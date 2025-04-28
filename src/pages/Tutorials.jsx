@@ -1,3 +1,4 @@
+import React from "react";
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { FiPlay, FiDownload, FiChevronDown, FiChevronUp, FiCheckCircle, FiLock, FiDollarSign, FiCreditCard, FiShield, FiBarChart2 } from 'react-icons/fi';

@@ -1,21 +1,55 @@
-import { createContext, useContext, useState, useEffect } from 'react';
+
+import React, { createContext, useContext, useState, useEffect } from 'react';
 import { ethers } from 'ethers';
 
-const WalletContext = createContext();
+// Create context with proper typing
+const WalletContext = createContext({
+  address: null,
+  provider: null,
+  signer: null,
+  chainId: null,
+  balance: "0.00",
+  connectedWallets: [],
+  connectWallet: () => {},
+  disconnectWallet: () => {},
+  fetchBalance: () => {}
+});
 
 export const WalletProvider = ({ children }) => {
-  const [state, setState] = useState({
-    address: localStorage.getItem('walletAddress') || null,
-    provider: null,
-    signer: null,
-    chainId: null,
-    balance: "0.00",
-    connectedWallets: JSON.parse(localStorage.getItem('connectedWallets')) || []
+  // Initialize state with localStorage values
+  const [state, setState] = useState(() => {
+    try {
+      return {
+        address: localStorage.getItem('walletAddress') || null,
+        provider: null,
+        signer: null,
+        chainId: null,
+        balance: "0.00",
+        connectedWallets: JSON.parse(localStorage.getItem('connectedWallets') || '[]')
+      };
+    } catch (error) {
+      console.error('Error parsing localStorage:', error);
+      return {
+        address: null,
+        provider: null,
+        signer: null,
+        chainId: null,
+        balance: "0.00",
+        connectedWallets: []
+      };
+    }
   });
 
+  // Memoized provider instance
+  const getProvider = (provider) => {
+    return new ethers.providers.Web3Provider(provider);
+  };
+
   const fetchBalance = async (address, provider) => {
+    if (!address || !provider) return "0.00";
+    
     try {
-      const ethersProvider = new ethers.providers.Web3Provider(provider);
+      const ethersProvider = getProvider(provider);
       const balance = await ethersProvider.getBalance(address);
       return ethers.utils.formatEther(balance);
     } catch (error) {
@@ -25,8 +59,10 @@ export const WalletProvider = ({ children }) => {
   };
 
   const connectWallet = async (walletType, address, provider) => {
+    if (!address || !provider) return false;
+
     try {
-      const ethersProvider = new ethers.providers.Web3Provider(provider);
+      const ethersProvider = getProvider(provider);
       const signer = ethersProvider.getSigner();
       const network = await ethersProvider.getNetwork();
       const balance = await fetchBalance(address, provider);
@@ -72,6 +108,7 @@ export const WalletProvider = ({ children }) => {
     localStorage.removeItem('connectedWallets');
   };
 
+  // Initialize wallet connection on mount
   useEffect(() => {
     const initializeWallet = async () => {
       if (state.address && window.ethereum) {
@@ -92,7 +129,37 @@ export const WalletProvider = ({ children }) => {
     };
 
     initializeWallet();
+
+    // Cleanup on unmount
+    return () => {
+      // Add any necessary cleanup
+    };
   }, []);
+
+  // Handle account/chain changes
+  useEffect(() => {
+    if (!window.ethereum) return;
+
+    const handleAccountsChanged = (accounts) => {
+      if (accounts.length === 0) {
+        disconnectWallet();
+      } else if (accounts[0] !== state.address) {
+        connectWallet('metamask', accounts[0], window.ethereum);
+      }
+    };
+
+    const handleChainChanged = () => {
+      window.location.reload();
+    };
+
+    window.ethereum.on('accountsChanged', handleAccountsChanged);
+    window.ethereum.on('chainChanged', handleChainChanged);
+
+    return () => {
+      window.ethereum.removeListener('accountsChanged', handleAccountsChanged);
+      window.ethereum.removeListener('chainChanged', handleChainChanged);
+    };
+  }, [state.address]);
 
   return (
     <WalletContext.Provider
@@ -108,4 +175,10 @@ export const WalletProvider = ({ children }) => {
   );
 };
 
-export const useWallet = () => useContext(WalletContext);
+export const useWallet = () => {
+  const context = useContext(WalletContext);
+  if (!context) {
+    throw new Error('useWallet must be used within a WalletProvider');
+  }
+  return context;
+};

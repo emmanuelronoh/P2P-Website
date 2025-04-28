@@ -6,10 +6,16 @@
   "scripts": {
     "dev": "vite",
     "build": "vite build",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "fix-react": "powershell -Command \"Get-ChildItem -Path .\\src -Recurse -Include *.jsx, *.tsx | ForEach-Object { $content = 'import React from `\"react`\";' + [System.Environment]::NewLine + (Get-Content $_.FullName -Raw); Set-Content -Path $_.FullName -Value $content }\""
   },
+
   "dependencies": {
+    "@chakra-ui/react": "^3.16.1",
     "@coinbase/wallet-sdk": "^4.3.2",
+    "@emotion/babel-plugin": "^11.13.5",
+    "@emotion/react": "^11.14.0",
+    "@emotion/styled": "^11.14.0",
     "@esbuild-plugins/node-globals-polyfill": "^0.2.3",
     "@esbuild-plugins/node-modules-polyfill": "^0.2.2",
     "@hookform/resolvers": "^5.0.1",
@@ -23,16 +29,17 @@
     "aos": "^2.3.4",
     "assert": "^2.1.0",
     "axios": "^1.9.0",
+    "browserify-zlib": "^0.2.0",
     "buffer": "^6.0.3",
     "constants-browserify": "^1.0.0",
     "crypto-browserify": "^3.12.1",
     "date-fns": "^4.1.0",
     "emoji-picker-react": "^4.12.2",
     "ethereumjs-util": "^7.1.5",
-    "ethers": "^6.13.5",
+    "ethers": "^6.13.7",
     "events": "^3.3.0",
     "formik": "^2.4.6",
-    "framer-motion": "^12.6.3",
+    "framer-motion": "^12.9.2",
     "global": "^4.4.0",
     "https-browserify": "^1.0.0",
     "js-cookie": "^3.0.5",
@@ -62,7 +69,7 @@
     "uikit": "^3.23.3",
     "url": "^0.11.4",
     "util": "^0.12.5",
-    "vite-plugin-node-polyfills": "^0.23.0",
+    "vite-plugin-node-polyfills": "^0.15.0",
     "walletlink": "^2.5.0",
     "web3": "^4.16.0",
     "web3-provider-engine": "^17.0.1",
@@ -75,7 +82,7 @@
     "globals": "^15.15.0",
     "rollup": "^4.39.0",
     "sass": "^1.86.3",
-    "vite": "^6.2.5"
+    "vite": "^4.5.0"
   },
   "engines": {
     "node": ">=20.0.0"

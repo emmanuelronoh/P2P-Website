@@ -1,15 +1,14 @@
-// VendorDashboard/TermsAndCondition.jsx
 import React, { useState } from "react";
-import { useNavigate } from "react-router-dom"; // ✅ Import useNavigate
-import "../styles/styles.css";
+import { useNavigate } from "react-router-dom"; 
+import "../styles/styles.css"; 
 
 const TermsAndCondition = () => {
   const [agreed, setAgreed] = useState(false);
-  const navigate = useNavigate(); // ✅ Initialize navigator
+  const navigate = useNavigate();
 
   const handleAgreement = () => {
     if (agreed) {
-      navigate("/CryptoListing"); // ✅ Navigate on agreement
+      navigate("/CryptoListing");
     }
   };
 
