@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { FaStar, FaShieldAlt, FaUserCheck, FaRegClock, FaExchangeAlt, FaPercentage, FaRegThumbsUp, FaRegThumbsDown } from 'react-icons/fa';
 import { MdPayment, MdAccountBalance, MdAttachMoney, MdVerifiedUser } from 'react-icons/md';
-import { jwtDecode } from "jwt-decode"; // ✅ correct named import
+import jwt_decode from "jwt-decode";
 import axios from 'axios';
 import '../styles/userProfile.css';
 
@@ -19,7 +19,7 @@ const UserProfile = () => {
 
       try {
         const token = localStorage.getItem('accessToken'); // ✅ Move this up
-        const decoded = jwtDecode(token); // ✅ Now token is available
+        const decoded = jwt_decode(token); // ✅ Now token is available
         const userId = decoded.user_id;
 
         console.log("userId:", userId);

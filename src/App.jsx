@@ -108,7 +108,7 @@ const LoadingScreen = () => {
             </span>
           </div>
           <div className="loading-tip">
-            <span className="tip-icon">💡</span>
+            <span className="tip-icon"></span>
             {tips[currentTip]}
           </div>
         </div>

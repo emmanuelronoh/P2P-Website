@@ -2,11 +2,11 @@
 import React, { useState, useEffect } from 'react';
 import { FaWallet, FaChevronRight, FaTimes, FaSpinner, FaCheck, FaExclamationTriangle } from 'react-icons/fa';
 import { MetaMaskIcon, TrustWalletIcon, BinanceChainIcon, WalletConnectIcon, CoinbaseIcon } from './WalletIcons';
-import WalletLink from 'walletlink';
+import WalletLink from "@coinbase/wallet-sdk";
 import { QRCodeCanvas } from 'qrcode.react';
 import { BrowserProvider } from 'ethers';
 import WalletConnect from '@walletconnect/client';
-import WalletConnectProvider from '@walletconnect/web3-provider';
+import WalletConnectProvider from "@walletconnect/ethereum-provider";
 import axios from 'axios';
 import '../styles/ConnectWalletModal.css';
 

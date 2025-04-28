@@ -2,7 +2,7 @@ import React from "react";
 import { useState, useEffect, useRef, useCallback } from "react";
 import { Link, useNavigate, useLocation } from "react-router-dom";
 import { ethers } from 'ethers';
-import WalletConnectProvider from '@walletconnect/web3-provider';
+import WalletConnectProvider from "@walletconnect/ethereum-provider";
 import { useAuth } from '../contexts/AuthContext';
 import {
   FaMoon,
