@@ -241,3 +241,230 @@
   .trade-amount-card {
     animation: fadeIn 0.3s ease-out forwards;
   }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  /* Loading Screen Styles */
+.loading-screen {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  background-color: var(--background-color);
+  color: var(--text-color);
+  z-index: 9999;
+  transition: opacity 0.5s ease;
+}
+
+.loading-container {
+  width: 100%;
+  max-width: 500px;
+  padding: 2rem;
+  text-align: center;
+}
+
+.loading-animation {
+  margin-bottom: 2rem;
+}
+
+.crypto-loader {
+  position: relative;
+  height: 80px;
+  margin-bottom: 2rem;
+}
+
+.crypto-loader .coin {
+  position: absolute;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  animation: float 3s infinite ease-in-out;
+}
+
+.crypto-loader .bitcoin {
+  background: #f7931a;
+  left: 30%;
+  animation-delay: 0s;
+}
+
+.crypto-loader .ethereum {
+  background: #627eea;
+  left: 50%;
+  transform: translateX(-50%);
+  animation-delay: 0.2s;
+}
+
+.crypto-loader .ripple {
+  background: #00aae4;
+  left: 70%;
+  animation-delay: 0.4s;
+}
+
+.progress-container {
+  width: 100%;
+  height: 8px;
+  background-color: var(--border-color);
+  border-radius: 4px;
+  margin: 1.5rem 0;
+  overflow: hidden;
+}
+
+.progress-bar {
+  height: 100%;
+  background: linear-gradient(90deg, #f7931a, #627eea, #00aae4);
+  border-radius: 4px;
+  transition: width 0.3s ease;
+}
+
+.loading-text {
+  font-size: 1.2rem;
+  margin-bottom: 1.5rem;
+  font-weight: 500;
+}
+
+.ellipsis-animation span {
+  opacity: 0;
+  animation: ellipsis 1.5s infinite;
+}
+
+.ellipsis-animation span:nth-child(1) {
+  animation-delay: 0s;
+}
+
+.ellipsis-animation span:nth-child(2) {
+  animation-delay: 0.5s;
+}
+
+.ellipsis-animation span:nth-child(3) {
+  animation-delay: 1s;
+}
+
+.loading-tip {
+  margin-top: 2rem;
+  padding: 1rem;
+  background-color: var(--card-bg-color);
+  border-radius: 8px;
+  font-style: italic;
+  opacity: 0;
+  animation: fadeIn 0.5s ease 1s forwards;
+}
+
+.tip-icon {
+  margin-right: 0.5rem;
+}
+
+/* Skeleton Loader Styles */
+.skeleton-loader {
+  padding: 2rem;
+}
+
+.skeleton-line {
+  height: 20px;
+  background-color: var(--border-color);
+  margin-bottom: 1rem;
+  border-radius: 4px;
+  animation: pulse 1.5s infinite ease-in-out;
+}
+
+.skeleton-loader.dashboard {
+  display: grid;
+  grid-template-areas: 
+    "header header"
+    "sidebar content";
+  grid-template-columns: 250px 1fr;
+  grid-template-rows: 80px 1fr;
+  gap: 1rem;
+  height: 100vh;
+}
+
+.skeleton-header {
+  grid-area: header;
+  background-color: var(--border-color);
+  border-radius: 8px;
+  animation: pulse 1.5s infinite ease-in-out;
+}
+
+.skeleton-sidebar {
+  grid-area: sidebar;
+  background-color: var(--border-color);
+  border-radius: 8px;
+  animation: pulse 1.5s infinite ease-in-out;
+}
+
+.skeleton-content {
+  grid-area: content;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: 1rem;
+}
+
+.skeleton-card {
+  background-color: var(--border-color);
+  border-radius: 8px;
+  height: 200px;
+  animation: pulse 1.5s infinite ease-in-out;
+}
+
+/* Animations */
+@keyframes float {
+  0%, 100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-20px);
+  }
+}
+
+@keyframes ellipsis {
+  0% {
+    opacity: 0;
+  }
+  50% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+  }
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes pulse {
+  0%, 100% {
+    opacity: 0.6;
+  }
+  50% {
+    opacity: 0.3;
+  }
+}
