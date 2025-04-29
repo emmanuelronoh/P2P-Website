@@ -75,7 +75,7 @@ const VendorVerification = () => {
           }
         }
       );
-      
+
       setState(prev => ({
         ...prev,
         verificationStatus: response.data.status,
@@ -97,8 +97,8 @@ const VendorVerification = () => {
   // Polling effect
   useEffect(() => {
     let pollingInterval;
-    
-    const shouldPoll = state.verificationId && 
+
+    const shouldPoll = state.verificationId &&
       !['completed', 'rejected'].includes(state.verificationStatus) &&
       state.pollCount < MAX_POLL_ATTEMPTS;
 
@@ -116,43 +116,56 @@ const VendorVerification = () => {
 
   const startVerification = async (regenerate = false) => {
     if (!validateForm()) return;
-    
-    setState(prev => ({ 
-      ...prev, 
-      loading: true, 
+
+    setState({
+      loading: true,
       error: null,
+      verificationStatus: null,
       pollCount: 0
-    }));
-    
+    });
+
     try {
-      const accessToken = getAccessToken();
-      const endpoint = regenerate 
+      // Step 1: Create verification record in Django
+      const createResponse = await axios.post(
+        'https://cheetahx.onrender.com/kyc/verifications/',
+        {
+          email: formData.email,
+          level_name: 'kyc_verification'
+        },
+        {
+          headers: {
+            'Authorization': `Bearer ${getAccessToken()}`
+          }
+        }
+      );
+
+      const verificationId = createResponse.data.id;
+
+      // Step 2: Get SumSub link
+      const endpoint = regenerate
         ? 'https://sumsub-cheetahx-kyc.onrender.com/api/regenerate-sumsub-link'
         : 'https://sumsub-cheetahx-kyc.onrender.com/api/generate-sumsub-link';
-      
-      const response = await axios.post(endpoint, {
+
+      const linkResponse = await axios.post(endpoint, {
         userId: formData.email,
+        verificationId: verificationId,
         levelName: 'kyc_verification'
-      }, {
-        headers: {
-          'Authorization': `Bearer ${accessToken}`
-        }
       });
 
       setState(prev => ({
         ...prev,
-        verificationUrl: response.data.url,
-        verificationId: response.data.verificationId,
+        verificationUrl: linkResponse.data.url,
+        verificationId: verificationId,
         loading: false,
         success: true
       }));
-      
-      window.open(response.data.url, '_blank', 'noopener,noreferrer');
-      
+
+      window.open(linkResponse.data.url, '_blank');
+
     } catch (err) {
       setState(prev => ({
         ...prev,
-        error: err.response?.data?.error || err.message || 'Verification failed',
+        error: err.response?.data?.error || 'Verification failed',
         loading: false
       }));
     }
@@ -165,7 +178,7 @@ const VendorVerification = () => {
           <div className="verification-complete">
             <div className="success-icon large">
               <svg viewBox="0 0 24 24">
-                <path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41L9 16.17z"/>
+                <path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41L9 16.17z" />
               </svg>
             </div>
             <h3>Verification Complete!</h3>
@@ -180,11 +193,11 @@ const VendorVerification = () => {
           <div className="verification-rejected">
             <div className="error-icon large">!</div>
             <h3>Verification Rejected</h3>
-            <p>{state.verificationResult?.rejectionReason || 
+            <p>{state.verificationResult?.rejectionReason ||
               'Please try again or contact support for more information.'}
             </p>
-            <button 
-              className="primary-button" 
+            <button
+              className="primary-button"
               onClick={() => startVerification(true)}
             >
               Try Again
@@ -196,16 +209,16 @@ const VendorVerification = () => {
           <div className="verification-success">
             <div className="success-icon">
               <svg viewBox="0 0 24 24">
-                <path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41L9 16.17z"/>
+                <path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41L9 16.17z" />
               </svg>
             </div>
             <h3>Verification Started Successfully!</h3>
             <p>
-              {state.pollCount > 0 
+              {state.pollCount > 0
                 ? 'Verification in progress...'
                 : 'Your verification window should open automatically.'}
             </p>
-            <button 
+            <button
               className="primary-button"
               onClick={() => window.open(state.verificationUrl, '_blank')}
             >
@@ -229,11 +242,10 @@ const VendorVerification = () => {
             <div className="step-number">1</div>
             <div className="step-label">Enter Details</div>
           </div>
-          <div className={`progress-step ${
-            state.success ? 
-              (state.verificationStatus === 'completed' ? 'completed' : 'active') 
+          <div className={`progress-step ${state.success ?
+              (state.verificationStatus === 'completed' ? 'completed' : 'active')
               : ''
-          }`}>
+            }`}>
             <div className="step-number">2</div>
             <div className="step-label">Verify Identity</div>
           </div>
