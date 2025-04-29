@@ -3,11 +3,11 @@ import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import '../styles/dashboard.css';
 import profileImage from '../assets/cheetah-logo.png';
-import { 
-  FiBell, FiMessageSquare, FiDollarSign, FiCreditCard, FiBarChart2, 
-  FiShield, FiSettings, FiArrowUp, FiArrowDown, FiTrendingUp, 
-  FiClock, FiCheckCircle, FiUsers, FiLayers, FiPieChart, 
-  FiRefreshCw, FiExternalLink, FiAlertCircle, FiLoader 
+import {
+  FiBell, FiMessageSquare, FiDollarSign, FiCreditCard, FiBarChart2,
+  FiShield, FiSettings, FiArrowUp, FiArrowDown, FiTrendingUp,
+  FiClock, FiCheckCircle, FiUsers, FiLayers, FiPieChart,
+  FiRefreshCw, FiExternalLink, FiAlertCircle, FiLoader
 } from 'react-icons/fi';
 
 // API configuration
@@ -27,7 +27,7 @@ const Dashboard = () => {
   const [showNotification, setShowNotification] = useState(true);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  
+
   // State for all data
   const [dashboardData, setDashboardData] = useState({
     userStats: null,
@@ -43,7 +43,7 @@ const Dashboard = () => {
       try {
         setLoading(true);
         setError(null);
-        
+
         // You might want to use Promise.all for parallel requests
         const [userRes, tradesRes, transactionsRes, notificationsRes, reputationRes] = await Promise.all([
           axiosInstance.get('/users/stats/'),
@@ -52,7 +52,7 @@ const Dashboard = () => {
           axiosInstance.get('https://cheetahx.onrender.com/crypto/notifications/'),
           axiosInstance.get('/reputation/')
         ]);
-        
+
         setDashboardData({
           userStats: userRes.data,
           tradeStats: tradesRes.data,
@@ -60,7 +60,7 @@ const Dashboard = () => {
           notifications: notificationsRes.data,
           reputation: reputationRes.data
         });
-        
+
       } catch (err) {
         console.error('Failed to fetch dashboard data:', err);
         setError('Failed to load dashboard data. Please try again later.');
@@ -68,7 +68,7 @@ const Dashboard = () => {
         setLoading(false);
       }
     };
-    
+
     fetchDashboardData();
   }, []);
 
@@ -89,7 +89,7 @@ const Dashboard = () => {
       await axiosInstance.patch(`https://cheetahx.onrender.com/crypto/notifications/${notificationId}/mark-read/`);
       setDashboardData(prev => ({
         ...prev,
-        notifications: prev.notifications.map(n => 
+        notifications: prev.notifications.map(n =>
           n.id === notificationId ? { ...n, read: true } : n
         )
       }));
@@ -133,7 +133,9 @@ const Dashboard = () => {
         {/* Sidebar */}
         <div className="dashboard-sidebar">
           <div className="user-profile">
-            <img src={profileImage} alt="Profile" className="profile-image" />
+            <div className="profile-image">
+              {userStats?.username?.[0]?.toUpperCase() || 'U'}
+            </div>
             <div className="profile-info">
               <h3>{userStats?.username || 'User'}</h3>
               <p className="profile-level">
@@ -141,37 +143,38 @@ const Dashboard = () => {
               </p>
             </div>
           </div>
-          
+
+
           <div className="sidebar-menu">
-            <button 
+            <button
               className={`menu-item ${activeTab === 'overview' ? 'active' : ''}`}
               onClick={() => handleTabChange('overview')}
             >
               <FiBarChart2 className="menu-icon" />
               <span>Overview</span>
             </button>
-            <button 
+            <button
               className={`menu-item ${activeTab === 'trades' ? 'active' : ''}`}
               onClick={() => handleTabChange('trades')}
             >
               <FiRefreshCw className="menu-icon" />
               <span>My Trades</span>
             </button>
-            <button 
+            <button
               className={`menu-item ${activeTab === 'wallet' ? 'active' : ''}`}
               onClick={() => handleTabChange('wallet')}
             >
               <FiCreditCard className="menu-icon" />
               <span>Wallet Balance</span>
             </button>
-            <button 
+            <button
               className={`menu-item ${activeTab === 'reputation' ? 'active' : ''}`}
               onClick={() => handleTabChange('reputation')}
             >
               <FiShield className="menu-icon" />
               <span>Reputation</span>
             </button>
-            <button 
+            <button
               className={`menu-item ${activeTab === 'settings' ? 'active' : ''}`}
               onClick={() => handleTabChange('settings')}
             >
@@ -179,7 +182,7 @@ const Dashboard = () => {
               <span>Settings</span>
             </button>
           </div>
-          
+
           <div className="sidebar-footer">
             <div className="online-status">
               <span className={`status-indicator ${available ? 'online' : 'offline'}`}></span>
@@ -200,8 +203,8 @@ const Dashboard = () => {
                 <FiBell className="notification-icon" />
                 <p>You have {notifications.filter(n => !n.read).length} unread notifications</p>
               </div>
-              <button 
-                className="notification-close" 
+              <button
+                className="notification-close"
                 onClick={() => setShowNotification(false)}
               >
                 &times;
@@ -219,10 +222,10 @@ const Dashboard = () => {
                 {available ? 'Online' : 'Offline'}
               </span>
               <label className="toggle-switch">
-                <input 
-                  type="checkbox" 
-                  checked={available} 
-                  onChange={toggleAvailability} 
+                <input
+                  type="checkbox"
+                  checked={available}
+                  onChange={toggleAvailability}
                 />
                 <span className="slider round"></span>
               </label>
@@ -317,7 +320,7 @@ const Dashboard = () => {
                 View All <FiExternalLink className="action-icon" />
               </button>
             </div>
-            
+
             <div className="activity-content">
               <div className="trade-chart">
                 <div className="chart-header">
@@ -335,9 +338,9 @@ const Dashboard = () => {
                 </div>
                 <div className="chart-placeholder">
                   {tradeStats?.weekly_volume?.map((volume, index) => (
-                    <div 
-                      key={index} 
-                      className="chart-bar" 
+                    <div
+                      key={index}
+                      className="chart-bar"
                       style={{ height: `${(volume / tradeStats.max_weekly_volume) * 80}%` }}
                     ></div>
                   ))}
@@ -400,8 +403,8 @@ const Dashboard = () => {
               <div className="level-progress">
                 <div className="progress-track">
                   {reputation?.levels?.map((level, index) => (
-                    <div 
-                      key={level.id} 
+                    <div
+                      key={level.id}
                       className={`progress-step ${level.achieved ? 'active' : ''} ${level.next ? 'next' : ''}`}
                     >
                       <div className="step-marker">{index + 1}</div>
@@ -410,8 +413,8 @@ const Dashboard = () => {
                         <p>{level.requirements}</p>
                         {level.progress && (
                           <div className="progress-bar">
-                            <div 
-                              className="progress-fill" 
+                            <div
+                              className="progress-fill"
                               style={{ width: `${level.progress}%` }}
                             ></div>
                           </div>
@@ -427,8 +430,8 @@ const Dashboard = () => {
                   <div className="score-value">{reputation?.rating || 0}</div>
                   <div className="score-stars">
                     {[...Array(5)].map((_, i) => (
-                      <span 
-                        key={i} 
+                      <span
+                        key={i}
                         className={`star ${i < Math.floor(reputation?.rating || 0) ? 'filled' : ''} 
                           ${i === Math.floor(reputation?.rating || 0) && (reputation?.rating || 0) % 1 >= 0.5 ? 'half' : ''}`}
                       >
@@ -441,10 +444,10 @@ const Dashboard = () => {
                 <div className="rating-details">
                   {[5, 4, 3, 2, 1].map(stars => {
                     const ratingCount = reputation?.rating_distribution?.[stars] || 0;
-                    const ratingPercentage = reputation?.total_reviews 
-                      ? (ratingCount / reputation.total_reviews) * 100 
+                    const ratingPercentage = reputation?.total_reviews
+                      ? (ratingCount / reputation.total_reviews) * 100
                       : 0;
-                    
+
                     return (
                       <div className="rating-bar" key={stars}>
                         <span className="bar-label">{stars} stars</span>

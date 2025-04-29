@@ -249,7 +249,6 @@
 .mobile-dropdown-content {
   width: 100%;
   padding-left: 1rem;
-  max-height: 0;
   overflow: hidden;
   transition: max-height 0.3s ease;
 }
@@ -261,10 +260,10 @@
 .mobile-dropdown-item {
   display: flex;
   align-items: center;
-  gap: 0.75rem;
   padding: 0.75rem 0;
+  width: 100%;
   color: var(--text-color);
-  border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+  gap: 0.75rem;
 }
 
 .mobile-dropdown-item:last-child {
@@ -730,7 +729,6 @@
   
   .mobile-menu {
     width: 90%;
-    margin-top: 40px;
   }
 }
 

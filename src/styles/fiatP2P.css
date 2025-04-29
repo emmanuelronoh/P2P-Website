@@ -276,7 +276,6 @@
   padding: 0.5rem 1rem 0.5rem 2rem;
   border: 1px solid var(--border-color);
   border-radius: 6px;
-  background-color: var(--bg-primary);
   color: var(--text-primary);
   font-size: 0.9rem;
   width: 250px;

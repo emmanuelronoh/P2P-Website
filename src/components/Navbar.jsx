@@ -118,7 +118,10 @@ const DropdownMenu = ({ title, items, icon: Icon }) => {
       <div className="mobile-dropdown-container" ref={dropdownRef}>
         <button
           className="mobile-dropdown-btn"
-          onClick={toggleDropdown}
+          onClick={(e) => {
+            e.stopPropagation();
+            toggleDropdown();
+          }}
           aria-expanded={isOpen}
           aria-haspopup="true"
         >
@@ -127,7 +130,14 @@ const DropdownMenu = ({ title, items, icon: Icon }) => {
           <FaChevronDown className={`mobile-dropdown-arrow ${isOpen ? "rotate" : ""}`} />
         </button>
 
-        <div className={`mobile-dropdown-content ${isOpen ? "open" : ""}`}>
+        <div
+          className="mobile-dropdown-content"
+          style={{
+            maxHeight: isOpen ? `${items.length * 50}px` : '0',
+            transition: 'max-height 0.3s ease',
+            overflow: 'hidden'
+          }}
+        >
           {items.map((item, index) => (
             <Link
               key={index}

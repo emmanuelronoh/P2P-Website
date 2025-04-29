@@ -255,7 +255,6 @@
   padding: 10px 16px 10px 40px;
   border-radius: var(--radius-lg);
   border: 1px solid var(--border-color);
-  background-color: var(--bg-secondary);
   color: var(--text-primary);
   font-size: 14px;
   transition: var(--transition);
@@ -429,7 +428,6 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  background-color: var(--bg-secondary);
 }
 
 .empty-state {
