@@ -297,7 +297,7 @@ function AppInner() {
         <Route path="/become-vendor" element={<Vendor />} />
         <Route path="/profile-details/:username" element={<ProfileDetails />} />
         <Route path="/TermsAndCondition" element={<TermsAndCondition />} />
-        <Route path="/CryptoListing" element={<CryptoListing />} />
+        <Route path="/cryptolisting" element={<CryptoListing />} />
         <Route path="/faq" element={<Faq />} />
         <Route path="/DashboardVendors" element={<DashboardVendors />} />
         <Route path="/profile-details-users/:userId" element={<ProfileDetails />} />

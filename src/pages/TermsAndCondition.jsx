@@ -8,7 +8,7 @@ const TermsAndCondition = () => {
 
   const handleAgreement = () => {
     if (agreed) {
-      navigate("/CryptoListing");
+      navigate("/cryptolisting");
     }
   };
 
