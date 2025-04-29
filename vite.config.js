@@ -10,6 +10,9 @@ export default defineConfig({
   server: {
     port: 5173,
     strictPort: true,
-    historyApiFallback: true, // This ensures the server serves index.html on refresh
   },
+  // Polyfill for 'global'
+  define: {
+    global: 'window',  // This will resolve the 'global is not defined' issue
+  }
 });
