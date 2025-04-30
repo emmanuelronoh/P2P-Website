@@ -324,10 +324,7 @@ const Navbar = ({ theme, toggleTheme }) => {
   }, []);
 
   const marketItems = [
-    { label: "Crypto Pairs", path: "/market/crypto", icon: FaCoins },
-    { label: "Stocks", path: "/market/stocks", icon: FaChartLine },
     { label: "Become a Vendor", path: "/become-vendor", icon: FaGlobe },
-    { label: "P2P Trading", path: "/p2p", icon: GiTrade }
   ];
 
   const helpItems = [

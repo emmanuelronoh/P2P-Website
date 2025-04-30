@@ -1,5 +1,5 @@
 :root {
-  --primary-color: #ff8a00;
+  --primary-color: #81C3DB;
   --secondary-color: #a29bfe;
   --accent-color: #FF6B00;
   --text-color: #2d3436;
@@ -83,7 +83,7 @@
   display: flex;
   align-items: center;
   gap: 0.5rem;
-  z-index: 1001;
+  z-index: 1000;
   height: 100%;
 }
 
@@ -109,7 +109,6 @@
   font-size: 1.5rem;
   cursor: pointer;
   z-index: 1001;
-  padding: 0.5rem;
 }
 
 /* Navigation Links - Desktop */
@@ -739,7 +738,6 @@
   
   .mobile-menu {
     width: 100%;
-    max-width: none;
   }
   
   .auth-btn {
@@ -893,3 +891,7 @@
 .icon-binance { color: #f3ba2f; }
 .icon-walletconnect { color: #3b99fc; }
 .icon-coinbase { color: #1652f0; }
+
+
+
+

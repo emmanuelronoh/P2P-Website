@@ -28,7 +28,7 @@ export const AuthProvider = ({ children }) => {
       const token = localStorage.getItem('accessToken');
       if (!token) return false;
 
-      const response = await axios.get('https://cheetahx.onrender.com/api/auth/validate-token', {
+      const response = await axios.get('http://localhost:8000/api/auth/validate-token', {
         headers: { Authorization: `Bearer ${token}` }
       });
 

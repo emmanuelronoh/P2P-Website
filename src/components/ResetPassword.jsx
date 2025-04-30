@@ -33,7 +33,7 @@ const ResetPassword = () => {
 
         try {
             const response = await axios.post(
-                "https://cheetahx.onrender.com/api/auth/reset-password/",
+                "http://localhost:8000/api/auth/reset-password/",
                 {
                     uidb64,
                     token,

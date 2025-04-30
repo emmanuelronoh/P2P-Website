@@ -321,10 +321,24 @@ input:checked + .slider:before {
 
 .section-action {
   font-size: clamp(0.85rem, 2vw, 0.9rem);
-  display: flex;
   align-items: center;
   gap: 0.3rem;
+  padding: 0.5rem 1rem;
+  background-color: #81c3db; /* green tone */
+  color: white;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: background-color 0.3s ease, transform 0.2s ease;
+  text-decoration: none;
+  text-align: center;
 }
+
+
+.section-action:active {
+  transform: scale(0.98);
+}
+
 
 /* Activity Section */
 .activity-section {

@@ -301,6 +301,7 @@ function AppInner() {
         <Route path="/faq" element={<Faq />} />
         <Route path="/DashboardVendors" element={<DashboardVendors />} />
         <Route path="/profile-details-users/:userId" element={<ProfileDetails />} />
+        
       </Route>
 
       <Route element={<MessagesLayout />}>
@@ -317,8 +318,8 @@ function AppInner() {
         <Route path="/support-fiat" element={<Support />} />
         <Route path="/tutorials-fiat" element={<Tutorials />} />
         <Route path="/profile-details-user/:userId" element={<ProfileDetails />} />
+        <Route path="/profile-fiat/:username" element={<Profile />} />
       </Route>
-
       <Route element={<P2PMessagesLayout />}>
         <Route path="/messages-p2p" element={<MessagesP2p />} />
         <Route path="/chat-room-fiat" element={<MessagesP2p />} />

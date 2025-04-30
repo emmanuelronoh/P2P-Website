@@ -146,7 +146,7 @@
   border: none;
   background: none;
   font-weight: 600;
-  color: var(--text-secondary);
+  color: #000000 !important;
   cursor: pointer;
   display: flex;
   align-items: center;
@@ -155,7 +155,7 @@
 }
 
 .tab-button.active {
-  background-color: var(--primary-color);
+  background-color: #81c3db;
   color: white !important;
 }
 
@@ -256,7 +256,7 @@
 
 
 .type-btn.active {
-  background-color: var(--primary-color);
+  background-color: #81c3db;
   color: white;
 }
 
@@ -1035,7 +1035,7 @@ select {
 
 /* Security Banner */
 .security-banner {
-  background-color: var(--primary-color);
+  background-color: #81c3db;
   color: white;
   padding: 2rem;
   margin-top: 3rem;

@@ -92,10 +92,10 @@ const FiatP2P = () => {
 
             // Fetch all data in parallel
             const [ordersResponse, paymentMethodsResponse, userOrdersResponse, priceTrendsResponse] = await Promise.all([
-                axios.get('https://cheetahx.onrender.com/escrow/orders/', { headers }),
-                axios.get('https://cheetahx.onrender.com/escrow/payment-methods-fiat/', { headers }),
-                axios.get('https://cheetahx.onrender.com/escrow/user-orders/', { headers }),
-                axios.get('https://cheetahx.onrender.com/escrow/price-trends/', { headers }),
+                axios.get('http://localhost:8000/escrow/orders/', { headers }),
+                axios.get('http://localhost:8000/escrow/payment-methods-fiat/', { headers }),
+                axios.get('http://localhost:8000/escrow/user-orders/', { headers }),
+                axios.get('http://localhost:8000/escrow/price-trends/', { headers }),
             ]);
 
             // Transform market orders
@@ -264,7 +264,7 @@ const FiatP2P = () => {
         try {
             const token = localStorage.getItem('accessToken');
             const response = await axios.post(
-                'https://cheetahx.onrender.com/chat-room/api/trades/initiate/',
+                'http://localhost:8000/chat-room/api/trades/initiate/',
                 {
                     order_id: order.id,
                     trade_type: uiState.activeTab,
@@ -330,7 +330,7 @@ const FiatP2P = () => {
             };
 
             const response = await axios.post(
-                'https://cheetahx.onrender.com/escrow/orders/',
+                'http://localhost:8000/escrow/orders/',
                 orderData,
                 {
                     headers: {
@@ -349,7 +349,7 @@ const FiatP2P = () => {
             }));
 
             // Then fetch fresh data from the server
-            const refreshedOrders = await axios.get('https://cheetahx.onrender.com/escrow/user-orders/', {
+            const refreshedOrders = await axios.get('http://localhost:8000/escrow/user-orders/', {
                 headers: {
                     Authorization: `Bearer ${token}`,
                     'Content-Type': 'application/json'

@@ -24,7 +24,7 @@ import { IoMdChatbubbles } from "react-icons/io";
 import { GiTrade } from "react-icons/gi";
 import { motion, AnimatePresence } from "framer-motion";
 import logo from "../assets/cheetah-logo.png";
-import "../styles/navbar.css";
+import "../styles/navbar-p2p.css";
 import TutorialModal from './TutorialModal';
 
 // Advertisement component
@@ -46,7 +46,7 @@ const AdvertisementBar = () => {
     }, []);
 
     return (
-        <div className="advertisement-bar">
+        <div className="p2p-advertisement-bar">
             <AnimatePresence mode="wait">
                 <motion.div
                     key={currentAd}
@@ -54,32 +54,40 @@ const AdvertisementBar = () => {
                     animate={{ opacity: 1, y: 0 }}
                     exit={{ opacity: 0, y: -20 }}
                     transition={{ duration: 0.5 }}
-                    className="ad-content"
+                    className="p2p-ad-content"
                 >
                     {ads[currentAd]}
                 </motion.div>
             </AnimatePresence>
-            <button className="ad-close-btn">×</button>
+            <button className="p2p-ad-close-btn">×</button>
         </div>
     );
 };
 
-// Dropdown menu component
 const DropdownMenu = ({ title, items, icon: Icon, onMobileClose }) => {
     const [isOpen, setIsOpen] = useState(false);
     const dropdownRef = useRef(null);
     const [isMobile, setIsMobile] = useState(window.innerWidth < 992);
     const { user, isAuthenticated, loading: authLoading } = useAuth();
 
+    // Enhanced mobile detection with debounce
     useEffect(() => {
+        let timeoutId = null;
         const handleResize = () => {
-            setIsMobile(window.innerWidth < 992);
+            clearTimeout(timeoutId);
+            timeoutId = setTimeout(() => {
+                setIsMobile(window.innerWidth < 992);
+            }, 100);
         };
 
         window.addEventListener("resize", handleResize);
-        return () => window.removeEventListener("resize", handleResize);
+        return () => {
+            window.removeEventListener("resize", handleResize);
+            clearTimeout(timeoutId);
+        };
     }, []);
 
+    // Improved click outside detection
     useEffect(() => {
         const handleClickOutside = (event) => {
             if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
@@ -95,49 +103,60 @@ const DropdownMenu = ({ title, items, icon: Icon, onMobileClose }) => {
         };
     }, []);
 
-    const handleItemClick = () => {
+    // Enhanced toggle handler
+    const handleToggle = useCallback(() => {
+        setIsOpen(prev => !prev);
+    }, []);
+
+    // Improved item click handler
+    const handleItemClick = useCallback(() => {
         setIsOpen(false);
         if (isMobile && onMobileClose) onMobileClose();
-    };
+    }, [isMobile, onMobileClose]);
 
     return (
-        <div className="dropdown-container" ref={dropdownRef}>
+        <div 
+            className={`p2p-dropdown-container ${isOpen ? 'p2p-open' : ''}`} 
+            ref={dropdownRef}
+        >
             <button
-                className="dropdown-btn"
-                onClick={() => setIsOpen(!isOpen)}
+                className="p2p-dropdown-btn"
+                onClick={handleToggle}
                 onMouseEnter={!isMobile ? () => setIsOpen(true) : undefined}
+                onMouseLeave={!isMobile ? () => setIsOpen(false) : undefined}
                 aria-expanded={isOpen}
                 aria-haspopup="true"
+                aria-label={typeof title === 'string' ? title : 'Menu'}
             >
-                {Icon && <Icon className="dropdown-icon" />}
-                {title}
-                <FaChevronDown className={`dropdown-arrow ${isOpen ? "rotate" : ""}`} />
+                {Icon && <Icon className="p2p-dropdown-icon" />}
+                {typeof title === 'string' ? title : null}
+                <FaChevronDown className={`p2p-dropdown-arrow ${isOpen ? "p2p-rotate" : ""}`} />
             </button>
 
             <AnimatePresence>
                 {isOpen && (
                     <motion.div
-                        initial={{ opacity: 0, y: isMobile ? 0 : 20 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        exit={{ opacity: 0, y: isMobile ? 0 : -10 }}
-                        transition={{ duration: 0.2 }}
-                        className="dropdown-content"
-                        onMouseLeave={!isMobile ? () => setIsOpen(false) : undefined}
+                        initial={{ opacity: 0, height: 0 }}
+                        animate={{ opacity: 1, height: 'auto' }}
+                        exit={{ opacity: 0, height: 0 }}
+                        transition={{ duration: 0.2, ease: 'easeInOut' }}
+                        className="p2p-dropdown-content"
+                        style={{ overflow: 'hidden' }}
                     >
-                        {items.map((item, index) => (
-                            <Link
-                                key={index}
-                                to={item.path}
-                                className="dropdown-item"
-                                onClick={() => {
-                                    handleItemClick();
-                                    if (item.action) item.action();
-                                }}
-                            >
-                                {item.icon && <item.icon className="dropdown-item-icon" />}
-                                <span className="dropdown-item-text">{item.label}</span>
-                            </Link>
-                        ))}
+                        <div className="p2p-dropdown-inner">
+                            {items.map((item, index) => (
+                                <Link
+                                    key={index}
+                                    to={item.path}
+                                    className="p2p-dropdown-item"
+                                    onClick={handleItemClick}
+                                    aria-label={item.label}
+                                >
+                                    {item.icon && <item.icon className="p2p-dropdown-item-icon" />}
+                                    <span className="p2p-dropdown-item-text">{item.label}</span>
+                                </Link>
+                            ))}
+                        </div>
                     </motion.div>
                 )}
             </AnimatePresence>
@@ -243,7 +262,7 @@ const Navbar = ({ toggleTheme, theme }) => {
     const accountItems = isAuthenticated
         ? [
             { label: "Dashboard", path: "/dashboard-fiat", icon: FaChartLine },
-            { label: "Profile", path: `/profile/${user?.id}`, icon: FaUserCircle },
+            { label: "Profile", path: `/profile-fiat/${user?.id}`, icon: FaUserCircle },
             {
                 label: `Messages ${unreadMessages > 0 ? `(${unreadMessages})` : ""}`,
                 path: "/messages",
@@ -260,24 +279,23 @@ const Navbar = ({ toggleTheme, theme }) => {
         <>
             <AdvertisementBar />
 
-            <header className={`navbar ${isScrolled ? "scrolled" : ""} ${menuOpen ? "menu-open" : ""}`} ref={navbarRef}>
-                <div className="navbar-container">
+            <header className={`p2p-navbar ${isScrolled ? "p2p-scrolled" : ""} ${menuOpen ? "p2p-menu-open" : ""}`} ref={navbarRef}>
+                <div className="p2p-navbar-container">
                     {/* Logo and mobile menu button */}
-                    <div className="logo-mobile-container">
+                    <div className="p2p-logo-mobile-container">
                         <motion.div
-                            className="logo-container"
+                            className="p2p-logo-container"
                             whileHover={{ scale: 1.05 }}
                             transition={{ type: "spring", stiffness: 400, damping: 10 }}
                         >
-                            <Link to="/" className="no-hover-line">
-                                <img src={logo} alt="Cheetah P2P Logo" className="logo" />
-                                <span className="logo-text">CHEETAH P2P</span>
+                            <Link to="/" className="p2p-no-hover-line">
+                                <img src={logo} alt="Cheetah P2P Logo" className="p2p-logo" />
+                                <span className="p2p-logo-text">CHEETAH P2P</span>
                             </Link>
-
                         </motion.div>
 
                         <button
-                            className="mobile-menu-btn"
+                            className="p2p-mobile-menu-btn"
                             onClick={() => setMenuOpen(!menuOpen)}
                             aria-label="Toggle menu"
                             aria-expanded={menuOpen}
@@ -287,7 +305,7 @@ const Navbar = ({ toggleTheme, theme }) => {
                     </div>
 
                     {/* Navigation */}
-                    <nav className={`nav-links ${menuOpen ? "open" : ""}`}>
+                    <nav className={`p2p-nav-links ${menuOpen ? "p2p-open" : ""}`}>
                         <DropdownMenu
                             title="Market"
                             items={marketItems}
@@ -298,11 +316,11 @@ const Navbar = ({ toggleTheme, theme }) => {
                         {isAuthenticated && (
                             <Link
                                 to="/fiat-p2p"
-                                className="nav-link"
+                                className="p2p-nav-link"
                                 onClick={() => setMenuOpen(false)}
                             >
-                                <FaExchangeAlt className="nav-icon" />
-                                <span className="nav-link-text">Trade</span>
+                                <FaExchangeAlt className="p2p-nav-icon" />
+                                <span className="p2p-nav-link-text">Trade</span>
                             </Link>
                         )}
 
@@ -315,17 +333,17 @@ const Navbar = ({ toggleTheme, theme }) => {
 
                         {/* Mobile-only auth links */}
                         {!isAuthenticated && (
-                            <div className="mobile-auth-links">
+                            <div className="p2p-mobile-auth-links">
                                 <Link
                                     to="/login"
-                                    className="auth-btn login-btn mobile-auth-btn"
+                                    className="p2p-auth-btn p2p-login-btn p2p-mobile-auth-btn"
                                     onClick={() => setMenuOpen(false)}
                                 >
                                     Sign In
                                 </Link>
                                 <Link
                                     to="/register"
-                                    className="auth-btn register-btn mobile-auth-btn"
+                                    className="p2p-auth-btn p2p-register-btn p2p-mobile-auth-btn"
                                     onClick={() => setMenuOpen(false)}
                                 >
                                     Register
@@ -335,12 +353,12 @@ const Navbar = ({ toggleTheme, theme }) => {
                     </nav>
 
                     {/* User actions */}
-                    <div className={`user-actions ${menuOpen ? "open" : ""}`}>
+                    <div className={`p2p-user-actions ${menuOpen ? "p2p-open" : ""}`}>
                         {isAuthenticated ? (
                             <>
                                 {/* Notifications */}
                                 <button
-                                    className="notification-button"
+                                    className="p2p-notification-button"
                                     onClick={() => {
                                         navigate('/notifications-p2p');
                                         setMenuOpen(false);
@@ -349,13 +367,13 @@ const Navbar = ({ toggleTheme, theme }) => {
                                 >
                                     <FaBell />
                                     {notifications > 0 && (
-                                        <span className="notification-badge">{notifications}</span>
+                                        <span className="p2p-notification-badge">{notifications}</span>
                                     )}
                                 </button>
 
                                 {/* Messages */}
                                 <div
-                                    className="message-icon"
+                                    className="p2p-message-icon"
                                     onClick={() => {
                                         navigate("/messages-p2p");
                                         setMenuOpen(false);
@@ -365,7 +383,7 @@ const Navbar = ({ toggleTheme, theme }) => {
                                     <IoMdChatbubbles />
                                     {unreadMessages > 0 && (
                                         <motion.span
-                                            className="message-badge"
+                                            className="p2p-message-badge"
                                             initial={{ scale: 0 }}
                                             animate={{ scale: 1 }}
                                             key={unreadMessages}
@@ -376,7 +394,7 @@ const Navbar = ({ toggleTheme, theme }) => {
                                 </div>
 
                                 <button
-                                    className="tutorial-btn"
+                                    className="p2p-tutorial-btn"
                                     onClick={startTutorial}
                                 >
                                     How It Works
@@ -384,17 +402,17 @@ const Navbar = ({ toggleTheme, theme }) => {
 
                                 {/* Profile dropdown */}
                                 <DropdownMenu
-                                    title={<FaUserCircle className="profile-icon" />}
+                                    title={<FaUserCircle className="p2p-profile-icon" />}
                                     items={accountItems}
                                     onMobileClose={() => setMenuOpen(false)}
                                 />
                             </>
                         ) : (
                             <>
-                                <Link to="/login" className="auth-btn login-btn desktop-auth-btn">
+                                <Link to="/login" className="p2p-auth-btn p2p-login-btn p2p-desktop-auth-btn">
                                     Sign In
                                 </Link>
-                                <Link to="/register" className="auth-btn register-btn desktop-auth-btn">
+                                <Link to="/register" className="p2p-auth-btn p2p-register-btn p2p-desktop-auth-btn">
                                     Register
                                 </Link>
                             </>
@@ -402,7 +420,7 @@ const Navbar = ({ toggleTheme, theme }) => {
 
                         {/* Theme toggle */}
                         <button
-                            className="theme-toggle"
+                            className="p2p-theme-toggle"
                             onClick={toggleTheme}
                             aria-label="Toggle theme"
                         >
@@ -415,7 +433,7 @@ const Navbar = ({ toggleTheme, theme }) => {
             {/* Overlay for mobile menu */}
             {menuOpen && (
                 <div
-                    className="mobile-menu-overlay"
+                    className="p2p-mobile-menu-overlay"
                     onClick={() => setMenuOpen(false)}
                 />
             )}

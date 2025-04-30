@@ -287,13 +287,34 @@
 
 .image-container {
   width: 100%;
-  max-width: 600px;
+  max-width: 1000px !important;
   background: var(--card-bg);
   border-radius: 16px;
   box-shadow: var(--card-shadow);
   overflow: hidden;
   height: auto;
+  margin: 0 auto;
+  padding: 1rem;
+  box-sizing: border-box;
 }
+
+/* Adjust padding and layout on medium screens */
+@media (max-width: 768px) {
+  .image-container {
+    padding: 0.75rem;
+    max-width: 90%;
+  }
+}
+
+/* Stack or reduce spacing on smaller screens */
+@media (max-width: 480px) {
+  .image-container {
+    padding: 0.5rem;
+    max-width: 95% !important;
+  }
+}
+
+
 
 .title-part:nth-child(1) {
   animation-delay: 0.1s;
@@ -1101,7 +1122,7 @@
   margin-right: 10px;
 }
 
-.footer-logo-text {
+.logo-text {
   font-size: 1.5rem;
   font-weight: 700;
   background: var(--secondary-gradient);
@@ -1187,7 +1208,7 @@
   flex: 1;
   padding: 12px 15px;
   border: 1px solid var(--border-color);
-  border-radius: 8px 0 0 8px;
+  border-radius: 8px 8px;
   background: var(--input-bg);
   color: var(--text-color);
 }
@@ -1363,13 +1384,6 @@
   .footer-legal {
     flex-direction: column;
     gap: 10px;
-  }
-}
-
-/* Foldable devices */
-@media (max-width: 768px) and (min-height: 720px) {
-  .hero-section {
-    padding-top: 200px;
   }
 }
 

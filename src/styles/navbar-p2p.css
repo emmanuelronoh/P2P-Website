@@ -1,0 +1,1180 @@
+:root {
+    --primary-color: #81C3DB;
+    --primary-hover: #e07b00;
+    --secondary-color: #a29bfe;
+    --accent-color: #FF6B00;
+    --accent-hover: #e05e00;
+    --text-color: #2d3436;
+    --text-light: #636e72;
+    --bg-color: #f5f6fa;
+    --card-bg: #ffffff;
+    --shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+    --shadow-hover: 0 6px 16px rgba(0, 0, 0, 0.12);
+    --border-radius: 10px;
+    --border-radius-sm: 6px;
+    --transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+    --navbar-height: 80px;
+    --mobile-nav-width: 320px;
+    --z-index-navbar: 1000;
+    --z-index-dropdown: 1001;
+    --z-index-mobile-menu: 1002;
+    --z-index-overlay: 999;
+}
+
+[data-theme="dark"] {
+    --primary-color: #a29bfe;
+    --primary-hover: #8a82f8;
+    --secondary-color: #6c5ce7;
+    --accent-color: #ff7675;
+    --accent-hover: #ff5e5e;
+    --text-color: #f5f6fa;
+    --text-light: #b2bec3;
+    --bg-color: #2d3436;
+    --card-bg: #1e272e;
+    --shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+    --shadow-hover: 0 6px 16px rgba(0, 0, 0, 0.4);
+}
+
+/* Base Reset */
+*,
+*::before,
+*::after {
+    box-sizing: border-box;
+}
+
+/* Advertisement bar */
+.p2p-advertisement-bar {
+    background: linear-gradient(90deg, var(--primary-color), var(--accent-color));
+    color: white;
+    padding: 0.6rem 1rem;
+    text-align: center;
+    position: relative;
+    overflow: hidden;
+    font-size: 0.95rem;
+    font-weight: 500;
+    z-index: calc(var(--z-index-navbar) + 100);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 40px;
+}
+
+.p2p-ad-content {
+    position: relative;
+    z-index: 1;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 90%;
+    padding: 0 1rem;
+}
+
+.p2p-ad-close-btn {
+    position: absolute;
+    right: 1rem;
+    top: 50%;
+    transform: translateY(-50%);
+    background: transparent;
+    border: none;
+    color: white;
+    cursor: pointer;
+    font-size: 1.3rem;
+    line-height: 1;
+    z-index: 2;
+    opacity: 0.8;
+    transition: var(--transition);
+    width: 24px;
+    height: 24px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+}
+
+.p2p-ad-close-btn:hover {
+    opacity: 1;
+    background: rgba(255, 255, 255, 0.2);
+}
+
+/* Navbar Structure */
+.p2p-navbar {
+    background-color: var(--card-bg);
+    box-shadow: var(--shadow);
+    position: sticky;
+    top: 0;
+    height: var(--navbar-height);
+    z-index: var(--z-index-navbar);
+    transition: var(--transition);
+    width: 100%;
+}
+
+.p2p-navbar.p2p-scrolled {
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.15);
+}
+
+.p2p-navbar-container {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0 2rem;
+    max-width: 1600px;
+    margin: 0 auto;
+    height: 100%;
+    position: relative;
+    width: 100%;
+}
+
+/* Logo Styles */
+.p2p-logo-mobile-container {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    width: 100%;
+    height: 100%;
+}
+
+.p2p-logo-container {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    z-index: var(--z-index-navbar);
+    height: 100%;
+    text-decoration: none;
+}
+
+.p2p-logo {
+    height: 42px;
+    width: 42px;
+    object-fit: contain;
+    transition: var(--transition);
+}
+
+.p2p-logo-text {
+    font-weight: 800;
+    font-size: 1.4rem;
+    color: var(--primary-color);
+    white-space: nowrap;
+    transition: var(--transition);
+}
+
+/* Mobile Menu Button */
+.p2p-mobile-menu-btn {
+    display: none;
+    background: none;
+    border: none;
+    color: var(--text-color);
+    font-size: 1.6rem;
+    cursor: pointer;
+    z-index: calc(var(--z-index-navbar) + 1);
+    padding: 0.5rem;
+    border-radius: var(--border-radius-sm);
+    transition: var(--transition);
+}
+
+.p2p-mobile-menu-btn:hover {
+    background: rgba(0, 0, 0, 0.05);
+    color: var(--primary-color);
+}
+
+.p2p-mobile-menu-btn:active {
+    transform: scale(0.95);
+}
+
+/* Navigation Links */
+.p2p-nav-links {
+    display: flex;
+    align-items: center;
+    gap: 1.25rem;
+    height: 100%;
+    margin-left: 2rem;
+}
+
+.p2p-nav-links {
+    display: flex !important;
+    align-items: center !important;
+    gap: 1.25rem !important;
+    height: 100% !important;
+    margin-left: 2rem;
+}
+
+.p2p-nav-link {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    color: var(--text-color);
+    font-weight: 500;
+    transition: var(--transition);
+    height: 100%;
+    padding: 0 0.75rem;
+    position: relative;
+    text-decoration: none;
+    font-size: 0.95rem;
+}
+
+.p2p-nav-link:hover {
+    color: var(--primary-color);
+}
+
+.p2p-nav-link::after {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 0;
+    height: 3px;
+    background: var(--primary-color);
+    transition: var(--transition);
+    border-radius: 3px 3px 0 0;
+}
+
+.p2p-nav-link:hover::after {
+    width: 100%;
+}
+
+.p2p-nav-icon {
+    font-size: 1.1rem;
+}
+
+/* Dropdown Menu Styles */
+.p2p-dropdown-container {
+    position: relative;
+    height: 100%;
+    display: flex;
+    align-items: center;
+}
+
+.p2p-dropdown-btn {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+    background: none;
+    border: none;
+    color: var(--text-color);
+    font-weight: 500;
+    cursor: pointer;
+    padding: 0 0.75rem;
+    height: 100%;
+    transition: var(--transition);
+    font-size: 0.95rem;
+    position: relative;
+}
+
+.p2p-dropdown-btn:hover {
+    color: var(--primary-color);
+}
+
+.p2p-dropdown-btn::after {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 0;
+    height: 3px;
+    background: var(--primary-color);
+    transition: var(--transition);
+    border-radius: 3px 3px 0 0;
+}
+
+.p2p-dropdown-btn:hover::after {
+    width: 100%;
+}
+
+.p2p-dropdown-icon {
+    font-size: 1.1rem;
+}
+
+.p2p-dropdown-arrow {
+    transition: transform 0.2s ease;
+    font-size: 0.8rem;
+    margin-left: 0.3rem;
+}
+
+.p2p-dropdown-arrow.p2p-rotate {
+    transform: rotate(180deg);
+}
+
+.p2p-dropdown-content {
+    position: absolute;
+    top: 100%;
+    left: 0;
+    background-color: var(--card-bg);
+    border-radius: var(--border-radius-sm);
+    box-shadow: var(--shadow-hover);
+    min-width: 220px;
+    z-index: var(--z-index-dropdown);
+    overflow: hidden;
+    transform-origin: top center;
+    padding: 0.5rem 0;
+}
+
+.p2p-dropdown-item {
+    display: flex;
+    align-items: center;
+    gap: 0.8rem;
+    padding: 0.75rem 1.25rem;
+    color: var(--text-color);
+    transition: var(--transition);
+    text-decoration: none;
+    font-size: 0.9rem;
+}
+
+.p2p-dropdown-item:hover {
+    background-color: rgba(0, 0, 0, 0.05);
+    color: var(--primary-color);
+    padding-left: 1.5rem;
+}
+
+.p2p-dropdown-item-icon {
+    font-size: 0.95rem;
+    width: 18px;
+    display: flex;
+    justify-content: center;
+}
+
+.p2p-dropdown-item-text {
+    flex: 1;
+}
+
+/* User Actions */
+.p2p-user-actions {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    margin-left: auto;
+}
+
+.p2p-notification-button,
+.p2p-message-icon {
+    position: relative;
+    cursor: pointer;
+    color: var(--text-color);
+    transition: var(--transition);
+    font-size: 1.3rem;
+    background: none;
+    border: none;
+    padding: 0.5rem;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 40px;
+    height: 40px;
+}
+
+.p2p-notification-button:hover,
+.p2p-message-icon:hover {
+    background: rgba(0, 0, 0, 0.05);
+    color: var(--primary-color);
+}
+
+.p2p-notification-badge,
+.p2p-message-badge {
+    position: absolute;
+    top: 3px;
+    right: 3px;
+    background-color: var(--accent-color);
+    color: white;
+    border-radius: 50%;
+    width: 18px;
+    height: 18px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.7rem;
+    font-weight: bold;
+    border: 2px solid var(--card-bg);
+}
+
+.p2p-tutorial-btn {
+    background: none;
+    border: 1px solid var(--primary-color);
+    color: var(--primary-color);
+    padding: 0.5rem 1rem;
+    border-radius: var(--border-radius-sm);
+    font-weight: 500;
+    transition: var(--transition);
+    font-size: 0.9rem;
+    cursor: pointer;
+    white-space: nowrap;
+}
+
+.p2p-tutorial-btn:hover {
+    background: rgba(255, 138, 0, 0.1);
+}
+
+/* Auth Buttons */
+.p2p-auth-btn {
+    padding: 0.6rem 1.2rem;
+    border-radius: var(--border-radius-sm);
+    font-weight: 500;
+    transition: var(--transition);
+    white-space: nowrap;
+    font-size: 0.95rem;
+    cursor: pointer;
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+}
+
+.p2p-login-btn {
+    background: none;
+    border: 1px solid var(--primary-color);
+    color: var(--primary-color);
+}
+
+.p2p-login-btn:hover {
+    background: rgba(255, 138, 0, 0.1);
+}
+
+.p2p-register-btn {
+    background: var(--primary-color);
+    color: white;
+    border: 1px solid var(--primary-color);
+}
+
+.p2p-register-btn:hover {
+    background: var(--primary-hover);
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-hover);
+}
+
+/* Theme Toggle */
+.p2p-theme-toggle {
+    background: none;
+    border: none;
+    color: var(--text-color);
+    font-size: 1.3rem;
+    cursor: pointer;
+    transition: var(--transition);
+    padding: 0.5rem;
+    border-radius: 50%;
+    width: 40px;
+    height: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.p2p-theme-toggle:hover {
+    background: rgba(0, 0, 0, 0.05);
+    color: var(--primary-color);
+    transform: rotate(15deg);
+}
+
+/* Mobile Menu Styles */
+.p2p-mobile-menu-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: rgba(0, 0, 0, 0.5);
+    z-index: var(--z-index-overlay);
+    opacity: 0;
+    visibility: hidden;
+    transition: var(--transition);
+    backdrop-filter: blur(5px);
+}
+
+.p2p-mobile-menu-overlay.active {
+    opacity: 1;
+    visibility: visible;
+}
+
+.p2p-nav-links.p2p-open,
+.p2p-user-actions.p2p-open {
+    display: flex;
+}
+
+/* Mobile Menu Content */
+@media (max-width: 992px) {
+    .p2p-navbar-container {
+        padding: 0 1.5rem;
+    }
+
+    .p2p-mobile-menu-btn {
+        display: flex;
+    }
+
+    .p2p-nav-links {
+        position: fixed;
+        top: var(--navbar-height);
+        left: 0;
+        width: 100%;
+        background: var(--card-bg);
+        flex-direction: column;
+        align-items: flex-start;
+        padding: 1.5rem;
+        gap: 0;
+        height: auto;
+        max-height: calc(100vh - var(--navbar-height));
+        overflow-y: auto;
+        box-shadow: 0 10px 20px rgba(0, 0, 0, 0.1);
+        transform: translateY(-20px);
+        opacity: 0;
+        visibility: hidden;
+        transition: var(--transition);
+        z-index: var(--z-index-mobile-menu);
+    }
+
+    .p2p-nav-links.p2p-open {
+        transform: translateY(0);
+        opacity: 1;
+        visibility: visible;
+    }
+
+    .p2p-nav-link {
+        width: 100%;
+        padding: 1rem 0;
+        height: auto;
+        border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+    }
+
+    .p2p-nav-link::after {
+        display: none;
+    }
+
+    .p2p-user-actions {
+        position: fixed;
+        bottom: 0;
+        left: 0;
+        width: 100%;
+        background: var(--card-bg);
+        padding: 1rem 1.5rem;
+        justify-content: space-between;
+        box-shadow: 0 -5px 15px rgba(0, 0, 0, 0.05);
+        transform: translateY(20px);
+        opacity: 0;
+        visibility: hidden;
+        transition: var(--transition);
+    }
+
+    .p2p-user-actions.p2p-open {
+        transform: translateY(0);
+        opacity: 1;
+        visibility: visible;
+    }
+
+    .p2p-dropdown-container {
+        width: 100%;
+        height: auto;
+    }
+
+    .p2p-dropdown-btn {
+        width: 100%;
+        height: auto;
+        padding: 1rem 0;
+        justify-content: space-between;
+    }
+
+    .p2p-dropdown-content {
+        position: static;
+        box-shadow: none;
+        background: transparent;
+        padding: 0 0 0 1rem;
+        display: none;
+        margin-top: 0.5rem;
+    }
+
+    .p2p-dropdown-container .p2p-dropdown-content.p2p-open {
+        display: block;
+    }
+
+    .p2p-dropdown-item {
+        padding: 0.75rem 0;
+    }
+
+    .p2p-dropdown-item:hover {
+        padding-left: 0.5rem;
+    }
+
+    .p2p-mobile-auth-links {
+        display: flex;
+        gap: 1rem;
+        width: 100%;
+        margin-top: 1.5rem;
+        padding-top: 1rem;
+        border-top: 1px solid rgba(0, 0, 0, 0.1);
+    }
+
+    .p2p-mobile-auth-btn {
+        flex: 1;
+        text-align: center;
+    }
+
+    .p2p-auth-btn.p2p-desktop-auth-btn {
+        display: none;
+    }
+
+    .p2p-logo {
+        height: 38px;
+        width: 38px;
+    }
+
+    .p2p-logo-text {
+        font-size: 1.3rem;
+    }
+}
+
+/* Small Mobile Devices */
+@media (max-width: 576px) {
+    .p2p-navbar-container {
+        padding: 0 1rem;
+    }
+
+    .p2p-logo-text {
+        font-size: 1.2rem;
+    }
+
+    .p2p-mobile-auth-links {
+        flex-direction: column;
+        gap: 0.75rem;
+    }
+
+    .p2p-auth-btn {
+        width: 100%;
+    }
+
+    .p2p-advertisement-bar {
+        font-size: 0.85rem;
+        padding: 0.5rem 0.75rem;
+    }
+
+    .p2p-ad-close-btn {
+        right: 0.5rem;
+    }
+}
+
+/* Animation Enhancements */
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(-10px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+@keyframes slideIn {
+    from {
+        opacity: 0;
+        transform: translateX(20px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateX(0);
+    }
+}
+
+/* Accessibility Improvements */
+[aria-hidden="true"] {
+    pointer-events: none;
+}
+
+/* Focus styles for keyboard navigation */
+button:focus-visible,
+a:focus-visible,
+input:focus-visible,
+select:focus-visible {
+    outline: 2px solid var(--primary-color);
+    outline-offset: 2px;
+}
+
+/* Reduced motion preferences */
+@media (prefers-reduced-motion: reduce) {
+
+    *,
+    *::before,
+    *::after {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+        scroll-behavior: auto !important;
+    }
+}
+
+/* Utility Classes */
+.p2p-no-hover-line {
+    text-decoration: none;
+}
+
+.p2p-no-hover-line:hover {
+    text-decoration: none;
+}
+
+.sr-only {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    border-width: 0;
+}
+
+
+
+/* Add these new media queries at the bottom of your existing CSS */
+
+/* Medium devices (tablets, less than 992px) */
+@media (max-width: 991.98px) {
+    .p2p-navbar-container {
+        padding: 0 1rem;
+    }
+
+    .p2p-logo {
+        height: 36px;
+        width: 36px;
+    }
+
+    .p2p-logo-text {
+        font-size: 1.2rem;
+    }
+
+    .p2p-mobile-menu-btn {
+        display: flex;
+        font-size: 1.4rem;
+        padding: 0.4rem;
+    }
+
+    .p2p-nav-links {
+        position: fixed;
+        top: var(--navbar-height);
+        left: 0;
+        right: 0;
+        background: var(--card-bg);
+        flex-direction: column;
+        align-items: stretch;
+        padding: 1rem;
+        gap: 0.5rem;
+        height: auto;
+        max-height: calc(100vh - var(--navbar-height));
+        overflow-y: auto;
+        box-shadow: var(--shadow-hover);
+        transform: translateY(-100%);
+        opacity: 0;
+        pointer-events: none;
+        transition: all 0.3s ease;
+        z-index: var(--z-index-mobile-menu);
+        margin-left: 0;
+        margin-top: 30px;
+    }
+
+    .p2p-nav-links.p2p-open {
+        transform: translateY(0);
+        opacity: 1;
+        pointer-events: auto;
+    }
+
+    .p2p-nav-link {
+        width: 100%;
+        padding: 0.8rem 1rem;
+        height: auto;
+        border-radius: var(--border-radius-sm);
+    }
+
+    .p2p-nav-link:hover {
+        background: rgba(0, 0, 0, 0.05);
+    }
+
+    .p2p-nav-link::after {
+        display: none;
+    }
+
+    .p2p-user-actions {
+        position: fixed;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        background: var(--card-bg);
+        padding: 0.8rem 1rem;
+        justify-content: space-between;
+        box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.1);
+        transform: translateY(100%);
+        opacity: 0;
+        pointer-events: none;
+        transition: all 0.3s ease;
+    }
+
+    .p2p-user-actions.p2p-open {
+        transform: translateY(0);
+        opacity: 1;
+        pointer-events: auto;
+        z-index: 1002;
+    }
+
+    .p2p-dropdown-container {
+        width: 100%;
+        height: auto;
+    }
+
+    .p2p-dropdown-btn {
+        width: 100%;
+        padding: 0.8rem 1rem;
+        justify-content: space-between;
+        border-radius: var(--border-radius-sm);
+    }
+
+    .p2p-dropdown-btn:hover {
+        background: rgba(0, 0, 0, 0.05);
+    }
+
+    .p2p-dropdown-content {
+        position: static;
+        box-shadow: none;
+        background: transparent;
+        padding: 0;
+        display: none;
+        margin-top: 0.5rem;
+        margin-left: 1rem;
+    }
+
+    .p2p-dropdown-container .p2p-dropdown-content.p2p-open {
+        display: block;
+    }
+
+    .p2p-dropdown-item {
+        padding: 0.7rem 0.5rem;
+    }
+
+    .p2p-dropdown-item:hover {
+        padding-left: 0.8rem;
+        background: rgba(0, 0, 0, 0.05);
+    }
+
+    .p2p-mobile-auth-links {
+        display: flex;
+        flex-direction: column;
+        gap: 0.75rem;
+        width: 100%;
+        margin-top: 1rem;
+        padding-top: 1rem;
+        border-top: 1px solid rgba(0, 0, 0, 0.1);
+    }
+
+    .p2p-mobile-auth-btn {
+        width: 100%;
+        text-align: center;
+    }
+
+    .p2p-auth-btn.p2p-desktop-auth-btn {
+        display: none;
+    }
+
+    .p2p-notification-button,
+    .p2p-message-icon,
+    .p2p-theme-toggle {
+        width: 36px;
+        height: 36px;
+        font-size: 1.1rem;
+    }
+
+    .p2p-tutorial-btn {
+        display: none;
+        /* Hide on mobile */
+    }
+}
+
+/* Small devices (landscape phones, less than 768px) */
+@media (max-width: 767.98px) {
+    .p2p-navbar {
+        height: 70px;
+    }
+
+    :root {
+        --navbar-height: 70px;
+    }
+
+    .p2p-logo {
+        height: 32px;
+        width: 32px;
+    }
+
+    .p2p-logo-text {
+        font-size: 1.1rem;
+    }
+
+    .p2p-advertisement-bar {
+        font-size: 0.8rem;
+        padding: 0.5rem;
+    }
+
+    .p2p-ad-close-btn {
+        right: 0.5rem;
+        font-size: 1.1rem;
+    }
+}
+
+/* Mobile dropdown specific styles */
+@media (max-width: 991.98px) {
+    .p2p-dropdown-container {
+        flex-direction: column;
+        width: 100%;
+    }
+
+    .p2p-dropdown-btn {
+        justify-content: space-between;
+        width: 100%;
+        padding: 1rem;
+        font-size: 1rem;
+        min-height: 48px;
+        /* Better touch target */
+    }
+
+    .p2p-dropdown-content {
+        position: static !important;
+        display: block !important;
+        box-shadow: none !important;
+        background: transparent !important;
+        padding: 0 !important;
+        margin-left: 0;
+        overflow: hidden;
+        will-change: height;
+    }
+
+    .p2p-dropdown-inner {
+        padding: 0.5rem 0;
+    }
+
+    .p2p-dropdown-item {
+        padding: 0.8rem 1rem !important;
+        border-radius: var(--border-radius-sm);
+        min-height: 48px;
+        display: flex;
+        align-items: center;
+    }
+
+    .p2p-dropdown-item:hover {
+        background: rgba(0, 0, 0, 0.05) !important;
+    }
+
+    /* Animation adjustments */
+    .p2p-dropdown-content {
+        transition: all 0.3s ease;
+    }
+
+    /* Initially hide dropdown content */
+    .p2p-dropdown-container:not(.p2p-open) .p2p-dropdown-content {
+        display: none !important;
+    }
+
+    /* Show when open */
+    .p2p-dropdown-container.p2p-open .p2p-dropdown-content {
+        display: block !important;
+    }
+
+    /* Arrow animation */
+    .p2p-dropdown-arrow {
+        transition: transform 0.3s ease;
+    }
+
+    .p2p-dropdown-arrow.p2p-rotate {
+        transform: rotate(180deg);
+    }
+}
+
+/* Mobile dropdown specific styles */
+@media (max-width: 991.98px) {
+    .p2p-dropdown-container {
+        flex-direction: column;
+        width: 100%;
+    }
+
+    .p2p-dropdown-btn {
+        justify-content: space-between;
+        width: 100%;
+        padding: 1rem;
+        font-size: 1rem;
+        min-height: 48px;
+        /* Better touch target */
+    }
+
+    .p2p-dropdown-content {
+        position: static !important;
+        display: block !important;
+        box-shadow: none !important;
+        background: transparent !important;
+        padding: 0 !important;
+        margin-left: 0;
+        overflow: hidden;
+        will-change: height;
+    }
+
+    .p2p-dropdown-inner {
+        padding: 0.5rem 0;
+    }
+
+    .p2p-dropdown-item {
+        padding: 0.8rem 1rem !important;
+        border-radius: var(--border-radius-sm);
+        min-height: 48px;
+        display: flex;
+        align-items: center;
+    }
+
+    .p2p-dropdown-item:hover {
+        background: rgba(0, 0, 0, 0.05) !important;
+    }
+
+    /* Animation adjustments */
+    .p2p-dropdown-content {
+        transition: all 0.3s ease;
+    }
+
+    /* Initially hide dropdown content */
+    .p2p-dropdown-container:not(.p2p-open) .p2p-dropdown-content {
+        display: none !important;
+    }
+
+    /* Show when open */
+    .p2p-dropdown-container.p2p-open .p2p-dropdown-content {
+        display: block !important;
+    }
+
+    /* Arrow animation */
+    .p2p-dropdown-arrow {
+        transition: transform 0.3s ease;
+    }
+
+    .p2p-dropdown-arrow.p2p-rotate {
+        transform: rotate(180deg);
+    }
+}
+
+/* Extra small devices (portrait phones, less than 576px) */
+@media (max-width: 575.98px) {
+    .p2p-navbar {
+        height: 60px;
+    }
+
+    :root {
+        --navbar-height: 60px;
+    }
+
+    .p2p-logo {
+        height: 28px;
+        width: 28px;
+    }
+
+    .p2p-logo-text {
+        font-size: 1rem;
+    }
+
+    .p2p-mobile-menu-btn {
+        font-size: 1.2rem;
+    }
+
+    .p2p-nav-links {
+        padding: 0.8rem;
+    }
+
+    .p2p-user-actions {
+        padding: 0.6rem;
+    }
+
+    .p2p-dropdown-item {
+        font-size: 0.85rem;
+    }
+}
+
+/* Mobile menu overlay fixes */
+.p2p-mobile-menu-overlay {
+    position: fixed;
+    top: var(--navbar-height);
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: rgba(0, 0, 0, 0.5);
+    z-index: calc(var(--z-index-overlay) - 1);
+    opacity: 0;
+    visibility: hidden;
+    transition: var(--transition);
+    backdrop-filter: blur(3px);
+}
+
+.p2p-navbar.p2p-menu-open .p2p-mobile-menu-overlay {
+    opacity: 1;
+    visibility: visible;
+}
+
+/* Improved dropdown transitions */
+.p2p-dropdown-content {
+    transition: all 0.2s ease;
+}
+
+/* Better touch targets for mobile */
+@media (hover: none) {
+
+    .p2p-nav-link,
+    .p2p-dropdown-btn,
+    .p2p-dropdown-item {
+        padding: 1rem;
+        min-height: 44px;
+        /* Apple recommended minimum touch target */
+    }
+
+    .p2p-notification-button,
+    .p2p-message-icon,
+    .p2p-theme-toggle {
+        min-width: 44px;
+        min-height: 44px;
+    }
+}
+
+
+/* Mobile dropdown specific styles */
+@media (max-width: 991.98px) {
+    .p2p-dropdown-container {
+        flex-direction: column;
+    }
+
+    .p2p-dropdown-btn {
+        justify-content: space-between;
+        width: 100%;
+        padding: 0.8rem 1rem;
+    }
+
+    .p2p-dropdown-content {
+        position: static !important;
+        display: block !important;
+        box-shadow: none !important;
+        background: transparent !important;
+        padding: 0 !important;
+        margin-left: 1rem;
+        overflow: hidden;
+    }
+
+    .p2p-dropdown-item {
+        padding: 0.7rem 0.5rem !important;
+        border-radius: var(--border-radius-sm);
+    }
+
+    .p2p-dropdown-item:hover {
+        background: rgba(0, 0, 0, 0.05) !important;
+    }
+
+    /* Animation adjustments */
+    .p2p-dropdown-content {
+        transition: all 0.3s ease;
+    }
+
+    /* Initially hide dropdown content */
+    .p2p-dropdown-container:not(.p2p-open) .p2p-dropdown-content {
+        display: none !important;
+    }
+
+    /* Show when open */
+    .p2p-dropdown-container.p2p-open .p2p-dropdown-content {
+        display: block !important;
+    }
+}

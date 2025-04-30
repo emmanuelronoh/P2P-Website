@@ -16,6 +16,16 @@ const Register = () => {
         phone_number: "",
     });
 
+    const [fieldErrors, setFieldErrors] = useState({
+        username: "",
+        email: "",
+        password: "",
+        confirm_password: "",
+        first_name: "",
+        last_name: "",
+        phone_number: "",
+    });
+
     const [message, setMessage] = useState(null);
     const [loading, setLoading] = useState(false);
     const [passwordStrength, setPasswordStrength] = useState({
@@ -73,6 +83,11 @@ const Register = () => {
         const { name, value } = e.target;
         setFormData({ ...formData, [name]: value });
         
+        // Clear error when user starts typing
+        if (fieldErrors[name]) {
+            setFieldErrors({ ...fieldErrors, [name]: "" });
+        }
+        
         // Update touched fields
         if (!touchedFields[name]) {
             setTouchedFields({ ...touchedFields, [name]: true });
@@ -91,55 +106,120 @@ const Register = () => {
         }
     };
 
+    // Helper function to format backend errors for display
+    const formatBackendErrors = (errors) => {
+        const formattedErrors = {};
+        
+        // Handle different error response formats
+        if (typeof errors === 'string') {
+            return { non_field_errors: [errors] };
+        }
+        
+        if (Array.isArray(errors)) {
+            return { non_field_errors: errors };
+        }
+        
+        for (const field in errors) {
+            if (Array.isArray(errors[field])) {
+                formattedErrors[field] = errors[field].join(' ');
+            } else if (typeof errors[field] === 'object') {
+                formattedErrors[field] = Object.values(errors[field]).join(' ');
+            } else {
+                formattedErrors[field] = errors[field];
+            }
+        }
+        
+        return formattedErrors;
+    };
+
     const handleSubmit = async (e) => {
         e.preventDefault();
         setLoading(true);
         setMessage(null);
+        setFieldErrors({
+            username: "",
+            email: "",
+            password: "",
+            confirm_password: "",
+            first_name: "",
+            last_name: "",
+            phone_number: "",
+        });
 
-        // Validate form before submission
+        // Frontend validation
+        let hasErrors = false;
+        const newErrors = { ...fieldErrors };
+
+        // Check required fields
+        for (const field in formData) {
+            if (!formData[field]) {
+                newErrors[field] = "This field is required";
+                hasErrors = true;
+            }
+        }
+
+        // Password validation
         if (formData.password !== formData.confirm_password) {
-            setMessage({ type: "error", text: "Passwords do not match!" });
-            setLoading(false);
-            return;
+            newErrors.confirm_password = "Passwords do not match";
+            hasErrors = true;
         }
 
         if (passwordStrength.score < 2) {
-            setMessage({ 
-                type: "error", 
-                text: "Please choose a stronger password. " + passwordStrength.feedback 
-            });
+            newErrors.password = "Please choose a stronger password. " + passwordStrength.feedback;
+            hasErrors = true;
+        }
+
+        // Email format validation
+        if (formData.email && !/^\S+@\S+\.\S+$/.test(formData.email)) {
+            newErrors.email = "Please enter a valid email address";
+            hasErrors = true;
+        }
+
+        if (hasErrors) {
+            setFieldErrors(newErrors);
             setLoading(false);
             return;
         }
 
         try {
             const response = await axios.post(
-                "https://cheetahx.onrender.com/api/auth/register/", 
+                "http://localhost:8000/api/auth/register/", 
                 formData
             );
 
             setMessage({ 
                 type: "success", 
-                text: response.data.message || "Registration successful! Redirecting to verification..." 
+                text: response.data.message || "Registration successful! Please check your email for verification." 
             });
             
             setTimeout(() => navigate("/verify-otp"), 3000);
         } catch (error) {
-            let errorMessage = "Registration failed. Please try again.";
+            let errorMessage = "Registration failed. Please check the form and try again.";
+            let backendErrors = {};
             
             if (error.response) {
                 if (error.response.data) {
-                    // Handle Django error responses
-                    if (error.response.data.errors) {
-                        errorMessage = Object.values(error.response.data.errors)
-                            .flat()
-                            .join(". ");
-                    } else if (error.response.data.error) {
-                        errorMessage = error.response.data.error;
-                    } else if (error.response.data.message) {
-                        errorMessage = error.response.data.message;
+                    // Format backend errors
+                    backendErrors = formatBackendErrors(error.response.data);
+                    
+                    // Set field-specific errors
+                    const updatedFieldErrors = { ...fieldErrors };
+                    for (const field in backendErrors) {
+                        if (field in updatedFieldErrors) {
+                            updatedFieldErrors[field] = backendErrors[field];
+                        }
+                    }
+                    setFieldErrors(updatedFieldErrors);
+
+                    // Set general error message if no field-specific errors
+                    if (Object.keys(backendErrors).length === 0) {
+                        errorMessage = "An unexpected error occurred. Please try again.";
+                    } else if (backendErrors.non_field_errors) {
+                        errorMessage = backendErrors.non_field_errors.join(' ');
                     }
                 }
+            } else if (error.request) {
+                errorMessage = "Network error. Please check your internet connection and try again.";
             }
             
             setMessage({
@@ -198,10 +278,10 @@ const Register = () => {
                                 onChange={handleChange}
                                 onBlur={handleBlur}
                                 required
-                                className={touchedFields.first_name && !formData.first_name ? "error" : ""}
+                                className={fieldErrors.first_name ? "error" : ""}
                             />
-                            {touchedFields.first_name && !formData.first_name && (
-                                <span className="error-message">First name is required</span>
+                            {fieldErrors.first_name && (
+                                <span className="error-message">{fieldErrors.first_name}</span>
                             )}
                         </div>
 
@@ -216,10 +296,10 @@ const Register = () => {
                                 onChange={handleChange}
                                 onBlur={handleBlur}
                                 required
-                                className={touchedFields.last_name && !formData.last_name ? "error" : ""}
+                                className={fieldErrors.last_name ? "error" : ""}
                             />
-                            {touchedFields.last_name && !formData.last_name && (
-                                <span className="error-message">Last name is required</span>
+                            {fieldErrors.last_name && (
+                                <span className="error-message">{fieldErrors.last_name}</span>
                             )}
                         </div>
                     </div>
@@ -235,10 +315,10 @@ const Register = () => {
                             onChange={handleChange}
                             onBlur={handleBlur}
                             required
-                            className={touchedFields.username && !formData.username ? "error" : ""}
+                            className={fieldErrors.username ? "error" : ""}
                         />
-                        {touchedFields.username && !formData.username && (
-                            <span className="error-message">Username is required</span>
+                        {fieldErrors.username && (
+                            <span className="error-message">{fieldErrors.username}</span>
                         )}
                     </div>
 
@@ -253,13 +333,10 @@ const Register = () => {
                             onChange={handleChange}
                             onBlur={handleBlur}
                             required
-                            className={touchedFields.email && !formData.email ? "error" : ""}
+                            className={fieldErrors.email ? "error" : ""}
                         />
-                        {touchedFields.email && !formData.email && (
-                            <span className="error-message">Email is required</span>
-                        )}
-                        {touchedFields.email && formData.email && !/^\S+@\S+\.\S+$/.test(formData.email) && (
-                            <span className="error-message">Please enter a valid email</span>
+                        {fieldErrors.email && (
+                            <span className="error-message">{fieldErrors.email}</span>
                         )}
                     </div>
 
@@ -275,10 +352,10 @@ const Register = () => {
                             onBlur={handleBlur}
                             required
                             inputMode="numeric"
-                            className={touchedFields.phone_number && !formData.phone_number ? "error" : ""}
+                            className={fieldErrors.phone_number ? "error" : ""}
                         />
-                        {touchedFields.phone_number && !formData.phone_number && (
-                            <span className="error-message">Phone number is required</span>
+                        {fieldErrors.phone_number && (
+                            <span className="error-message">{fieldErrors.phone_number}</span>
                         )}
                     </div>
 
@@ -297,7 +374,7 @@ const Register = () => {
                                 }}
                                 onBlur={handleBlur}
                                 required
-                                className={touchedFields.password && !formData.password ? "error" : ""}
+                                className={fieldErrors.password ? "error" : ""}
                             />
                             <button
                                 type="button"
@@ -318,8 +395,8 @@ const Register = () => {
                                 )}
                             </button>
                         </div>
-                        {touchedFields.password && !formData.password && (
-                            <span className="error-message">Password is required</span>
+                        {fieldErrors.password && (
+                            <span className="error-message">{fieldErrors.password}</span>
                         )}
                         
                         <div className="password-strength-meter">
@@ -351,7 +428,7 @@ const Register = () => {
                                 onChange={handleChange}
                                 onBlur={handleBlur}
                                 required
-                                className={touchedFields.confirm_password && !formData.confirm_password ? "error" : ""}
+                                className={fieldErrors.confirm_password ? "error" : ""}
                             />
                             <button
                                 type="button"
@@ -372,11 +449,8 @@ const Register = () => {
                                 )}
                             </button>
                         </div>
-                        {touchedFields.confirm_password && !formData.confirm_password && (
-                            <span className="error-message">Please confirm your password</span>
-                        )}
-                        {touchedFields.confirm_password && formData.password !== formData.confirm_password && formData.confirm_password && (
-                            <span className="error-message">Passwords do not match</span>
+                        {fieldErrors.confirm_password && (
+                            <span className="error-message">{fieldErrors.confirm_password}</span>
                         )}
                     </div>
 
