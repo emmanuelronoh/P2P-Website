@@ -94,7 +94,7 @@ const CheetahXHome = () => {
                         </button>
                         <button
                             className="btn-secondary"
-                            onClick={() => navigate('/tutorials')}
+                            onClick={() => navigate('/tutorials-fiat')}
                         >
                             Watch Demo
                         </button>

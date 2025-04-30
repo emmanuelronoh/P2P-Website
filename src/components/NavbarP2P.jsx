@@ -68,6 +68,7 @@ const DropdownMenu = ({ title, items, icon: Icon, onMobileClose }) => {
     const [isOpen, setIsOpen] = useState(false);
     const dropdownRef = useRef(null);
     const [isMobile, setIsMobile] = useState(window.innerWidth < 992);
+    const [isHovering, setIsHovering] = useState(false);
     const { user, isAuthenticated, loading: authLoading } = useAuth();
 
     // Enhanced mobile detection with debounce
@@ -92,14 +93,13 @@ const DropdownMenu = ({ title, items, icon: Icon, onMobileClose }) => {
         const handleClickOutside = (event) => {
             if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
                 setIsOpen(false);
+                setIsHovering(false);
             }
         };
 
         document.addEventListener("mousedown", handleClickOutside);
-        document.addEventListener("touchstart", handleClickOutside);
         return () => {
             document.removeEventListener("mousedown", handleClickOutside);
-            document.removeEventListener("touchstart", handleClickOutside);
         };
     }, []);
 
@@ -111,19 +111,53 @@ const DropdownMenu = ({ title, items, icon: Icon, onMobileClose }) => {
     // Improved item click handler
     const handleItemClick = useCallback(() => {
         setIsOpen(false);
+        setIsHovering(false);
         if (isMobile && onMobileClose) onMobileClose();
     }, [isMobile, onMobileClose]);
+
+    // Handle mouse enter for desktop
+    const handleMouseEnter = useCallback(() => {
+        if (!isMobile) {
+            setIsOpen(true);
+            setIsHovering(true);
+        }
+    }, [isMobile]);
+
+    // Handle mouse leave for desktop with delay
+    const handleMouseLeave = useCallback(() => {
+        if (!isMobile) {
+            setTimeout(() => {
+                if (!isHovering) {
+                    setIsOpen(false);
+                }
+            }, 300); // Small delay to allow moving to dropdown
+        }
+    }, [isMobile, isHovering]);
+
+    // Track if mouse is over dropdown content
+    const handleContentMouseEnter = useCallback(() => {
+        if (!isMobile) {
+            setIsHovering(true);
+        }
+    }, [isMobile]);
+
+    const handleContentMouseLeave = useCallback(() => {
+        if (!isMobile) {
+            setIsHovering(false);
+            setIsOpen(false);
+        }
+    }, [isMobile]);
 
     return (
         <div 
             className={`p2p-dropdown-container ${isOpen ? 'p2p-open' : ''}`} 
             ref={dropdownRef}
+            onMouseEnter={handleMouseEnter}
+            onMouseLeave={handleMouseLeave}
         >
             <button
                 className="p2p-dropdown-btn"
                 onClick={handleToggle}
-                onMouseEnter={!isMobile ? () => setIsOpen(true) : undefined}
-                onMouseLeave={!isMobile ? () => setIsOpen(false) : undefined}
                 aria-expanded={isOpen}
                 aria-haspopup="true"
                 aria-label={typeof title === 'string' ? title : 'Menu'}
@@ -142,6 +176,8 @@ const DropdownMenu = ({ title, items, icon: Icon, onMobileClose }) => {
                         transition={{ duration: 0.2, ease: 'easeInOut' }}
                         className="p2p-dropdown-content"
                         style={{ overflow: 'hidden' }}
+                        onMouseEnter={handleContentMouseEnter}
+                        onMouseLeave={handleContentMouseLeave}
                     >
                         <div className="p2p-dropdown-inner">
                             {items.map((item, index) => (
@@ -149,7 +185,12 @@ const DropdownMenu = ({ title, items, icon: Icon, onMobileClose }) => {
                                     key={index}
                                     to={item.path}
                                     className="p2p-dropdown-item"
-                                    onClick={handleItemClick}
+                                    onClick={() => {
+                                        if (item.action) {
+                                            item.action();
+                                        }
+                                        handleItemClick();
+                                    }}
                                     aria-label={item.label}
                                 >
                                     {item.icon && <item.icon className="p2p-dropdown-item-icon" />}
@@ -250,7 +291,6 @@ const Navbar = ({ toggleTheme, theme }) => {
     const marketItems = [
         { label: "Stocks", path: "/market/stocks", icon: FaChartLine },
         { label: "Become a Vendor", path: "/become-vendor-fiat", icon: FaGlobe },
-        { label: "P2P Trading", path: "/p2p", icon: GiTrade }
     ];
 
     const helpItems = [
@@ -265,7 +305,7 @@ const Navbar = ({ toggleTheme, theme }) => {
             { label: "Profile", path: `/profile-fiat/${user?.id}`, icon: FaUserCircle },
             {
                 label: `Messages ${unreadMessages > 0 ? `(${unreadMessages})` : ""}`,
-                path: "/messages",
+                path: "/messages-p2p",
                 icon: IoMdChatbubbles
             },
             { label: "Logout", path: "#", icon: FaSignOutAlt, action: handleLogout }

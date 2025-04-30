@@ -15,7 +15,7 @@ const FiatP2P = () => {
     const navigate = useNavigate();
     const [darkMode, setDarkMode] = useState(window.matchMedia('(prefers-color-scheme: dark)').matches);
     const handleLearnMoreClick = () => {
-        navigate('/tutorials');
+        navigate('/tutorials-fiat');
     };
 
     // Separate state for order placement and filtering
@@ -503,7 +503,7 @@ const FiatP2P = () => {
                                         value={orderState.price}
                                         onChange={(e) => setOrderState(prev => ({ ...prev, price: e.target.value }))}
                                         placeholder={`Rate in ${orderState.receiveCurrency}`}
-                                        step="0.0001"
+                                        step="0.01"
                                         required
                                     />
                                 </div>

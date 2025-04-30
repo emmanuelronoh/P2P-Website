@@ -296,12 +296,11 @@ function AppInner() {
         <Route path="/tutorials" element={<Tutorials />} />
         <Route path="/become-vendor" element={<Vendor />} />
         <Route path="/profile-details/:username" element={<ProfileDetails />} />
-        <Route path="/TermsAndCondition" element={<TermsAndCondition />} />
+        <Route path="/termsAndcondition" element={<TermsAndCondition />} />
         <Route path="/cryptolisting" element={<CryptoListing />} />
         <Route path="/faq" element={<Faq />} />
         <Route path="/DashboardVendors" element={<DashboardVendors />} />
         <Route path="/profile-details-users/:userId" element={<ProfileDetails />} />
-        
       </Route>
 
       <Route element={<MessagesLayout />}>

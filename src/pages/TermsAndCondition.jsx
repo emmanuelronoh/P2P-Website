@@ -15,16 +15,16 @@ const TermsAndCondition = () => {
   return (
     <section className="terms-container">
       <div className="terms-card">
-        <h2 className="terms-title">📜 Vendor Terms & Conditions</h2>
+        <h2 className="terms-title"> Vendor Terms & Conditions</h2>
         <p className="terms-description">
           Please review and accept the terms below before listing your cryptocurrency.
         </p>
 
         <ul className="terms-list">
-          <li>✅ Vendors must list only verified and legitimate cryptocurrencies.</li>
-          <li>⚠️ Any form of fraudulent activity will result in account suspension.</li>
-          <li>🛡️ Vendors must comply with KYC requirements and local financial laws.</li>
-          <li>🔒 The platform retains the right to monitor and audit listings at any time.</li>
+          <li> Vendors must list only verified and legitimate cryptocurrencies.</li>
+          <li> Any form of fraudulent activity will result in account suspension.</li>
+          <li> Vendors must comply with KYC requirements and local financial laws.</li>
+          <li> The platform retains the right to monitor and audit listings at any time.</li>
         </ul>
 
         <div className="terms-agree">
@@ -45,7 +45,7 @@ const TermsAndCondition = () => {
           onClick={handleAgreement}
           disabled={!agreed}
         >
-          ✅ Continue to Crypto Listing
+           Continue to Crypto Listing
         </button>
       </div>
     </section>

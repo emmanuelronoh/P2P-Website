@@ -275,7 +275,7 @@ const Market = () => {
         </p>
         <div className="header-actions">
           <Link to="/become-vendor" className="become-vendor-btn">
-            Become a Vendor
+            Create Offer
           </Link>
         </div>
       </div>
