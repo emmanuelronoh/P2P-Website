@@ -605,13 +605,6 @@ const Navbar = ({ theme, toggleTheme }) => {
                       <div className="mobile-menu-footer">
                         <WalletInfo />
 
-                        <button
-                          className="theme-toggle mobile-theme-toggle"
-                          onClick={toggleTheme}
-                        >
-                          {theme === "light" ? <FaMoon /> : <FaSun />}
-                          {theme === "light" ? "Dark Mode" : "Light Mode"}
-                        </button>
 
                         {!isAuthenticated && (
                           <div className="mobile-auth-buttons">

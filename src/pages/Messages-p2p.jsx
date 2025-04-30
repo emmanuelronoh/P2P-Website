@@ -73,7 +73,7 @@ const Messages = () => {
   const loadChatRooms = useCallback(async () => {
     try {
       const token = localStorage.getItem('accessToken');
-      const response = await fetch('http://localhost:8000/chat-room/', {
+      const response = await fetch('https://cheetahx.onrender.com/chat-room/', {
         headers: { Authorization: `Bearer ${token}` }
       });
       const data = await response.json();
@@ -295,8 +295,7 @@ const Messages = () => {
     try {
       const token = localStorage.getItem('accessToken');
       const response = await fetch(
-        `http://localhost:8000
-/chat-room/${chatRoomId}/messages/`,
+        `https://cheetahx.onrender.com/chat-room/${chatRoomId}/messages/`,
         { headers: { Authorization: `Bearer ${token}` } }
       );
       const data = await response.json();
@@ -321,8 +320,7 @@ const Messages = () => {
     try {
         const token = localStorage.getItem('accessToken');
         await fetch(
-            `http://localhost:8000
-/chat-room/${chatRoomId}/mark-read/`,
+            `https://cheetahx.onrender.com/chat-room/${chatRoomId}/mark-read/`,
             {
                 method: 'PATCH', // Change to 'PATCH' or 'PUT'
                 headers: {
@@ -428,8 +426,7 @@ const Messages = () => {
       if (state.attachment) {
         // First create the message (even if empty)
         const messageResponse = await fetch(
-          `http://localhost:8000
-/chat-room/${state.currentChat.id}/messages/create/`,
+          `https://cheetahx.onrender.com/chat-room/${state.currentChat.id}/messages/create/`,
           {
             method: 'POST',
             headers: { 
@@ -453,8 +450,7 @@ const Messages = () => {
         formData.append('file', state.attachment);
   
         const uploadResponse = await fetch(
-          `http://localhost:8000
-/chat-room/chat-room/messages/${messageId}/attachments/`,
+          `https://cheetahx.onrender.com/chat-room/chat-room/messages/${messageId}/attachments/`,
           {
             method: 'POST',
             headers: { 
@@ -491,7 +487,7 @@ const Messages = () => {
     try {
       const token = localStorage.getItem('accessToken');
       const response = await fetch(
-        'http://localhost:8000/chat-room/api/trades/initiate/',
+        'https://cheetahx.onrender.com/chat-room/api/trades/initiate/',
         {
           method: 'POST',
           headers: { 

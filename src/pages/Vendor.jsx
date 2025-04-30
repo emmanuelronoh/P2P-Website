@@ -72,7 +72,7 @@ const VendorVerification = () => {
       const userId = localStorage.getItem('userId') || 'temp-user'; // Fallback if needed
       
       const response = await axios.post(
-        `${process.env.REACT_APP_API_URL || 'http://localhost:3001'}/api/generate-sumsub-link`, 
+        `${process.env.REACT_APP_API_URL || 'https://sumsub-cheetahx-kyc.onrender.com'}/api/generate-sumsub-link`, 
         {
           userId: userId,
           levelName: 'kyc_verification', // or whatever level name you're using
