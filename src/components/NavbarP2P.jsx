@@ -27,41 +27,74 @@ import logo from "../assets/cheetah-logo.png";
 import "../styles/navbar-p2p.css";
 import TutorialModal from './TutorialModal';
 
-// Advertisement component
 const AdvertisementBar = () => {
-    const ads = [
-        "🔥 Limited Time Offer: 0% Trading Fees This Week!",
-        "🚀 New Crypto Pairs Added: BTC/ETH, SOL/ADA",
-        "💎 Exclusive VIP Benefits - Join Now!"
-    ];
+  const [ads, setAds] = useState([]);
+  const [currentAd, setCurrentAd] = useState(0);
+  const [isVisible, setIsVisible] = useState(true);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState(null);
 
-    const [currentAd, setCurrentAd] = useState(0);
+  useEffect(() => {
+    const fetchAds = async () => {
+      try {
+        const response = await fetch('https://cheetahx.onrender.com/api/auth/advertisements/'); // Your API endpoint
+        if (!response.ok) {
+          throw new Error('Failed to fetch advertisements');
+        }
+        const data = await response.json();
+        setAds(data);
+        setIsLoading(false);
+      } catch (err) {
+        setError(err.message);
+        setIsLoading(false);
+      }
+    };
 
-    useEffect(() => {
-        const interval = setInterval(() => {
-            setCurrentAd((prev) => (prev + 1) % ads.length);
-        }, 8000);
+    fetchAds();
+  }, []);
 
-        return () => clearInterval(interval);
-    }, []);
+  useEffect(() => {
+    if (ads.length > 0) {
+      const interval = setInterval(() => {
+        setCurrentAd((prev) => (prev + 1) % ads.length);
+      }, 8000);
 
-    return (
-        <div className="p2p-advertisement-bar">
-            <AnimatePresence mode="wait">
-                <motion.div
-                    key={currentAd}
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    exit={{ opacity: 0, y: -20 }}
-                    transition={{ duration: 0.5 }}
-                    className="p2p-ad-content"
-                >
-                    {ads[currentAd]}
-                </motion.div>
-            </AnimatePresence>
-            <button className="p2p-ad-close-btn">×</button>
-        </div>
-    );
+      return () => clearInterval(interval);
+    }
+  }, [ads]);
+
+  const handleClose = () => {
+    setIsVisible(false);
+  };
+
+  if (!isVisible) return null;
+  if (isLoading) return <div className="advertisement-bar">Loading ads...</div>;
+  if (error) return <div className="advertisement-bar">Error: {error}</div>;
+  if (ads.length === 0) return null;
+
+  return (
+    <div className="advertisement-bar">
+      <AnimatePresence mode="wait">
+        <motion.div
+          key={currentAd}
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          exit={{ opacity: 0, y: -20 }}
+          transition={{ duration: 0.5 }}
+          className="ad-content"
+        >
+          {ads[currentAd].text}
+        </motion.div>
+      </AnimatePresence>
+      <button 
+        className="ad-close-btn" 
+        onClick={handleClose}
+        aria-label="Close advertisement"
+      >
+        × 
+      </button>
+    </div>
+  );
 };
 
 const DropdownMenu = ({ title, items, icon: Icon, onMobileClose }) => {

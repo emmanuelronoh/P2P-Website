@@ -17,29 +17,10 @@
   --rating-color: #f59e0b;
 }
 
-[data-theme="dark"] {
-  --primary-color: #81C3DB;
-  --primary-hover: #81C3DB;
-  --secondary-color: #fb923c;
-  --secondary-hover: #f97316;
-  --text-primary: #f3f4f6;
-  --text-secondary: #9ca3af;
-  --bg-primary: #1f2937;
-  --bg-secondary: #111827;
-  --border-color: #374151;
-  --success-color: #34d399;
-  --warning-color: #fbbf24;
-  --error-color: #f87171;
-  --online-color: #34d399;
-  --offline-color: #9ca3af;
-  --rating-color: #fbbf24;
-}
-
 /* Base Styles */
 .fiat-p2p-container {
   font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
   color: var(--text-primary);
-  background-color: var(--bg-secondary);
   min-height: 100vh;
   transition: background-color 0.3s, color 0.3s;
 }
@@ -187,7 +168,6 @@
 /* Panel Styles */
 .order-creation-panel,
 .orders-list-panel {
-  background-color: var(--bg-primary);
   border-radius: 12px;
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
   overflow: hidden;
@@ -417,7 +397,6 @@ select {
 }
 
 .order-summary {
-  background-color: var(--bg-secondary);
   padding: 1rem;
   border-radius: 6px;
   margin-bottom: 1.5rem;
@@ -583,9 +562,6 @@ select {
   border-collapse: collapse;
 }
 
-.orders-table thead {
-  background-color: var(--bg-secondary);
-}
 
 .orders-table th {
   padding: 1rem;
@@ -759,7 +735,6 @@ select {
 
 /* User Orders Section */
 .user-orders-section {
-  background-color: var(--bg-primary);
   border-radius: 12px;
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
   overflow: hidden;
@@ -775,9 +750,6 @@ select {
   border-collapse: collapse;
 }
 
-.user-orders-table thead {
-  background-color: var(--bg-secondary);
-}
 
 .user-orders-table th {
   padding: 1rem;
