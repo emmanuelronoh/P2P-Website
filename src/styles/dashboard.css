@@ -20,26 +20,10 @@
   --nav-height: 4rem;
 }
 
-* {
-  margin: 0;
-  padding: 0;
-  box-sizing: border-box;
-  font-family: 'Segoe UI', -apple-system, BlinkMacSystemFont, sans-serif;
-}
-
 html {
   scroll-behavior: smooth;
 }
 
-body {
-  background-color: var(--background-light);
-  color: var(--text-primary);
-  font-size: clamp(14px, 2vw, 16px);
-  line-height: 1.5;
-  min-height: 100vh;
-  display: flex;
-  flex-direction: column;
-}
 
 /* Utility Classes */
 .container {
@@ -324,7 +308,7 @@ input:checked + .slider:before {
   align-items: center;
   gap: 0.3rem;
   padding: 0.5rem 1rem;
-  background-color: #81c3db; /* green tone */
+  background-color: #81C3DB;
   color: white;
   border: none;
   border-radius: 8px;

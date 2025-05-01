@@ -1,7 +1,7 @@
 /* Base Styles */
 :root {
-  --primary-color: #1a73e8;
-  --primary-hover: #0d62c9;
+  --primary-color: #81c3db;
+  --primary-hover: #81c3db;
   --text-primary: #202124;
   --text-secondary: #5f6368;
   --bg-color: #ffffff;
@@ -18,24 +18,6 @@
   --radius-md: 12px;
   --radius-lg: 16px;
   --transition: all 0.2s ease;
-}
-
-/* Dark Mode Variables */
-.dark-mode {
-  --primary-color: #8ab4f8;
-  --primary-hover: #669df6;
-  --text-primary: #e8eaed;
-  --text-secondary: #9aa0a6;
-  --bg-color: #202124;
-  --bg-secondary: #2d2e30;
-  --border-color: #3c4043;
-  --message-incoming: #292a2d;
-  --message-outgoing: #3a4a6b;
-  --unread-badge: #f28b82;
-  --online-badge: #81c995;
-  --typing-indicator: #9aa0a6;
-  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.3);
-  --shadow-md: 0 4px 6px rgba(0, 0, 0, 0.3);
 }
 
 /* Reset and Base Styles */
@@ -412,9 +394,6 @@
   transition: var(--transition);
 }
 
-.start-chat-btn:hover {
-  background-color: var(--primary-hover);
-}
 
 /* Message Area */
 .message-area {
@@ -522,7 +501,6 @@
 }
 
 .date-separator span {
-  background-color: var(--bg-secondary);
   color: var(--text-secondary);
   font-size: 12px;
   padding: 4px 12px;
@@ -611,7 +589,6 @@
 .emoji-picker-container {
   position: absolute;
   bottom: 80px;
-  right: 16px;
   left: 16px;
   z-index: 100;
   box-shadow: var(--shadow-md);
@@ -664,7 +641,6 @@
 .composer-inputs {
   display: flex;
   align-items: center;
-  background-color: var(--bg-secondary);
   border-radius: var(--radius-lg);
   padding: 8px 12px;
 }

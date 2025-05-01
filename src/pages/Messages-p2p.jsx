@@ -73,20 +73,20 @@ const Messages = () => {
   const loadChatRooms = useCallback(async () => {
     try {
       const token = localStorage.getItem('accessToken');
-      const response = await fetch('https://cheetahx.onrender.com/chat-room/', {
+      const response = await fetch('http://127.0.0.1:8000/chat-room/', {
         headers: { Authorization: `Bearer ${token}` }
       });
       const data = await response.json();
-      
+
       // Calculate unread counts
       const unreadCounts = {};
       data.forEach(room => {
         unreadCounts[room.id] = room.unread_count || 0;
       });
 
-      setState(prev => ({ 
-        ...prev, 
-        chatRooms: data, 
+      setState(prev => ({
+        ...prev,
+        chatRooms: data,
         userId: user?.id,
         unreadCounts
       }));
@@ -113,7 +113,7 @@ const Messages = () => {
     newSocket.onmessage = (e) => {
       try {
         const data = JSON.parse(e.data);
-        
+
         const handleChatMessage = () => {
           setState(prev => {
             // Parse and validate timestamp
@@ -127,11 +127,11 @@ const Messages = () => {
                   }
                   // Try common formats
                   const formats = [
-                    'yyyy-MM-dd HH:mm:ss', 
+                    'yyyy-MM-dd HH:mm:ss',
                     'yyyy/MM/dd HH:mm:ss',
                     'MM/dd/yyyy HH:mm:ss'
                   ];
-                  
+
                   for (const format of formats) {
                     try {
                       const dt = new Date(timestamp);
@@ -149,18 +149,18 @@ const Messages = () => {
                 return new Date().toISOString();
               }
             };
-    
+
             const validatedTimestamp = parseTimestamp(data.message?.timestamp);
             const isOwnMessage = data.sender === prev.userId;
             const chatRoomId = data.chat_room_id || prev.currentChat?.id;
-    
+
             // Check for optimistic update
             const existingMessageIndex = prev.messages.findIndex(
-              msg => msg.id === data.temp_id || 
-                    (msg.text === data.message?.content && 
-                     Math.abs(new Date(msg.time) - new Date(validatedTimestamp)) < 60000) // Within 1 minute
+              msg => msg.id === data.temp_id ||
+                (msg.text === data.message?.content &&
+                  Math.abs(new Date(msg.time) - new Date(validatedTimestamp)) < 60000) // Within 1 minute
             );
-    
+
             // Handle optimistic update
             if (existingMessageIndex >= 0) {
               const updatedMessages = [...prev.messages];
@@ -170,10 +170,10 @@ const Messages = () => {
                 text: data.message?.content || updatedMessages[existingMessageIndex].text,
                 time: validatedTimestamp,
                 read: data.message?.read || false,
-                attachments: data.message?.attachments || 
-                           updatedMessages[existingMessageIndex].attachments || []
+                attachments: data.message?.attachments ||
+                  updatedMessages[existingMessageIndex].attachments || []
               };
-    
+
               return {
                 ...prev,
                 messages: updatedMessages,
@@ -184,7 +184,7 @@ const Messages = () => {
                 }
               };
             }
-    
+
             // New message
             return {
               ...prev,
@@ -205,13 +205,13 @@ const Messages = () => {
               }
             };
           });
-    
+
           // Mark as read if needed
           if (state.currentChat?.id === data.chat_room_id && data.sender !== state.userId) {
             markMessagesAsRead(data.chat_room_id);
           }
         };
-    
+
         const handleTyping = () => {
           setState(prev => ({
             ...prev,
@@ -219,22 +219,22 @@ const Messages = () => {
             typingUser: data.user || ''
           }));
         };
-    
+
         const handleAttachment = () => {
           setState(prev => {
             if (!data.message_id || !data.attachment) return prev;
-    
+
             return {
               ...prev,
               messages: prev.messages.map(msg => {
                 if (msg.id !== data.message_id) return msg;
-                
+
                 const existingAttachment = msg.attachments?.find(a => a.id === data.attachment.id);
                 const attachment = {
                   ...data.attachment,
                   file: data.attachment.file || existingAttachment?.file
                 };
-    
+
                 return {
                   ...msg,
                   attachments: [
@@ -246,18 +246,18 @@ const Messages = () => {
             };
           });
         };
-    
+
         const handleMessageRead = () => {
           setState(prev => ({
             ...prev,
-            messages: prev.messages.map(msg => 
-              msg.sender === 'me' && !msg.read 
+            messages: prev.messages.map(msg =>
+              msg.sender === 'me' && !msg.read
                 ? { ...msg, read: true }
                 : msg
             )
           }));
         };
-    
+
         // Route message types
         switch (data.type) {
           case 'chat_message':
@@ -295,11 +295,11 @@ const Messages = () => {
     try {
       const token = localStorage.getItem('accessToken');
       const response = await fetch(
-        `https://cheetahx.onrender.com/chat-room/${chatRoomId}/messages/`,
+        `http://127.0.0.1:8000/chat-room/${chatRoomId}/messages/`,
         { headers: { Authorization: `Bearer ${token}` } }
       );
       const data = await response.json();
-      
+
       setState(prev => ({
         ...prev,
         messages: data.map(msg => ({
@@ -318,29 +318,29 @@ const Messages = () => {
 
   const markMessagesAsRead = async (chatRoomId) => {
     try {
-        const token = localStorage.getItem('accessToken');
-        await fetch(
-            `https://cheetahx.onrender.com/chat-room/${chatRoomId}/mark-read/`,
-            {
-                method: 'PATCH', // Change to 'PATCH' or 'PUT'
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${token}`
-                }
-            }
-        );
-        
-        setState(prev => ({
-            ...prev,
-            unreadCounts: {
-                ...prev.unreadCounts,
-                [chatRoomId]: 0
-            }
-        }));
+      const token = localStorage.getItem('accessToken');
+      await fetch(
+        `http://127.0.0.1:8000/chat-room/${chatRoomId}/mark-read/`,
+        {
+          method: 'PATCH', // Change to 'PATCH' or 'PUT'
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`
+          }
+        }
+      );
+
+      setState(prev => ({
+        ...prev,
+        unreadCounts: {
+          ...prev.unreadCounts,
+          [chatRoomId]: 0
+        }
+      }));
     } catch (error) {
-        console.error('Error marking messages as read:', error);
+      console.error('Error marking messages as read:', error);
     }
-};
+  };
 
 
   const handleFileChange = (e) => {
@@ -380,11 +380,11 @@ const Messages = () => {
   const sendMessage = useCallback(async () => {
     if (!state.newMessage.trim() && !state.attachment) return;
     const tempId = Date.now().toString();
-  
+
     try {
       const token = localStorage.getItem('accessToken');
       const tempTimestamp = new Date().toISOString();
-  
+
       // Create optimistic message immediately
       setState(prev => ({
         ...prev,
@@ -397,13 +397,13 @@ const Messages = () => {
             text: prev.newMessage.trim(),
             time: tempTimestamp,
             read: false,
-            attachments: prev.attachment 
+            attachments: prev.attachment
               ? [{
-                  id: 'temp-' + tempId,
-                  file: URL.createObjectURL(prev.attachment),
-                  file_type: prev.attachment.type.startsWith('image/') ? 'image' : 'file',
-                  file_name: prev.attachment.name
-                }]
+                id: 'temp-' + tempId,
+                file: URL.createObjectURL(prev.attachment),
+                file_type: prev.attachment.type.startsWith('image/') ? 'image' : 'file',
+                file_name: prev.attachment.name
+              }]
               : []
           }
         ],
@@ -411,7 +411,7 @@ const Messages = () => {
         attachment: null,
         showEmojiPicker: false
       }));
-  
+
       // Handle text message via WebSocket
       if (state.newMessage.trim() && socketRef.current) {
         socketRef.current.send(JSON.stringify({
@@ -421,55 +421,55 @@ const Messages = () => {
           temp_id: tempId
         }));
       }
-  
+
       // Handle attachment upload if present
       if (state.attachment) {
         // First create the message (even if empty)
         const messageResponse = await fetch(
-          `https://cheetahx.onrender.com/chat-room/${state.currentChat.id}/messages/create/`,
+          `http://127.0.0.1:8000/chat-room/${state.currentChat.id}/messages/create/`,
           {
             method: 'POST',
-            headers: { 
+            headers: {
               'Content-Type': 'application/json',
               'Authorization': `Bearer ${token}`
             },
-            body: JSON.stringify({ 
-              content: state.newMessage.trim() || '[Attachment]' 
+            body: JSON.stringify({
+              content: state.newMessage.trim() || '[Attachment]'
             })
           }
         );
-  
+
         if (!messageResponse.ok) {
           throw new Error('Failed to create message');
         }
-  
+
         const messageData = await messageResponse.json();
-  
+
         // Then upload the attachment
         const formData = new FormData();
         formData.append('file', state.attachment);
-  
+
         const uploadResponse = await fetch(
-          `https://cheetahx.onrender.com/chat-room/chat-room/messages/${messageId}/attachments/`,
+          `http://127.0.0.1:8000/chat-room/chat-room/messages/${messageId}/attachments/`,
           {
             method: 'POST',
-            headers: { 
+            headers: {
               'Authorization': `Bearer ${token}`,
             },
             body: formData
           }
         );
-  
+
         if (!uploadResponse.ok) {
           throw new Error('Failed to upload attachment');
         }
       }
-  
+
       // Focus back on input after sending
       if (messageInputRef.current) {
         messageInputRef.current.focus();
       }
-  
+
     } catch (error) {
       console.error('Error sending message:', error);
       // Remove the optimistic message if sending fails
@@ -487,12 +487,12 @@ const Messages = () => {
     try {
       const token = localStorage.getItem('accessToken');
       const response = await fetch(
-        'https://cheetahx.onrender.com/chat-room/api/trades/initiate/',
+        'http://127.0.0.1:8000/chat-room/api/trades/initiate/',
         {
           method: 'POST',
-          headers: { 
+          headers: {
             'Content-Type': 'application/json',
-            Authorization: `Bearer ${token}` 
+            Authorization: `Bearer ${token}`
           },
           body: JSON.stringify({
             order_id: order.id,
@@ -540,7 +540,7 @@ const Messages = () => {
     }
 
     window.addEventListener('resize', handleResize);
-    
+
     // Check for dark mode preference
     const darkModeMediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
     const handleDarkModeChange = (e) => {
@@ -579,20 +579,20 @@ const Messages = () => {
   const renderAttachment = (attachment) => {
     // Determine if this is a temporary attachment (before upload completes)
     const isTempAttachment = attachment.id && attachment.id.startsWith('temp-');
-    
+
     // Get the correct file URL based on attachment type
     const fileUrl = isTempAttachment ? attachment.file : attachment.file_url || attachment.file;
-    
+
     // Get the filename - checking multiple possible sources
-    const fileName = attachment.file_name || 
-                    (attachment.file && attachment.file.name) || 
-                    (fileUrl && fileUrl.split('/').pop()) || 
-                    'Unknown file';
-  
+    const fileName = attachment.file_name ||
+      (attachment.file && attachment.file.name) ||
+      (fileUrl && fileUrl.split('/').pop()) ||
+      'Unknown file';
+
     // Get the file type - with fallback to extension detection
-    const fileType = attachment.file_type || 
-                    (fileName.includes('.') ? fileName.split('.').pop().toUpperCase() : 'FILE');
-  
+    const fileType = attachment.file_type ||
+      (fileName.includes('.') ? fileName.split('.').pop().toUpperCase() : 'FILE');
+
     // Handle click - with error prevention
     const handleClick = (e) => {
       e.stopPropagation();
@@ -601,7 +601,7 @@ const Messages = () => {
           // For temporary files, we can only open them if they're blobs
           if (isTempAttachment && typeof fileUrl === 'string' && fileUrl.startsWith('blob:')) {
             window.open(fileUrl, '_blank');
-          } 
+          }
           // For permanent files, use the proper URL
           else if (!isTempAttachment) {
             window.open(fileUrl, '_blank');
@@ -612,18 +612,18 @@ const Messages = () => {
         // Optionally show a user-friendly error message
       }
     };
-  
+
     // Image attachment
-    if (fileType.toLowerCase() === 'image' || 
-        (attachment.file && attachment.file.type.startsWith('image/'))) {
+    if (fileType.toLowerCase() === 'image' ||
+      (attachment.file && attachment.file.type.startsWith('image/'))) {
       return (
         <div className="attachment-image">
-          <img 
-            src={fileUrl} 
+          <img
+            src={fileUrl}
             alt={fileName}
             onClick={handleClick}
             onError={(e) => {
-              e.target.onerror = null; 
+              e.target.onerror = null;
               e.target.src = '/placeholder-image.png';
             }}
           />
@@ -636,14 +636,14 @@ const Messages = () => {
         </div>
       );
     }
-  
+
     // PDF attachment
     if (fileType.toLowerCase() === 'pdf') {
       return (
         <div className="attachment-pdf" onClick={handleClick}>
           <div className="pdf-icon">
             <svg viewBox="0 0 24 24" width="24" height="24">
-              <path fill="currentColor" d="M8.267 14.68c-.184 0-.308.018-.372.036v1.178c.076.018.171.023.302.023.479 0 .774-.242.774-.651 0-.366-.254-.586-.704-.586zm-1.27 1.196c-.235 0-.367.018-.367.045v.566c0 .027.135.045.367.045.351 0 .556-.18.556-.477 0-.213-.146-.379-.556-.379zm-2.16-.13c-.184 0-.308.018-.372.036v1.178c.076.018.171.023.302.023.479 0 .774-.242.774-.651 0-.366-.254-.586-.704-.586zm10.043-.933c0-.522-.354-.77-.938-.77h-.888v2.535h.888c.584 0 .938-.248.938-.765zm-1.004-.114h1.525v-.539h-1.525v.539zm4.126-5.593h-7.456v12.796h7.456V9.149zm-1.357 11.47h-4.762V10.576h4.762v9.995zm-12.698-9.995h1.531v9.995h-1.531V10.576zm-2.691 0h1.531v9.995H4.631V10.576zm16.437 0h1.531v9.995h-1.531V10.576z"/>
+              <path fill="currentColor" d="M8.267 14.68c-.184 0-.308.018-.372.036v1.178c.076.018.171.023.302.023.479 0 .774-.242.774-.651 0-.366-.254-.586-.704-.586zm-1.27 1.196c-.235 0-.367.018-.367.045v.566c0 .027.135.045.367.045.351 0 .556-.18.556-.477 0-.213-.146-.379-.556-.379zm-2.16-.13c-.184 0-.308.018-.372.036v1.178c.076.018.171.023.302.023.479 0 .774-.242.774-.651 0-.366-.254-.586-.704-.586zm10.043-.933c0-.522-.354-.77-.938-.77h-.888v2.535h.888c.584 0 .938-.248.938-.765zm-1.004-.114h1.525v-.539h-1.525v.539zm4.126-5.593h-7.456v12.796h7.456V9.149zm-1.357 11.47h-4.762V10.576h4.762v9.995zm-12.698-9.995h1.531v9.995h-1.531V10.576zm-2.691 0h1.531v9.995H4.631V10.576zm16.437 0h1.531v9.995h-1.531V10.576z" />
             </svg>
           </div>
           <div className="file-info">
@@ -653,7 +653,7 @@ const Messages = () => {
         </div>
       );
     }
-  
+
     // Document attachment (Word, Excel, etc)
     const documentTypes = ['doc', 'docx', 'xls', 'xlsx', 'ppt', 'pptx'];
     if (documentTypes.includes(fileType.toLowerCase())) {
@@ -661,7 +661,7 @@ const Messages = () => {
         <div className="attachment-document" onClick={handleClick}>
           <div className="document-icon">
             <svg viewBox="0 0 24 24" width="24" height="24">
-              <path fill="currentColor" d="M14 2H6c-1.1 0-1.99.9-1.99 2L4 20c0 1.1.89 2 1.99 2H18c1.1 0 2-.9 2-2V8l-6-6zM6 20V4h7v5h5v11H6z"/>
+              <path fill="currentColor" d="M14 2H6c-1.1 0-1.99.9-1.99 2L4 20c0 1.1.89 2 1.99 2H18c1.1 0 2-.9 2-2V8l-6-6zM6 20V4h7v5h5v11H6z" />
             </svg>
           </div>
           <div className="file-info">
@@ -671,15 +671,15 @@ const Messages = () => {
         </div>
       );
     }
-  
+
     // Video attachment
-    if (fileType.toLowerCase() === 'video' || 
-        (attachment.file && attachment.file.type.startsWith('video/'))) {
+    if (fileType.toLowerCase() === 'video' ||
+      (attachment.file && attachment.file.type.startsWith('video/'))) {
       return (
         <div className="attachment-video" onClick={handleClick}>
           <div className="video-icon">
             <svg viewBox="0 0 24 24" width="24" height="24">
-              <path fill="currentColor" d="M10 16.5l6-4.5-6-4.5v9zM12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8z"/>
+              <path fill="currentColor" d="M10 16.5l6-4.5-6-4.5v9zM12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8z" />
             </svg>
           </div>
           <div className="file-info">
@@ -689,15 +689,15 @@ const Messages = () => {
         </div>
       );
     }
-  
+
     // Audio attachment
-    if (fileType.toLowerCase() === 'audio' || 
-        (attachment.file && attachment.file.type.startsWith('audio/'))) {
+    if (fileType.toLowerCase() === 'audio' ||
+      (attachment.file && attachment.file.type.startsWith('audio/'))) {
       return (
         <div className="attachment-audio" onClick={handleClick}>
           <div className="audio-icon">
             <svg viewBox="0 0 24 24" width="24" height="24">
-              <path fill="currentColor" d="M12 3v10.55c-.59-.34-1.27-.55-2-.55-2.21 0-4 1.79-4 4s1.79 4 4 4 4-1.79 4-4V7h4V3h-6zm-2 16c-1.1 0-2-.9-2-2s.9-2 2-2 2 .9 2 2-.9 2-2 2z"/>
+              <path fill="currentColor" d="M12 3v10.55c-.59-.34-1.27-.55-2-.55-2.21 0-4 1.79-4 4s1.79 4 4 4 4-1.79 4-4V7h4V3h-6zm-2 16c-1.1 0-2-.9-2-2s.9-2 2-2 2 .9 2 2-.9 2-2 2z" />
             </svg>
           </div>
           <div className="file-info">
@@ -707,13 +707,13 @@ const Messages = () => {
         </div>
       );
     }
-  
+
     // Default file attachment
     return (
       <div className="attachment-file" onClick={handleClick}>
         <div className="file-icon">
           <svg viewBox="0 0 24 24" width="24" height="24">
-            <path fill="currentColor" d="M14 2H6c-1.1 0-1.99.9-1.99 2L4 20c0 1.1.89 2 1.99 2H18c1.1 0 2-.9 2-2V8l-6-6zM6 20V4h7v5h5v11H6z"/>
+            <path fill="currentColor" d="M14 2H6c-1.1 0-1.99.9-1.99 2L4 20c0 1.1.89 2 1.99 2H18c1.1 0 2-.9 2-2V8l-6-6zM6 20V4h7v5h5v11H6z" />
           </svg>
         </div>
         <div className="file-info">
@@ -740,6 +740,67 @@ const Messages = () => {
     }
   };
 
+  const ActionDropdown = ({ chatRoomId }) => {
+    const [showMenu, setShowMenu] = useState(false);
+    const menuRef = useRef(null);
+  
+    const handleClickOutside = useCallback((e) => {
+      if (menuRef.current && !menuRef.current.contains(e.target)) {
+        setShowMenu(false);
+      }
+    }, []);
+  
+    useEffect(() => {
+      document.addEventListener('mousedown', handleClickOutside);
+      return () => document.removeEventListener('mousedown', handleClickOutside);
+    }, [handleClickOutside]);
+  
+    const handleMarkAsPaid = () => {
+      // Implement mark as paid functionality
+      setShowMenu(false);
+    };
+  
+    const handleOpenDispute = () => {
+      // Implement open dispute functionality
+      setShowMenu(false);
+    };
+  
+    const handleReport = () => {
+      // Implement report functionality
+      setShowMenu(false);
+    };
+  
+    return (
+      <div className="action-dropdown-container" ref={menuRef}>
+        <button
+          className="menu-button"
+          onClick={(e) => {
+            e.stopPropagation();
+            setShowMenu(prev => !prev);
+          }}
+        >
+          <BsThreeDotsVertical size={20} />
+        </button>
+  
+        {showMenu && (
+          <div className="dropdown-menu">
+            <button className="dropdown-item" onClick={handleMarkAsPaid}>
+              I have paid
+            </button>
+            <button className="dropdown-item" onClick={handleOpenDispute}>
+              Open dispute
+            </button>
+            <button className="dropdown-item danger" onClick={handleReport}>
+              Report seller
+            </button>
+          </div>
+        )}
+      </div>
+    );
+  };
+  
+  
+
   return (
     <div className={`messages-app ${state.darkMode ? 'dark-mode' : ''}`}>
       {/* Mobile header */}
@@ -747,7 +808,7 @@ const Messages = () => {
         <div className="mobile-header">
           {state.currentChat && !state.showChatList ? (
             <div className="mobile-chat-header">
-              <button 
+              <button
                 className="back-button"
                 onClick={() => setState(prev => ({ ...prev, showChatList: true }))}
               >
@@ -761,14 +822,13 @@ const Messages = () => {
                   {state.isTyping ? "Typing..." : "Online"}
                 </p>
               </div>
-              <button className="menu-button">
-                <BsThreeDotsVertical size={20} />
-              </button>
+              {/* Use the ActionDropdown component here */}
+            <ActionDropdown chatRoomId={state.currentChat.id} />
             </div>
           ) : (
             <div className="mobile-list-header">
               <h2>Messages</h2>
-              <button 
+              <button
                 className="new-chat-btn"
                 onClick={() => navigate('/fiat-p2p')}
               >
@@ -821,10 +881,10 @@ const Messages = () => {
                       }}
                     >
                       <div className="avatar-container">
-                        <img 
-                          src={counterparty.profile_picture || 'https://i.ibb.co/PsXqD7Xd/groom-6925756.png'} 
-                          alt={counterparty.username} 
-                          className="conversation-avatar" 
+                        <img
+                          src={counterparty.profile_picture || 'https://i.ibb.co/PsXqD7Xd/groom-6925756.png'}
+                          alt={counterparty.username}
+                          className="conversation-avatar"
                         />
                         {room.is_online && <span className="online-badge"></span>}
                       </div>
@@ -854,7 +914,7 @@ const Messages = () => {
               ) : (
                 <div className="no-conversations">
                   <p>No conversations found</p>
-                  <button 
+                  <button
                     className="start-chat-btn"
                     onClick={() => navigate('/fiat-p2p')}
                   >
@@ -874,10 +934,10 @@ const Messages = () => {
                 <div className="message-header">
                   <div className="header-left">
                     <div className="avatar-container">
-                      <img 
-                        src={state.currentChat.counterparty.profile_picture || 'https://i.ibb.co/PsXqD7Xd/groom-6925756.png'} 
-                        alt={state.currentChat.counterparty.username} 
-                        className="message-avatar" 
+                      <img
+                        src={state.currentChat.counterparty.profile_picture || 'https://i.ibb.co/PsXqD7Xd/groom-6925756.png'}
+                        alt={state.currentChat.counterparty.username}
+                        className="message-avatar"
                       />
                       <span className="online-badge"></span>
                     </div>
@@ -892,9 +952,7 @@ const Messages = () => {
                     <div className="trade-details">
                       Trade #{state.currentChat.tradeId}
                     </div>
-                    <button className="menu-button">
-                      <BsThreeDotsVertical size={18} />
-                    </button>
+                    <ActionDropdown chatRoomId={state.currentChat.id} />
                   </div>
                 </div>
               )}
@@ -950,8 +1008,8 @@ const Messages = () => {
                 <div className="message-composer">
                   {state.showEmojiPicker && (
                     <div className="emoji-picker-container">
-                      <EmojiPicker 
-                        onEmojiClick={onEmojiClick} 
+                      <EmojiPicker
+                        onEmojiClick={onEmojiClick}
                         width="100%"
                         height={300}
                         skinTonesDisabled
@@ -961,7 +1019,7 @@ const Messages = () => {
                       />
                     </div>
                   )}
-                  
+
                   {state.attachment && (
                     <div className="attachment-preview">
                       <div className="attachment-info">
@@ -970,7 +1028,7 @@ const Messages = () => {
                           {(state.attachment.size / 1024).toFixed(1)} KB
                         </span>
                       </div>
-                      <button 
+                      <button
                         className="remove-attachment"
                         onClick={() => setState(prev => ({ ...prev, attachment: null }))}
                       >
@@ -1041,7 +1099,7 @@ const Messages = () => {
               </div>
               <h3>No conversation selected</h3>
               <p>Choose a chat from the list or start a new one</p>
-              <button 
+              <button
                 className="start-chat-btn"
                 onClick={() => navigate('/fiat-p2p')}
               >

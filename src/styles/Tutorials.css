@@ -7,7 +7,7 @@
   }
   /* Premium P2P Header Style */
 .tutorials-header {
-  background: linear-gradient(135deg, #81C3DB 0%, #3b82f6 100%);
+  background: #81C3DB;
   color: #ffffff;
   padding: 6rem 2rem;
   text-align: center;
@@ -23,7 +23,7 @@
 /* When user scrolls */
 .tutorials-header.scrolled {
   padding: 2rem;
-  background: linear-gradient(135deg, #1e40af 0%, #81C3DB 100%);
+  background: #81C3DB;
 }
 
 /* Add a subtle glowing effect */
@@ -45,11 +45,6 @@
   100% { transform: rotate(360deg); }
 }
 
-/* Place content above glow */
-.tutorials-header > * {
-  position: relative;
-  z-index: 1;
-}
 
   .header-content {
     max-width: 800px;
@@ -600,7 +595,7 @@
   .step-number {
     width: 32px;
     height: 32px;
-    background-color: #81C3DB;
+    background-color:#81C3DB !important;
     color: white;
     border-radius: 50%;
     display: flex;
@@ -724,7 +719,7 @@
   .tutorials-cta {
     text-align: center;
     padding: 4rem 2rem;
-    background: linear-gradient(135deg, #81C3DB 0%, #81C3DB 100%);
+    background: #81C3DB;
     color: white;
     margin-top: 2rem;
   }

@@ -15,33 +15,12 @@
   --input-bg: #ffffff;
   --input-border: #ddd;
   --primary-gradient: #FF8A00;
-  --secondary-gradient: linear-gradient(90deg, #81C3DB, #81C3DB);
+  --secondary-gradient: #81C3DB;
   --floating-coin-opacity: 0.1;
   --wave-bg: radial-gradient(circle at 50% 0%, rgba(0, 150, 255, 0.1) 0%, transparent 70%);
   --faq-bg: linear-gradient(135deg, #f9f9ff 0%, #ffffff 100%);
   --cta-bg: linear-gradient(135deg, #2f2f2f 0%, #ff8a00, #e52e71 100%);
   --testimonial-bg: #f8f9fa;
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --bg-color: #121212;
-    --text-color: #f0f0f0;
-    --text-secondary: #b0b0b0;
-    --card-bg: #1e1e1e;
-    --card-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
-    --border-color: rgba(255, 255, 255, 0.1);
-    --nav-bg: rgba(30, 30, 30, 0.98);
-    --nav-scrolled-bg: rgba(30, 30, 30, 0.98);
-    --nav-shadow: 0 2px 20px rgba(0, 0, 0, 0.3);
-    --input-bg: #2d2d2d;
-    --input-border: #444;
-    --floating-coin-opacity: 0.05;
-    --wave-bg: radial-gradient(circle at 50% 0%, rgba(0, 75, 150, 0.2) 0%, transparent 70%);
-    --faq-bg: linear-gradient(135deg, #1a1a1a 0%, #2a2a2a 100%);
-    --cta-bg: linear-gradient(135deg, #121212 0%, #d46b00, #c2185b 100%);
-    --testimonial-bg: #1a1a1a;
-  }
 }
 
 /* Base Styles with CSS Variables */
@@ -169,70 +148,6 @@
 .btn-signup:hover {
   transform: translateY(-2px);
   box-shadow: 0 6px 20px rgba(255, 107, 0, 0.4);
-}
-
-.mobile-menu-btn {
-  display: none;
-  flex-direction: column;
-  justify-content: space-between;
-  width: 30px;
-  height: 21px;
-  background: transparent;
-  border: none;
-  cursor: pointer;
-  padding: 0;
-}
-
-.mobile-menu-btn span {
-  display: block;
-  width: 100%;
-  height: 3px;
-  background: #FF6B00;
-  border-radius: 3px;
-  transition: all 0.3s;
-}
-
-/* Mobile Menu */
-.mobile-menu {
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100vh;
-  background: var(--nav-scrolled-bg);
-  z-index: 999;
-  display: none;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  transition: all 0.3s ease;
-}
-
-.mobile-menu.active {
-  display: flex;
-}
-
-.mobile-menu .nav-links {
-  flex-direction: column;
-  align-items: center;
-  gap: 30px;
-}
-
-.mobile-menu .nav-actions {
-
-  flex-direction: column;
-  align-items: center;
-}
-
-.mobile-menu-close {
-  position: absolute;
-  top: 30px;
-  right: 30px;
-  background: none;
-  border: none;
-  font-size: 2rem;
-  color: var(--text-color);
-  cursor: pointer;
 }
 
 /* Hero Section */
@@ -1286,9 +1201,6 @@
     display: none;
   }
 
-  .mobile-menu-btn {
-    display: flex;
-  }
 
   .hero-section {
     padding: 50px 20px 80px;
@@ -1423,14 +1335,8 @@
 @media print {
   .main-nav,
   .animated-bg-elements,
-  .mobile-menu-btn,
   .footer {
     display: none !important;
-  }
-
-  body {
-    background: white !important;
-    color: black !important;
   }
 
   .hero-section,

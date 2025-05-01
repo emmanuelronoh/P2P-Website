@@ -205,7 +205,7 @@ const VendorVerification = () => {
               {formErrors.phone && <span className="error-message">{formErrors.phone}</span>}
             </div>
 
-            <div className={`form-group checkbox-group ${formErrors.termsAccepted ? 'error' : ''}`}>
+            <div className={`form-group vendor-checkbox-group ${formErrors.termsAccepted ? 'error' : ''}`}>
               <input
                 type="checkbox"
                 id="termsAccepted"

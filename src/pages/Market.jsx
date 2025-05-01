@@ -14,7 +14,7 @@ import { RiExchangeDollarFill } from "react-icons/ri";
 import debounce from "lodash.debounce";
 import "../styles/market.css";
 
-const API_BASE_URL = "https://cheetahx.onrender.com";
+const API_BASE_URL = "http://127.0.0.1:8000";
 
 const DEFAULT_TRADER = {
   id: '',
@@ -47,6 +47,35 @@ const DEFAULT_TRADER = {
   location: 'Unknown'
 };
 
+// ... (keep all your existing imports)
+
+const handleTradeClick = (trader) => {
+  const safeTrader = { ...DEFAULT_TRADER, ...trader };
+  
+  // Prepare the trade data to pass to the amount page
+  const tradeData = {
+    trader: {
+      id: safeTrader.id,
+      name: safeTrader.creator?.username || 'Anonymous',
+      rating: (safeTrader.creator?.trade_stats?.completion_rate || 0) / 20,
+      completedTrades: safeTrader.creator?.trade_stats?.total_trades || 0,
+      price: parseFloat(safeTrader.rate) || 0,
+      minLimit: parseFloat(safeTrader.min_amount) || 0,
+      maxLimit: parseFloat(safeTrader.max_amount) || 0,
+      paymentMethod: getPaymentMethods(safeTrader.payment_methods),
+      verifiedPayment: safeTrader.creator?.verification_status !== 'UNVERIFIED',
+      walletAddress: safeTrader.creator?.wallet_address || null,
+      terms: safeTrader.terms,
+      location: safeTrader.location
+    },
+    tradeType: filters.tradeType,
+    crypto: `${safeTrader.crypto_currency} - ${safeTrader.crypto_currency}` // You might want to map to full names
+  };
+
+  navigate("/amount", { state: tradeData });
+};
+
+// ... (rest of your existing market.jsx code)
 const TradingService = {
   fetchTraders: async (filters) => {
     try {

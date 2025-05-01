@@ -81,9 +81,10 @@
   }
   
   .filter-tab.active {
-    background-color: #81C3DB;
+    background: #81C3DB;
     color: white;
   }
+  
   
   .notifications-list {
     background-color: #f9fafb;

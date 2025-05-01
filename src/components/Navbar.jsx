@@ -51,6 +51,7 @@ const useWindowSize = () => {
   return windowSize;
 };
 
+
 const AdvertisementBar = () => {
   const ads = [
     "🔥 Limited Time Offer: 0% Trading Fees This Week!",
@@ -59,6 +60,7 @@ const AdvertisementBar = () => {
   ];
 
   const [currentAd, setCurrentAd] = useState(0);
+  const [isVisible, setIsVisible] = useState(true); // New state for visibility
 
   useEffect(() => {
     const interval = setInterval(() => {
@@ -67,6 +69,12 @@ const AdvertisementBar = () => {
 
     return () => clearInterval(interval);
   }, []);
+
+  const handleClose = () => {
+    setIsVisible(false);
+  };
+
+  if (!isVisible) return null; // Don't render anything if not visible
 
   return (
     <div className="advertisement-bar">
@@ -82,7 +90,13 @@ const AdvertisementBar = () => {
           {ads[currentAd]}
         </motion.div>
       </AnimatePresence>
-      <button className="ad-close-btn">×</button>
+      <button 
+        className="ad-close-btn" 
+        onClick={handleClose}
+        aria-label="Close advertisement"
+      >
+        ×
+      </button>
     </div>
   );
 };
@@ -226,48 +240,44 @@ const Navbar = ({ theme, toggleTheme }) => {
   const [signer, setSigner] = useState(null);
   const [chainId, setChainId] = useState(null);
 
-  const handleWalletConnect = async (connectionData) => {
-    try {
-      const { walletType, address, provider, chainId, verification } = connectionData;
+  // In Navbar.jsx, update the handleWalletConnect function:
+  const handleWalletConnect = useCallback((connectionData) => {
+    const { walletType, address, provider, chainId } = connectionData;
 
-      if (!address) throw new Error('No wallet address provided');
+    if (!address) return;
 
-      setWalletAddress(address);
-      localStorage.setItem("walletAddress", address);
+    setWalletAddress(address);
+    localStorage.setItem("walletAddress", address);
 
-      if (provider) {
-        setProvider(provider);
-        const ethersProvider = new ethers.providers.Web3Provider(provider);
-        const signer = ethersProvider.getSigner();
-        setSigner(signer);
-        setChainId(chainId);
+    if (provider) {
+      setProvider(provider);
+      const ethersProvider = new ethers.providers.Web3Provider(provider);
+      const signer = ethersProvider.getSigner();
+      setSigner(signer);
+      setChainId(chainId);
 
-        if (provider.on) {
-          provider.on('accountsChanged', (accounts) => {
-            if (accounts.length === 0) {
-              handleWalletDisconnect();
-            } else {
-              setWalletAddress(accounts[0]);
-            }
-          });
-
-          provider.on('chainChanged', (chainId) => {
-            setChainId(parseInt(chainId, 16));
-            window.location.reload();
-          });
-
-          provider.on('disconnect', () => {
-            handleWalletDisconnect();
-          });
+      // Set up event listeners
+      provider.on('accountsChanged', (accounts) => {
+        if (accounts.length === 0) {
+          handleWalletDisconnect();
+        } else {
+          setWalletAddress(accounts[0]);
+          localStorage.setItem("walletAddress", accounts[0]);
         }
-      }
+      });
 
-      await fetchBalance(address);
-      setShowWalletModal(false);
-    } catch (error) {
-      console.error('Wallet connection error:', error);
+      provider.on('chainChanged', (chainId) => {
+        setChainId(parseInt(chainId, 16));
+        window.location.reload();
+      });
+
+      provider.on('disconnect', () => {
+        handleWalletDisconnect();
+      });
     }
-  };
+
+    setShowWalletModal(false);
+  }, []);
 
   const handleWalletDisconnect = () => {
     setWalletAddress(null);
@@ -292,18 +302,10 @@ const Navbar = ({ theme, toggleTheme }) => {
   };
 
   useEffect(() => {
-    const checkConnectedWallet = async () => {
-      const savedAddress = localStorage.getItem("walletAddress");
-      if (savedAddress) {
-        setWalletAddress(savedAddress);
-        if (window.ethereum && window.ethereum.selectedAddress) {
-          const provider = window.ethereum;
-          await handleWalletConnect('metamask', savedAddress, provider);
-        }
-      }
-    };
-
-    checkConnectedWallet();
+    const savedAddress = localStorage.getItem("walletAddress");
+    if (savedAddress) {
+      setWalletAddress(savedAddress);
+    }
   }, []);
 
   const handleLogout = useCallback(async () => {
@@ -351,16 +353,32 @@ const Navbar = ({ theme, toggleTheme }) => {
     ];
 
   const WalletInfo = () => {
-    if (!walletAddress) return (
-      <button
-        className="connect-wallet-btn"
-        onClick={() => setShowWalletModal(true)}
-        aria-label="Connect wallet"
-      >
-        <FaWallet className="wallet-icon" />
-        {!isMobile ? "Connect Wallet" : "Connect"}
-      </button>
+    const [localWalletAddress, setLocalWalletAddress] = useState(
+      localStorage.getItem("walletAddress") || null
     );
+
+    useEffect(() => {
+      const handleStorageChange = () => {
+        setLocalWalletAddress(localStorage.getItem("walletAddress"));
+      };
+
+      window.addEventListener('storage', handleStorageChange);
+      return () => window.removeEventListener('storage', handleStorageChange);
+    }, []);
+
+    if (!localWalletAddress && !walletAddress) {
+      return (
+        <button
+          className="connect-wallet-btn"
+          onClick={() => setShowWalletModal(true)}
+        >
+          <FaWallet className="wallet-icon" />
+          {!isMobile ? "Connect Wallet" : "Connect"}
+        </button>
+      );
+    }
+
+    const displayAddress = walletAddress || localWalletAddress;
 
     return (
       <div className="wallet-connected-container">
@@ -511,14 +529,6 @@ const Navbar = ({ theme, toggleTheme }) => {
                     </Link>
                   </>
                 )}
-
-                <button
-                  className="theme-toggle"
-                  onClick={toggleTheme}
-                  aria-label="Toggle theme"
-                >
-                  {theme === "light" ? <FaMoon /> : <FaSun />}
-                </button>
               </div>
             </>
           ) : (
@@ -558,13 +568,6 @@ const Navbar = ({ theme, toggleTheme }) => {
                             </span>
                           </div>
                         )}
-                        <button
-                          className="mobile-menu-close"
-                          onClick={() => setMenuOpen(false)}
-                          aria-label="Close menu"
-                        >
-                          <FaTimes />
-                        </button>
                       </div>
 
                       <div className="mobile-menu-content">

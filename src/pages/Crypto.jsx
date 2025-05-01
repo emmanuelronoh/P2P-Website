@@ -3,7 +3,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import "../styles/CryptoListing.css"
 
-const BASE_URL = 'https://cheetahx.onrender.com/crypto/';
+const BASE_URL = 'http://127.0.0.1:8000/crypto/';
 
 const AmountForm = ({ mode = 'create', initialData = {} }) => {
   // Form state
@@ -343,7 +343,7 @@ const AmountForm = ({ mode = 'create', initialData = {} }) => {
                   onChange={handleAmountChange}
                   step="any"
                   min="0"
-                  placeholder="0.00000000"
+                  placeholder="0.00"
                   required
                 />
                 <span className="suffix">{formData.cryptoCurrency}</span>
@@ -384,7 +384,7 @@ const AmountForm = ({ mode = 'create', initialData = {} }) => {
                   onChange={handleAmountChange}
                   step="any"
                   min="0"
-                  placeholder={formData.tradeType === 'fiat' ? "0.00" : "0.00000000"}
+                  placeholder={formData.tradeType === 'fiat' ? "0.00" : "0.00"}
                   required
                 />
                 <span className="suffix">{getCurrencyDisplay(formData.secondaryCurrency)}</span>
@@ -402,7 +402,7 @@ const AmountForm = ({ mode = 'create', initialData = {} }) => {
                   onChange={handleChange}
                   step="any"
                   min="0"
-                  placeholder="0.00000000"
+                  placeholder="0.00"
                   required
                 />
                 <span className="suffix">

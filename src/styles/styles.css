@@ -9,11 +9,6 @@
     --transition: all 0.3s ease;
   }
   
-  body {
-    font-family: "Segoe UI", Roboto, sans-serif;
-    background-color: var(--bg-light);
-    color: #1f2937;
-  }
   
   .terms-container {
     max-width: 720px;
@@ -111,7 +106,7 @@
   --primary-color: #81C3DB;
   --primary-dark: #81C3DB;
   --primary-light: #81C3DB;
-  --secondary-color: #4597b5;
+  --secondary-color: #81C3DB;
   --secondary-dark: #009624;
   --danger-color: #ff3d00;
   --warning-color: #ff9100;

@@ -92,10 +92,10 @@ const FiatP2P = () => {
 
             // Fetch all data in parallel
             const [ordersResponse, paymentMethodsResponse, userOrdersResponse, priceTrendsResponse] = await Promise.all([
-                axios.get('https://cheetahx.onrender.com/escrow/orders/', { headers }),
-                axios.get('https://cheetahx.onrender.com/escrow/payment-methods-fiat/', { headers }),
-                axios.get('https://cheetahx.onrender.com/escrow/user-orders/', { headers }),
-                axios.get('https://cheetahx.onrender.com/escrow/price-trends/', { headers }),
+                axios.get('http://127.0.0.1:8000/escrow/orders/', { headers }),
+                axios.get('http://127.0.0.1:8000/escrow/payment-methods-fiat/', { headers }),
+                axios.get('http://127.0.0.1:8000/escrow/user-orders/', { headers }),
+                axios.get('http://127.0.0.1:8000/escrow/price-trends/', { headers }),
             ]);
 
             // Transform market orders
@@ -203,6 +203,37 @@ const FiatP2P = () => {
         }
     }, [authLoading, isAuthenticated, navigate, logout]);
 
+
+    const handleCancelOrder = async (orderId) => {
+        try {
+            const token = localStorage.getItem('accessToken');
+            if (!token) {
+                navigate('/login');
+                return;
+            }
+
+            await axios.delete(
+                `http://127.0.0.1:8000/escrow/orders/${orderId}/`,
+                {
+                    headers: {
+                        'Authorization': `Bearer ${token}`,
+                        'Content-Type': 'application/json'
+                    }
+                }
+            );
+
+            // Refresh the orders list after successful deletion
+            loadData();
+
+            // Close the modal
+            setUiState(prev => ({ ...prev, showOrderDetails: null }));
+
+        } catch (error) {
+            console.error('Error cancelling order:', error);
+            alert(`Failed to cancel order: ${error.response?.data?.error || error.message}`);
+        }
+    };
+
     // Filter and sort orders - now only uses filterState
     const filteredOrders = uiState.orders
         .filter(order => order.type === (uiState.activeTab === 'buy' ? 'sell' : 'buy'))
@@ -264,7 +295,7 @@ const FiatP2P = () => {
         try {
             const token = localStorage.getItem('accessToken');
             const response = await axios.post(
-                'https://cheetahx.onrender.com/chat-room/api/trades/initiate/',
+                'http://127.0.0.1:8000/chat-room/api/trades/initiate/',
                 {
                     order_id: order.id,
                     trade_type: uiState.activeTab,
@@ -330,7 +361,7 @@ const FiatP2P = () => {
             };
 
             const response = await axios.post(
-                'https://cheetahx.onrender.com/escrow/orders/',
+                'http://127.0.0.1:8000/escrow/orders/',
                 orderData,
                 {
                     headers: {
@@ -349,7 +380,7 @@ const FiatP2P = () => {
             }));
 
             // Then fetch fresh data from the server
-            const refreshedOrders = await axios.get('https://cheetahx.onrender.com/escrow/user-orders/', {
+            const refreshedOrders = await axios.get('http://127.0.0.1:8000/escrow/user-orders/', {
                 headers: {
                     Authorization: `Bearer ${token}`,
                     'Content-Type': 'application/json'
@@ -1036,9 +1067,12 @@ const FiatP2P = () => {
                                 return (
                                     <div className="modal-actions">
                                         {order.status === 'pending' && (
-                                            <button className="cancel-order-btn">
-                                                Cancel Order
-                                            </button>
+                                            <button
+                                            className="cancel-order-btn"
+                                            onClick={() => handleCancelOrder(order.id)}
+                                        >
+                                            Cancel Order
+                                        </button>
                                         )}
                                         {order.status === 'completed' && (
                                             <button className="feedback-btn">

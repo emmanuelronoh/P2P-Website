@@ -2,7 +2,13 @@ import React from 'react';
 import PropTypes from 'prop-types';
 import '../styles/ErrorModal.css';
 
-const ErrorModal = ({ show, title, message, onClose, actions }) => {
+const ErrorModal = ({
+  show,
+  title,
+  message,
+  onClose,
+  actions = null  // ✅ Set default parameter here
+}) => {
   if (!show) {
     return null;
   }
@@ -61,8 +67,6 @@ ErrorModal.propTypes = {
   )
 };
 
-ErrorModal.defaultProps = {
-  actions: null
-};
+// ✅ Removed ErrorModal.defaultProps
 
 export default ErrorModal;

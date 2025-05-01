@@ -13,18 +13,6 @@
   --transition: all 0.3s ease;
 }
 
-* {
-  box-sizing: border-box;
-  margin: 0;
-  padding: 0;
-}
-
-body {
-  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-  line-height: 1.6;
-  color: var(--text-color);
-  background-color: #f5f7fa;
-}
 
 .verification-container {
   max-width: 600px;
@@ -174,27 +162,27 @@ body {
   font-size: 0.85rem;
 }
 
-.checkbox-group {
+.vendor-checkbox-group {
   flex-direction: row !important;
   align-items: center;
   gap: 0.75rem !important;
 }
 
-.checkbox-group input {
-  width: auto;
+.vendor-checkbox-group input {
+  width: auto !important;
   margin: 0;
 }
 
-.checkbox-group label {
+.vendor-checkbox-group label {
   font-weight: normal;
 }
 
-.checkbox-group label a {
+.vendor-checkbox-group label a {
   color: var(--primary-color);
   text-decoration: none;
 }
 
-.checkbox-group label a:hover {
+.vendor-checkbox-group label a:hover {
   text-decoration: underline;
 }
 
@@ -205,8 +193,7 @@ body {
 }
 
 .primary-button {
-  background-color: var(--primary-color);
-  color: white;
+  background-color: #81C3DB;
   border: none;
   padding: 0.75rem 1.5rem;
   border-radius: var(--border-radius);
@@ -233,7 +220,7 @@ body {
 }
 
 .secondary-button {
-  background-color: #81c3db;
+  background-color: #81C3DB;
   color: var(--text-color);
   border: 1px solid var(--border-color);
   padding: 0.75rem 1.5rem;

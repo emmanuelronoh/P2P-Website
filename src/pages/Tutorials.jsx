@@ -353,11 +353,6 @@ const TutorialsPage = () => {
                             Create Free Account
                         </button>
                     </Link>
-                    <Link to="/market">
-                        <button className="btn-secondary">
-                            Browse Marketplace
-                        </button>
-                    </Link>
                 </div>
             </div>
         </div>

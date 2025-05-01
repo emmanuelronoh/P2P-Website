@@ -21,20 +21,6 @@
     --z-index-overlay: 999;
 }
 
-[data-theme="dark"] {
-    --primary-color: #a29bfe;
-    --primary-hover: #8a82f8;
-    --secondary-color: #6c5ce7;
-    --accent-color: #ff7675;
-    --accent-hover: #ff5e5e;
-    --text-color: #f5f6fa;
-    --text-light: #b2bec3;
-    --bg-color: #2d3436;
-    --card-bg: #1e272e;
-    --shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
-    --shadow-hover: 0 6px 16px rgba(0, 0, 0, 0.4);
-}
-
 /* Base Reset */
 *,
 *::before,
@@ -44,7 +30,7 @@
 
 /* Advertisement bar */
 .p2p-advertisement-bar {
-    background: linear-gradient(90deg, var(--primary-color), var(--accent-color));
+    background: linear-gradient(to right, #81C3DB, #FF6B00);
     color: white;
     padding: 0.6rem 1rem;
     text-align: center;
@@ -490,6 +476,63 @@
     display: flex;
 }
 
+/* Action Dropdown Styles */
+.action-dropdown-container {
+    position: relative;
+    display: inline-block;
+  }
+  
+  .menu-button {
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 8px;
+    color: inherit;
+  }
+  
+  .dropdown-menu {
+    position: absolute;
+    right: 0;
+    top: 100%;
+    background-color: var(--bg-color);
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+    z-index: 100;
+    min-width: 180px;
+    overflow: hidden;
+  }
+  
+  .dropdown-item {
+    display: block;
+    width: 100%;
+    padding: 10px 16px;
+    text-align: left;
+    background: none;
+    border: none;
+    color: var(--text-color);
+    cursor: pointer;
+  }
+  
+  .dropdown-item:hover {
+    background-color: var(--hover-color);
+  }
+  
+  .dropdown-item.danger {
+    color: #ff4d4f;
+  }
+  
+  /* Dark mode specific styles */
+  .dark-mode .dropdown-menu {
+    background-color: #2a2a2a;
+    border-color: #444;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
+  }
+  
+  .dark-mode .dropdown-item:hover {
+    background-color: #3a3a3a;
+  }
+  
 /* Mobile Menu Content */
 @media (max-width: 992px) {
     .p2p-navbar-container {

@@ -131,7 +131,7 @@
 button[type="submit"] {
   width: 100%;
   padding: 14px;
-  background: #81C3DB;
+  background:#81C3DB;
   color: white;
   border: none;
   border-radius: 8px;
@@ -151,7 +151,7 @@ button[type="submit"]:disabled {
 }
 
 button[type="submit"]:not(:disabled):hover {
-  background: #81C3DB ;
+  background: #81C3DB;
 }
 
 .spin {
@@ -170,7 +170,7 @@ button[type="submit"]:not(:disabled):hover {
 }
 
 .login-footer a {
-  color: #81C3DB ;
+  color: #81C3DB;
   text-decoration: none;
   font-weight: 500;
   transition: color 0.2s ease;
@@ -250,7 +250,7 @@ button[type="submit"]:not(:disabled):hover {
 }
 
 .trade-type-btn.active {
-  border-color: #81C3DB ;
+  border-color: #81C3DB;
   background-color: rgba(99, 102, 241, 0.1);
   color: #81C3DB;
   font-weight: 500;

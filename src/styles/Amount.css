@@ -27,19 +27,6 @@
   --font-size-xxl: 1.75rem;
 }
 
-* {
-  box-sizing: border-box;
-  margin: 0;
-  padding: 0;
-}
-
-body {
-  font-family: 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', sans-serif;
-  color: var(--text-primary);
-  background-color: var(--background-color);
-  line-height: 1.6;
-}
-
 
 .trade-amount-container {
   display: flex;
@@ -140,10 +127,6 @@ body {
   background-color: var(--warning-color);
 }
 
-.rating.low {
-  background-color: var(--error-color);
-}
-
 .trade-count {
   color: var(--text-secondary);
   font-size: 0.75rem;
@@ -237,7 +220,6 @@ body {
 }
 
 .conversion-display {
-  background-color: rgba(41, 98, 255, 0.05);
   border: 1px solid rgba(41, 98, 255, 0.1);
   border-radius: var(--border-radius-md);
   padding: var(--spacing-md);
@@ -271,12 +253,12 @@ body {
   font-weight: 600;
   cursor: pointer;
   transition: all 0.2s ease;
-  border: none;
 }
 
 .proceed-btn {
   background-color: var(--primary-color);
-  color: white;
+  color: #fff;
+
 }
 
 .proceed-btn:hover {
@@ -285,7 +267,6 @@ body {
 }
 
 .proceed-btn:disabled {
-  background-color: #b0bec5;
   cursor: not-allowed;
   transform: none;
 }

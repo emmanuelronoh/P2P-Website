@@ -7,23 +7,6 @@
     --text-color: #2b2d42;
     --light-text: #8d99ae;
     --border-color: #e9ecef;
-    --background-light: #f8f9fa;
-    --white: #ffffff;
-    --shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-    --transition: all 0.3s ease;
-}
-
-* {
-    box-sizing: border-box;
-    margin: 0;
-    padding: 0;
-}
-
-body {
-    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-    line-height: 1.6;
-    color: var(--text-color);
-    background-color: var(--background-light);
 }
 
 .register-container {
@@ -32,7 +15,6 @@ body {
     align-items: center;
     min-height: 100vh;
     padding: 2rem;
-    background-color: var(--background-light);
 }
 
 .register-card {

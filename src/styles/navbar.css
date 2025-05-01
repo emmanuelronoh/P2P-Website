@@ -1,6 +1,6 @@
 :root {
   --primary-color: #81C3DB;
-  --secondary-color: #a29bfe;
+  --secondary-color: #81C3DB;
   --accent-color: #FF6B00;
   --text-color: #2d3436;
   --bg-color: #f5f6fa;
@@ -11,19 +11,9 @@
   --navbar-height: 70px;
 }
 
-[data-theme="dark"] {
-  --primary-color: #81C3DB;
-  --secondary-color: #6c5ce7;
-  --accent-color: #ff7675;
-  --text-color: #f5f6fa;
-  --bg-color: #2d3436;
-  --card-bg: #1e272e;
-  --shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
-}
-
 /* Advertisement bar */
 .advertisement-bar {
-  background: linear-gradient(90deg, var(--primary-color), var(--accent-color));
+  background: linear-gradient(to right, #81C3DB, #FF6B00);
   color: white;
   padding: 0.5rem 1rem;
   text-align: center;
@@ -31,7 +21,7 @@
   overflow: hidden;
   font-size: 0.9rem;
   font-weight: 500;
-  z-index: 1100;
+  z-index: 1050;
 }
 
 .ad-content {
@@ -560,21 +550,13 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 1rem;
+  padding: 3rem;
   border-bottom: 1px solid rgba(0, 0, 0, 0.1);
   margin-bottom: 1rem;
   position: sticky;
   top: 0;
   background-color: var(--card-bg);
   z-index: 1;
-}
-
-.mobile-menu-close {
-  background: none;
-  border: none;
-  font-size: 1.5rem;
-  color: var(--text-color);
-  cursor: pointer;
 }
 
 .mobile-wallet-info {
@@ -745,153 +727,3 @@
     font-size: 0.9rem;
   }
 }
-
-/* Wallet Modal Styles */
-.wallet-modal-overlay {
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background-color: rgba(0, 0, 0, 0.5);
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  z-index: 1100;
-  backdrop-filter: blur(5px);
-}
-
-.wallet-modal {
-  background-color: var(--bg-color);
-  border-radius: 12px;
-  width: 100%;
-  max-width: 400px;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
-  overflow: hidden;
-  transform: translateY(20px);
-  opacity: 0;
-  transition: all 0.3s ease;
-}
-
-.wallet-modal.open {
-  transform: translateY(0);
-  opacity: 1;
-}
-
-.wallet-modal-header {
-  padding: 20px;
-  border-bottom: 1px solid rgba(0, 0, 0, 0.1);
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-}
-
-.wallet-modal-header h3 {
-  margin: 0;
-  font-size: 1.25rem;
-  font-weight: 600;
-  color: var(--text-color);
-}
-
-.wallet-modal-close {
-  background: none;
-  border: none;
-  font-size: 1.2rem;
-  cursor: pointer;
-  color: var(--text-color);
-}
-
-.wallet-modal-body {
-  padding: 20px;
-}
-
-.wallet-section {
-  margin-bottom: 20px;
-}
-
-.wallet-section-title {
-  margin: 0 0 12px 0;
-  font-size: 0.9rem;
-  color: var(--text-color);
-  opacity: 0.7;
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
-}
-
-.wallet-grid {
-  display: grid;
-  grid-template-columns: 1fr;
-  gap: 8px;
-}
-
-.wallet-option {
-  display: flex;
-  align-items: center;
-  padding: 12px 16px;
-  background-color: var(--card-bg);
-  border: 1px solid rgba(0, 0, 0, 0.1);
-  border-radius: var(--border-radius);
-  width: 100%;
-  cursor: pointer;
-  transition: var(--transition);
-}
-
-.wallet-option:hover {
-  background-color: rgba(0, 0, 0, 0.05);
-  transform: translateY(-1px);
-}
-
-.wallet-icon {
-  margin-right: 12px;
-  width: 24px;
-  height: 24px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.wallet-arrow {
-  margin-left: auto;
-  color: var(--text-color);
-  opacity: 0.5;
-}
-
-.wallet-modal-footer {
-  padding: 16px 20px;
-  border-top: 1px solid rgba(0, 0, 0, 0.1);
-  text-align: center;
-  font-size: 0.9rem;
-  color: var(--text-color);
-  opacity: 0.7;
-}
-
-.wallet-modal-footer a {
-  color: var(--primary-color);
-  text-decoration: none;
-}
-
-.wallet-modal-footer a:hover {
-  text-decoration: underline;
-}
-
-.no-hover-line {
-  text-decoration: none;
-  border: none;
-}
-
-.no-hover-line:hover {
-  text-decoration: none;
-  border: none;
-  box-shadow: none;
-}
-
-/* Wallet icons */
-.icon-metamask { color: #f6851b; }
-.icon-trustwallet { color: #3375bb; }
-.icon-binance { color: #f3ba2f; }
-.icon-walletconnect { color: #3b99fc; }
-.icon-coinbase { color: #1652f0; }
-
-
-
-
