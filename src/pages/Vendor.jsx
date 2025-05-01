@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
+import { v4 as uuidv4 } from 'uuid';
 import '../styles/Vendor.css';
 
 const VendorVerification = () => {
@@ -53,7 +54,7 @@ const VendorVerification = () => {
 
   const startVerification = async () => {
     if (!validateForm()) return;
-    
+
     setState(prev => ({
       ...prev,
       loading: true,
@@ -61,18 +62,19 @@ const VendorVerification = () => {
       verificationStatus: null,
       pollCount: 0
     }));
-  
+
     try {
       const accessToken = localStorage.getItem('accessToken');
       if (!accessToken) {
         throw new Error('Authentication required - please login');
       }
-  
+
       // Get current user ID (you might need to adjust this based on your auth system)
-      const userId = localStorage.getItem('userId') || 'temp-user'; // Fallback if needed
-      
+      const userId = localStorage.getItem('userId') || uuidv4();
+      localStorage.setItem('userId', userId); // Persist for future use
+
       const response = await axios.post(
-        `${process.env.REACT_APP_API_URL || 'https://sumsub-cheetahx-kyc.onrender.com'}/api/generate-sumsub-link`, 
+        `${process.env.REACT_APP_API_URL || 'https://sumsub-cheetahx-kyc.onrender.com'}/api/generate-sumsub-link`,
         {
           userId: userId,
           levelName: 'kyc_verification', // or whatever level name you're using
@@ -87,29 +89,29 @@ const VendorVerification = () => {
           timeout: 10000
         }
       );
-  
+
       if (!response.data?.url) {
         throw new Error('Invalid response from verification service');
       }
-  
+
       // Try to open in new tab first
       const newWindow = window.open(response.data.url, '_blank');
-      
+
       if (!newWindow || newWindow.closed || typeof newWindow.closed === 'undefined') {
         // Fallback to current tab if popup blocked
         window.location.href = response.data.url;
       }
-  
+
       setState(prev => ({
         ...prev,
         loading: false,
         verificationUrl: response.data.url,
         success: true
       }));
-  
+
     } catch (err) {
       console.error('Verification error:', err);
-      
+
       let errorMessage = 'Verification failed';
       if (err.response) {
         if (err.response.data?.error) {
@@ -125,7 +127,7 @@ const VendorVerification = () => {
       } else if (err.message) {
         errorMessage = err.message;
       }
-  
+
       setState(prev => ({
         ...prev,
         error: errorMessage,

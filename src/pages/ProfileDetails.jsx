@@ -23,7 +23,7 @@ const UserProfile = () => {
 
         console.log("userId:", userId);
         console.log("token:", token);
-        const response = await axios.get(`http://127.0.0.1:8000/user/api/users/${userId}/profile/`, {
+        const response = await axios.get(`https://cheetahx.onrender.com/user/api/users/${userId}/profile/`, {
           headers: {
             Authorization: `Bearer ${token}`
           }

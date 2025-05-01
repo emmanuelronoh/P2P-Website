@@ -5,7 +5,7 @@ let socket = null;
 
 export const connectSocket = (chatRoomId, onMessage) => {
   const token = localStorage.getItem('accessToken');
-  const wsUrl = `ws://localhost:8001/ws/chat/${chatRoomId}/?token=${token}`;
+  const wsUrl = `ws://localhost:80/ws/chat/${chatRoomId}/?token=${token}`;
   
   if (socket) {
     socket.close();

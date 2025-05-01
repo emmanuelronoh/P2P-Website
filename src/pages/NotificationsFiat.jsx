@@ -45,7 +45,7 @@ const NotificationsPage = () => {
   useEffect(() => {
     const fetchNotifications = async () => {
       try {
-        const response = await axios.get('http://127.0.0.1:8000/crypto/api/notifications/', {
+        const response = await axios.get('https://cheetahx.onrender.com/crypto/api/notifications/', {
           headers: {
             'Authorization': `Bearer ${localStorage.getItem('accessToken')}`
           }
@@ -65,7 +65,7 @@ const NotificationsPage = () => {
 
   const markAsRead = async (id) => {
     try {
-      await axios.patch(`http://127.0.0.1:8000/crypto/api/notifications/${id}/mark_as_read/`, {}, {
+      await axios.patch(`https://cheetahx.onrender.com/crypto/api/notifications/${id}/mark_as_read/`, {}, {
         headers: {
           'Authorization': `Bearer ${localStorage.getItem('accessToken')}`
         }
@@ -83,7 +83,7 @@ const NotificationsPage = () => {
 
   const markAllAsRead = async () => {
     try {
-      await axios.post('http://127.0.0.1:8000/crypto/mark_all_as_read/', {}, {
+      await axios.post('https://cheetahx.onrender.com/crypto/mark_all_as_read/', {}, {
         headers: {
           'Authorization': `Bearer ${localStorage.getItem('accessToken')}`
         }
@@ -102,7 +102,7 @@ const NotificationsPage = () => {
 
   const deleteNotification = async (id) => {
     try {
-      await axios.delete(`http://127.0.0.1:8000/crypto/api/notifications/${id}/`, {
+      await axios.delete(`https://cheetahx.onrender.com/crypto/api/notifications/${id}/`, {
         headers: {
           'Authorization': `Bearer ${localStorage.getItem('accessToken')}`
         }

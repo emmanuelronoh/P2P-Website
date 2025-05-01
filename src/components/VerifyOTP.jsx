@@ -39,7 +39,7 @@ const VerifyOTP = () => {
 
         try {
             const response = await axios.post(
-                "http://127.0.0.1:8000/api/auth/verify-email/",
+                "https://cheetahx.onrender.com/api/auth/verify-email/",
                 formData
             );
 
@@ -75,7 +75,7 @@ const VerifyOTP = () => {
 
         try {
             const response = await axios.post(
-                "http://127.0.0.1:8000/api/auth/resend-otp/",
+                "https://cheetahx.onrender.com/api/auth/resend-otp/",
                 { email: formData.email }
             );
 

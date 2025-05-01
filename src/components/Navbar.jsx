@@ -53,28 +53,49 @@ const useWindowSize = () => {
 
 
 const AdvertisementBar = () => {
-  const ads = [
-    "🔥 Limited Time Offer: 0% Trading Fees This Week!",
-    "🚀 New Crypto Pairs Added: BTC/ETH, SOL/ADA",
-    "💎 Exclusive VIP Benefits - Join Now!"
-  ];
-
+  const [ads, setAds] = useState([]);
   const [currentAd, setCurrentAd] = useState(0);
-  const [isVisible, setIsVisible] = useState(true); // New state for visibility
+  const [isVisible, setIsVisible] = useState(true);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState(null);
 
   useEffect(() => {
-    const interval = setInterval(() => {
-      setCurrentAd((prev) => (prev + 1) % ads.length);
-    }, 8000);
+    const fetchAds = async () => {
+      try {
+        const response = await fetch('https://cheetahx.onrender.com/api/auth/advertisements/'); // Your API endpoint
+        if (!response.ok) {
+          throw new Error('Failed to fetch advertisements');
+        }
+        const data = await response.json();
+        setAds(data);
+        setIsLoading(false);
+      } catch (err) {
+        setError(err.message);
+        setIsLoading(false);
+      }
+    };
 
-    return () => clearInterval(interval);
+    fetchAds();
   }, []);
+
+  useEffect(() => {
+    if (ads.length > 0) {
+      const interval = setInterval(() => {
+        setCurrentAd((prev) => (prev + 1) % ads.length);
+      }, 8000);
+
+      return () => clearInterval(interval);
+    }
+  }, [ads]);
 
   const handleClose = () => {
     setIsVisible(false);
   };
 
-  if (!isVisible) return null; // Don't render anything if not visible
+  if (!isVisible) return null;
+  if (isLoading) return <div className="advertisement-bar">Loading ads...</div>;
+  if (error) return <div className="advertisement-bar">Error: {error}</div>;
+  if (ads.length === 0) return null;
 
   return (
     <div className="advertisement-bar">
@@ -87,7 +108,7 @@ const AdvertisementBar = () => {
           transition={{ duration: 0.5 }}
           className="ad-content"
         >
-          {ads[currentAd]}
+          {ads[currentAd].text}
         </motion.div>
       </AnimatePresence>
       <button 
@@ -95,7 +116,7 @@ const AdvertisementBar = () => {
         onClick={handleClose}
         aria-label="Close advertisement"
       >
-        ×
+        × 
       </button>
     </div>
   );

@@ -183,7 +183,7 @@ const Register = () => {
 
         try {
             const response = await axios.post(
-                "http://127.0.0.1:8000/api/auth/register/", 
+                "https://cheetahx.onrender.com/api/auth/register/", 
                 formData
             );
 
@@ -483,3 +483,5 @@ const Register = () => {
 };
 
 export default Register;
+
+
