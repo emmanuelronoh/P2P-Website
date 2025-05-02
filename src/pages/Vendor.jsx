@@ -328,27 +328,6 @@ const VendorVerification = () => {
     setFormErrors(errors);
     return Object.keys(errors).length === 0;
   };
-
-  // Polling effect
-  useEffect(() => {
-    let pollingInterval;
-
-    const shouldPoll = state.verificationId &&
-      !['completed', 'rejected'].includes(state.verificationStatus) &&
-      state.pollCount < MAX_POLL_ATTEMPTS;
-
-    if (shouldPoll) {
-      pollingInterval = setInterval(async () => {
-        const status = await checkVerificationStatus(state.verificationId);
-        if (status && ['completed', 'rejected'].includes(status)) {
-          clearInterval(pollingInterval);
-        }
-      }, POLL_INTERVAL);
-    }
-
-    return () => clearInterval(pollingInterval);
-  }, [state.verificationId, state.verificationStatus, state.pollCount, checkVerificationStatus]);
-
   const startVerification = async (regenerate = false) => {
     if (!validateForm()) return;
 
