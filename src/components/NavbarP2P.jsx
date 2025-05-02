@@ -439,9 +439,6 @@ const Navbar = ({ toggleTheme, theme }) => {
                                     aria-label="Notifications"
                                 >
                                     <FaBell />
-                                    {notifications > 0 && (
-                                        <span className="p2p-notification-badge">{notifications}</span>
-                                    )}
                                 </button>
 
                                 {/* Messages */}

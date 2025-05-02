@@ -360,6 +360,15 @@ const FiatP2P = () => {
                 avg_release_time: '15 minutes'
             };
 
+            // First reset the form
+            setOrderState(prev => ({
+                ...prev,
+                amount: '',
+                price: '',
+                selectedPayment: ''
+            }));
+
+            // Make the API call to create the order
             const response = await axios.post(
                 'https://cheetahx.onrender.com/escrow/orders/',
                 orderData,
@@ -371,15 +380,7 @@ const FiatP2P = () => {
                 }
             );
 
-            // Reset the form first
-            setOrderState(prev => ({
-                ...prev,
-                amount: '',
-                price: '',
-                selectedPayment: ''
-            }));
-
-            // Then fetch fresh data from the server
+            // After successful creation, fetch the updated orders list
             const refreshedOrders = await axios.get('https://cheetahx.onrender.com/escrow/user-orders/', {
                 headers: {
                     Authorization: `Bearer ${token}`,
@@ -387,7 +388,7 @@ const FiatP2P = () => {
                 }
             });
 
-            // Transform and update only the userOrders part of the state
+            // Transform and update the userOrders state
             const transformedUserOrders = refreshedOrders.data.map(order => {
                 let paymentMethods = [];
                 if (Array.isArray(order.payment_methods)) {
@@ -429,7 +430,6 @@ const FiatP2P = () => {
 
         } catch (error) {
             console.error('Error creating order:', error);
-
             if (error.response?.status === 401) {
                 logout();
                 navigate('/login');
@@ -1068,11 +1068,11 @@ const FiatP2P = () => {
                                     <div className="modal-actions">
                                         {order.status === 'pending' && (
                                             <button
-                                            className="cancel-order-btn"
-                                            onClick={() => handleCancelOrder(order.id)}
-                                        >
-                                            Cancel Order
-                                        </button>
+                                                className="cancel-order-btn"
+                                                onClick={() => handleCancelOrder(order.id)}
+                                            >
+                                                Cancel Order
+                                            </button>
                                         )}
                                         {order.status === 'completed' && (
                                             <button className="feedback-btn">

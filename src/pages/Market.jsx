@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useMemo, useCallback } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import {
@@ -47,55 +46,33 @@ const DEFAULT_TRADER = {
   location: 'Unknown'
 };
 
-// ... (keep all your existing imports)
-
-const handleTradeClick = (trader) => {
-  const safeTrader = { ...DEFAULT_TRADER, ...trader };
-  
-  // Prepare the trade data to pass to the amount page
-  const tradeData = {
-    trader: {
-      id: safeTrader.id,
-      name: safeTrader.creator?.username || 'Anonymous',
-      rating: (safeTrader.creator?.trade_stats?.completion_rate || 0) / 20,
-      completedTrades: safeTrader.creator?.trade_stats?.total_trades || 0,
-      price: parseFloat(safeTrader.rate) || 0,
-      minLimit: parseFloat(safeTrader.min_amount) || 0,
-      maxLimit: parseFloat(safeTrader.max_amount) || 0,
-      paymentMethod: getPaymentMethods(safeTrader.payment_methods),
-      verifiedPayment: safeTrader.creator?.verification_status !== 'UNVERIFIED',
-      walletAddress: safeTrader.creator?.wallet_address || null,
-      terms: safeTrader.terms,
-      location: safeTrader.location
-    },
-    tradeType: filters.tradeType,
-    crypto: `${safeTrader.crypto_currency} - ${safeTrader.crypto_currency}` // You might want to map to full names
-  };
-
-  navigate("/amount", { state: tradeData });
-};
-
-// ... (rest of your existing market.jsx code)
 const TradingService = {
   fetchTraders: async (filters) => {
     try {
       const accessToken = localStorage.getItem('accessToken');
+      
+      // Prepare strict filters for API
       const apiFilters = {
-        transaction_type: filters.tradeType === 'Buy' ? 'BUY' : 'SELL',
+        transaction_type: filters.tradeType.toUpperCase(), // 'BUY' or 'SELL'
         crypto_currency: filters.crypto,
-        payment_methods: filters.paymentMethod === 'Any' ? '' : filters.paymentMethod,
-        location: filters.location,
-        sort_by: filters.sortBy
+        ...(filters.paymentMethod !== 'Any' && { 
+          payment_methods: filters.paymentMethod 
+        }),
+        ...(filters.location && { 
+          location: filters.location 
+        })
       };
 
-      const queryParams = new URLSearchParams();
-      for (const key in apiFilters) {
-        if (apiFilters[key]) {
-          queryParams.append(key, apiFilters[key]);
+      // Remove empty filters
+      Object.keys(apiFilters).forEach(key => {
+        if (apiFilters[key] === undefined || apiFilters[key] === '') {
+          delete apiFilters[key];
         }
-      }
+      });
 
-      const response = await fetch(`${API_BASE_URL}/crypto/trade-offers/?${queryParams.toString()}`, {
+      const queryParams = new URLSearchParams(apiFilters).toString();
+
+      const response = await fetch(`${API_BASE_URL}/crypto/trade-offers/?${queryParams}`, {
         method: "GET",
         headers: {
           "Content-Type": "application/json",
@@ -211,17 +188,23 @@ const Market = () => {
   }, [filterMemo, fetchTraders]);
 
   const processedTraders = useMemo(() => {
+    // First apply strict filtering based on search query
     const filtered = searchQuery
       ? traders.filter(trader => {
-        const query = searchQuery.toLowerCase();
-        const safeTrader = { ...DEFAULT_TRADER, ...trader };
-        return (
-          safeTrader.creator?.username?.toLowerCase().includes(query) ||
-          (safeTrader.payment_methods?.join(', ')?.toLowerCase().includes(query) || ''
-          ));
-      })
+          const query = searchQuery.toLowerCase();
+          const safeTrader = { ...DEFAULT_TRADER, ...trader };
+          return (
+            safeTrader.creator?.username?.toLowerCase().includes(query) ||
+            safeTrader.payment_methods?.some(method => 
+              method.toLowerCase().includes(query)
+            ) ||
+            safeTrader.crypto_currency?.toLowerCase().includes(query) ||
+            safeTrader.secondary_currency?.toLowerCase().includes(query)
+          );
+        })
       : traders;
 
+    // Then sort the results
     return [...filtered].sort((a, b) => {
       const safeA = { ...DEFAULT_TRADER, ...a };
       const safeB = { ...DEFAULT_TRADER, ...b };
@@ -265,17 +248,30 @@ const Market = () => {
 
   const handleTradeClick = (trader) => {
     const safeTrader = { ...DEFAULT_TRADER, ...trader };
-    navigate("/amount", {
-      state: {
-        trader: safeTrader,
-        tradeType: filters.tradeType,
-        crypto: filters.crypto
-      }
-    });
+    
+    const tradeData = {
+      trader: {
+        id: safeTrader.id,
+        name: safeTrader.creator?.username || 'Anonymous',
+        rating: (safeTrader.creator?.trade_stats?.completion_rate || 0) / 20,
+        completedTrades: safeTrader.creator?.trade_stats?.total_trades || 0,
+        price: parseFloat(safeTrader.rate) || 0,
+        minLimit: parseFloat(safeTrader.min_amount) || 0,
+        maxLimit: parseFloat(safeTrader.max_amount) || 0,
+        paymentMethod: getPaymentMethods(safeTrader.payment_methods),
+        verifiedPayment: safeTrader.creator?.verification_status !== 'UNVERIFIED',
+        walletAddress: safeTrader.creator?.wallet_address || null,
+        terms: safeTrader.terms,
+        location: safeTrader.location
+      },
+      tradeType: filters.tradeType,
+      crypto: safeTrader.crypto_currency
+    };
+
+    navigate("/amount", { state: tradeData });
   };
 
   const renderRatingStars = (completionRate) => {
-    // Convert completion rate (0-100) to 5-star rating (0-5)
     const rating = (completionRate || 0) / 20;
     return Array(5).fill(0).map((_, i) => (
       <FaStar
@@ -568,7 +564,6 @@ const Market = () => {
           )}
         </div>
       )}
-
 
       <div className="how-to-buy-section">
         <div className="buy-crypto-header">
