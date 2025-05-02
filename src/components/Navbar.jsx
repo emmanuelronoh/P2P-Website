@@ -260,67 +260,7 @@ const Navbar = ({ theme, toggleTheme }) => {
   const [provider, setProvider] = useState(null);
   const [signer, setSigner] = useState(null);
   const [chainId, setChainId] = useState(null);
-
-  // In Navbar.jsx, update the handleWalletConnect function:
-  const handleWalletConnect = useCallback((connectionData) => {
-    const { walletType, address, provider, chainId } = connectionData;
-
-    if (!address) return;
-
-    setWalletAddress(address);
-    localStorage.setItem("walletAddress", address);
-
-    if (provider) {
-      setProvider(provider);
-      const ethersProvider = new ethers.providers.Web3Provider(provider);
-      const signer = ethersProvider.getSigner();
-      setSigner(signer);
-      setChainId(chainId);
-
-      // Set up event listeners
-      provider.on('accountsChanged', (accounts) => {
-        if (accounts.length === 0) {
-          handleWalletDisconnect();
-        } else {
-          setWalletAddress(accounts[0]);
-          localStorage.setItem("walletAddress", accounts[0]);
-        }
-      });
-
-      provider.on('chainChanged', (chainId) => {
-        setChainId(parseInt(chainId, 16));
-        window.location.reload();
-      });
-
-      provider.on('disconnect', () => {
-        handleWalletDisconnect();
-      });
-    }
-
-    setShowWalletModal(false);
-  }, []);
-
-  const handleWalletDisconnect = () => {
-    setWalletAddress(null);
-    setProvider(null);
-    setSigner(null);
-    setChainId(null);
-    localStorage.removeItem("walletAddress");
-    setBalance("0.00");
-  };
-
-  const fetchBalance = async (address) => {
-    if (!provider || !address) return;
-
-    try {
-      const ethersProvider = new ethers.providers.Web3Provider(provider);
-      const balance = await ethersProvider.getBalance(address);
-      setBalance(ethers.utils.formatEther(balance));
-    } catch (error) {
-      console.error("Error fetching balance:", error);
-      setBalance("0.00");
-    }
-  };
+  
 
   useEffect(() => {
     const savedAddress = localStorage.getItem("walletAddress");
@@ -328,6 +268,91 @@ const Navbar = ({ theme, toggleTheme }) => {
       setWalletAddress(savedAddress);
     }
   }, []);
+
+  // Update the wallet state management in Navbar
+const [walletState, setWalletState] = useState({
+  address: localStorage.getItem("walletAddress") || null,
+  provider: null,
+  signer: null,
+  chainId: null,
+  balance: "0.00",
+  walletType: null
+});
+
+// Updated handleWalletConnect function
+const handleWalletConnect = useCallback((connectionData) => {
+  const { walletType, address, provider, chainId } = connectionData;
+
+  if (!address) return;
+
+  const newWalletState = {
+    address,
+    provider,
+    chainId,
+    walletType,
+    balance: "0.00" // Will be fetched next
+  };
+
+  setWalletState(newWalletState);
+  localStorage.setItem("walletAddress", address);
+
+  if (provider) {
+    const ethersProvider = new ethers.providers.Web3Provider(provider);
+    const signer = ethersProvider.getSigner();
+    setWalletState(prev => ({ ...prev, signer }));
+
+    // Set up event listeners
+    provider.on('accountsChanged', (accounts) => {
+      if (accounts.length === 0) {
+        handleWalletDisconnect();
+      } else {
+        setWalletState(prev => ({ ...prev, address: accounts[0] }));
+        localStorage.setItem("walletAddress", accounts[0]);
+        fetchBalance(accounts[0], provider);
+      }
+    });
+
+    provider.on('chainChanged', (chainId) => {
+      const newChainId = parseInt(chainId, 16);
+      setWalletState(prev => ({ ...prev, chainId: newChainId }));
+      window.location.reload();
+    });
+
+    provider.on('disconnect', () => {
+      handleWalletDisconnect();
+    });
+
+    // Fetch initial balance
+    fetchBalance(address, provider);
+  }
+
+  setShowWalletModal(false);
+}, []);
+
+const handleWalletDisconnect = useCallback(() => {
+  setWalletState({
+    address: null,
+    provider: null,
+    signer: null,
+    chainId: null,
+    balance: "0.00",
+    walletType: null
+  });
+  localStorage.removeItem("walletAddress");
+}, []);
+
+const fetchBalance = useCallback(async (address, provider) => {
+  if (!provider || !address) return;
+
+  try {
+    const ethersProvider = new ethers.providers.Web3Provider(provider);
+    const balance = await ethersProvider.getBalance(address);
+    setWalletState(prev => ({ ...prev, balance: ethers.utils.formatEther(balance) }));
+  } catch (error) {
+    console.error("Error fetching balance:", error);
+    setWalletState(prev => ({ ...prev, balance: "0.00" }));
+  }
+}, []);
 
   const handleLogout = useCallback(async () => {
     try {
