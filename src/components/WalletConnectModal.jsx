@@ -1032,7 +1032,7 @@ import WalletLink from "@coinbase/wallet-sdk";
 import { QRCodeCanvas } from 'qrcode.react';
 import { BrowserProvider } from 'ethers';
 import WalletConnect from '@walletconnect/client';
-import { WalletConnectConnector } from 'wagmi/connectors/walletConnect'
+import WalletConnectProvider from "@walletconnect/ethereum-provider";
 import axios from 'axios';
 import '../styles/ConnectWalletModal.css';
 
