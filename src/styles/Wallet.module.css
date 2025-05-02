@@ -47,7 +47,7 @@
   
   .submitButton {
     padding: 10px;
-    background: #81C3DB;
+    background: rgb(0 123 255);
     color: white;
     border: none;
     border-radius: 5px;
@@ -56,7 +56,7 @@
   }
   
   .submitButton:hover {
-    background: #81C3DB;
+    background: rgb(0 123 255);
   }
   
   .transactionHistory {

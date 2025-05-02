@@ -1,7 +1,7 @@
 
 :root {
-  --primary-color: #81C3DB;
-  --primary-hover: #81C3DB;
+  --primary-color: rgb(0 123 255);
+  --primary-hover: rgb(0 123 255);
   --secondary-color: #f97316;
   --secondary-hover: #ea580c;
   --text-primary: #1f2937;
@@ -136,7 +136,7 @@
 }
 
 .tab-button.active {
-  background: #81C3DB;
+  background: rgb(0 123 255);
   color: white !important;
 }
 
@@ -229,14 +229,14 @@
 }
 
 .order-tabs .tab.active {
-  background: #81C3DB;
+  background: rgb(0 123 255);
   color: white;
-  border-color: #81C3DB;
+  border-color: rgb(0 123 255);
 }
 
 
 .type-btn.active {
-  background-color: #81C3DB;
+  background-color: rgb(0 123 255);
   color: white;
 }
 
@@ -1007,7 +1007,7 @@ select {
 
 /* Security Banner */
 .security-banner {
-  background-color: #81C3DB;
+  background-color: rgb(0 123 255);
   color: white;
   padding: 2rem;
   margin-top: 3rem;

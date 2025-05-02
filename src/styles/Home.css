@@ -15,7 +15,7 @@
   --input-bg: #ffffff;
   --input-border: #ddd;
   --primary-gradient: #FF8A00;
-  --secondary-gradient: #81C3DB;
+  --secondary-gradient: rgb(0 123 255);
   --floating-coin-opacity: 0.1;
   --wave-bg: radial-gradient(circle at 50% 0%, rgba(0, 150, 255, 0.1) 0%, transparent 70%);
   --faq-bg: linear-gradient(135deg, #f9f9ff 0%, #ffffff 100%);
@@ -461,7 +461,7 @@
 .preview-find-buyers {
   width: 100%;
   padding: 12px;
-  background: #81C3DB;
+  background: rgb(0 123 255);
   border: none;
   border-radius: 8px;
   color: white;

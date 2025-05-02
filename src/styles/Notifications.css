@@ -26,12 +26,12 @@
   
   .title-icon {
     margin-right: 0.75rem;
-    color: #81C3DB;
+    color: rgb(0 123 255);
   }
   
   .unread-count {
     margin-left: 0.75rem;
-    background-color: #81C3DB;
+    background-color: rgb(0 123 255);
     color: white;
     font-size: 0.875rem;
     font-weight: 600;
@@ -81,7 +81,7 @@
   }
   
   .filter-tab.active {
-    background: #81C3DB;
+    background: rgb(0 123 255);
     color: white;
   }
   
@@ -166,7 +166,7 @@
   }
   
   .notification-item.unread {
-    border-left-color: #81C3DB;
+    border-left-color: rgb(0 123 255);
   }
   
   .notification-content {
@@ -193,7 +193,7 @@
   }
   
   .trade-icon {
-    color: #81C3DB;
+    color: rgb(0 123 255);
   }
   
   .escrow-icon {
@@ -201,7 +201,7 @@
   }
   
   .message-icon {
-    color: #81C3DB;
+    color: rgb(0 123 255);
   }
   
   .system-icon {

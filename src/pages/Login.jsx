@@ -146,7 +146,7 @@ const Login = () => {
             boxShadow: "0 1px 2px 0 rgba(0, 0, 0, 0.05)"
         },
         active: {
-            borderColor: "#81C3DB",
+            borderColor: "rgb(0 123 255)",
             boxShadow: "0 0 0 3px rgba(99, 102, 241, 0.2)"
         },
         error: {

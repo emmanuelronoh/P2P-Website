@@ -1,5 +1,5 @@
 :root {
-    --primary-color: #81C3DB;
+    --primary-color: rgb(0 123 255);
     --primary-hover: #e07b00;
     --secondary-color: #a29bfe;
     --accent-color: #FF6B00;
@@ -30,7 +30,7 @@
 
 /* Advertisement bar */
 .p2p-advertisement-bar {
-    background: linear-gradient(to right, #81C3DB, #FF6B00);
+    background: linear-gradient(to right, rgb(0 123 255), #FF6B00);
     color: white;
     padding: 0.6rem 1rem;
     text-align: center;

@@ -1,8 +1,8 @@
 
 :root {
-  --primary-color: #81C3DB;
-  --primary-dark: #81C3DB;
-  --secondary-color: #81C3DB;
+  --primary-color: rgb(0 123 255);
+  --primary-dark: rgb(0 123 255);
+  --secondary-color: rgb(0 123 255);
   --error-color: #d32f2f;
   --warning-color: #ffa000;
   --text-primary: #212121;

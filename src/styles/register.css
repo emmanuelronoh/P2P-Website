@@ -1,7 +1,7 @@
 /* register.css */
 :root {
-    --primary-color: #81C3DB;
-    --primary-hover: #81C3DB;
+    --primary-color: rgb(0 123 255);
+    --primary-hover: rgb(0 123 255);
     --success-color: #4cc9f0;
     --error-color: #f72585;
     --text-color: #2b2d42;

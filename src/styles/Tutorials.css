@@ -7,7 +7,7 @@
   }
   /* Premium P2P Header Style */
 .tutorials-header {
-  background: #81C3DB;
+  background: rgb(0 123 255);
   color: #ffffff;
   padding: 6rem 2rem;
   text-align: center;
@@ -23,7 +23,7 @@
 /* When user scrolls */
 .tutorials-header.scrolled {
   padding: 2rem;
-  background: #81C3DB;
+  background: rgb(0 123 255);
 }
 
 /* Add a subtle glowing effect */
@@ -164,7 +164,7 @@
   }
   
   .section-links li.active {
-    background-color: #81C3DB;
+    background-color: rgb(0 123 255);
     color: white;
   }
   
@@ -291,7 +291,7 @@
   .step-number {
     width: 32px;
     height: 32px;
-    background-color: #81C3DB;
+    background-color: rgb(0 123 255);
     color: white;
     border-radius: 50%;
     display: flex;
@@ -350,7 +350,7 @@
   
   .form-button {
     height: 40px;
-    background-color: #81C3DB;
+    background-color: rgb(0 123 255);
     color: white;
     border-radius: 6px;
     display: flex;
@@ -404,7 +404,7 @@
   .payment-method svg {
     font-size: 1.5rem;
     margin-bottom: 0.5rem;
-    color: #81C3DB;
+    color: rgb(0 123 255);
   }
   
   .escrow-diagram {
@@ -448,7 +448,7 @@
   .btn-interactive {
     margin-top: 1.5rem;
     padding: 0.75rem 1.5rem;
-    background-color: #81C3DB;
+    background-color: rgb(0 123 255);
     color: white;
     border: none;
     border-radius: 8px;
@@ -516,7 +516,7 @@
     left: 0;
     width: 30%;
     height: 100%;
-    background-color: #81C3DB;
+    background-color: rgb(0 123 255);
   }
   
   .video-chapters {
@@ -554,18 +554,18 @@
   }
   
   .btn-primary {
-    background-color: #81C3DB;
+    background-color: rgb(0 123 255);
     color: white;
     border: none;
   }
   
   .btn-primary:hover {
-    background-color: #81C3DB;
+    background-color: rgb(0 123 255);
   }
   
   .btn-secondary {
     background-color: white;
-    color: #81C3DB;
+    color: rgb(0 123 255);
     border: 1px solid #e2e8f0;
   }
   
@@ -595,7 +595,7 @@
   .step-number {
     width: 32px;
     height: 32px;
-    background-color:#81C3DB !important;
+    background-color:rgb(0 123 255) !important;
     color: white;
     border-radius: 50%;
     display: flex;
@@ -648,7 +648,7 @@
   .btn-place-order {
     width: 100%;
     padding: 0.75rem;
-    background-color: #81C3DB;
+    background-color: rgb(0 123 255);
     color: white;
     border: none;
     border-radius: 6px;
@@ -701,7 +701,7 @@
   .release-icon {
     width: 40px;
     height: 40px;
-    background-color: #81C3DB;
+    background-color: rgb(0 123 255);
     color: white;
     border-radius: 50%;
     display: flex;
@@ -719,7 +719,7 @@
   .tutorials-cta {
     text-align: center;
     padding: 4rem 2rem;
-    background: #81C3DB;
+    background: rgb(0 123 255);
     color: white;
     margin-top: 2rem;
   }

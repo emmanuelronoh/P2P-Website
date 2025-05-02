@@ -1,7 +1,7 @@
 /* Base Styles */
 :root {
-  --primary-color: #81c3db;
-  --primary-hover: #81c3db;
+  --primary-color: rgb(0 123 255);
+  --primary-hover: rgb(0 123 255);
   --text-primary: #202124;
   --text-secondary: #5f6368;
   --bg-color: #ffffff;

@@ -50,7 +50,7 @@
   }
   
   .tutorial-nav-btn.finish {
-    background-color: #81C3DB;
+    background-color: rgb(0 123 255);
     color: white;
   }
   
@@ -70,5 +70,5 @@
   }
   
   .step-indicator.active {
-    background-color: #81C3DB;
+    background-color: rgb(0 123 255);
   }

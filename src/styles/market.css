@@ -1,8 +1,8 @@
 /* Base Styles */
 :root {
-    --primary-color: #81C3DB;
-    --secondary-color: #81C3DB;
-    --buy-color: #81C3DB;
+    --primary-color: rgb(0 123 255);
+    --secondary-color: rgb(0 123 255);
+    --buy-color: rgb(0 123 255);
     --sell-color: #ff3d00;
     --premium-color: #D4AF37;
     --online-color: #4caf50;
@@ -42,7 +42,7 @@
   }
   
   .become-vendor-btn {
-    background: linear-gradient(135deg, #81C3DB);
+    background: linear-gradient(135deg, rgb(0 123 255));
     color: white;
     padding: 12px 24px;
     border-radius: 30px;
@@ -654,9 +654,9 @@
 }
 
 .pagination-controls button.active {
-  background: #81C3DB;
+  background: rgb(0 123 255);
   color: white;
-  border-color: #81C3DB;
+  border-color: rgb(0 123 255);
 }
 
 .pagination-controls button:disabled {

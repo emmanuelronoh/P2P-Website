@@ -1,7 +1,7 @@
 /* VendorDashboard/styles.css */
 
 :root {
-    --primary: #81C3DB;
+    --primary: rgb(0 123 255);
     --gray: #6b7280;
     --bg-light: #f9fafb;
     --card-bg: #ffffff;
@@ -103,10 +103,10 @@
   
 /* Base Styles */
 :root {
-  --primary-color: #81C3DB;
-  --primary-dark: #81C3DB;
-  --primary-light: #81C3DB;
-  --secondary-color: #81C3DB;
+  --primary-color: rgb(0 123 255);
+  --primary-dark: rgb(0 123 255);
+  --primary-light: rgb(0 123 255);
+  --secondary-color: rgb(0 123 255);
   --secondary-dark: #009624;
   --danger-color: #ff3d00;
   --warning-color: #ff9100;
