@@ -261,7 +261,6 @@
 // export default VendorVerification;
 
 
-
 import React, { useState, useEffect, useCallback } from 'react';
 import axios from 'axios';
 import '../styles/Vendor.css';
@@ -270,7 +269,6 @@ const POLL_INTERVAL = 15000; // 15 seconds
 const MAX_POLL_ATTEMPTS = 20; // ~5 minutes total
 
 const VendorVerification = () => {
-  // Combined state for better organization
   const [state, setState] = useState({
     loading: false,
     error: null,
@@ -291,9 +289,13 @@ const VendorVerification = () => {
   const [formErrors, setFormErrors] = useState({});
   const [shake, setShake] = useState(false);
 
-  // Get access token from localStorage
+  // Enhanced getAccessToken function with validation
   const getAccessToken = () => {
-    return localStorage.getItem('accessToken');
+    const token = localStorage.getItem('accessToken');
+    if (!token) {
+      throw new Error('No access token found. Please log in again.');
+    }
+    return token;
   };
 
   // Handle error animation
@@ -334,7 +336,8 @@ const VendorVerification = () => {
         `https://sumsub-cheetahx-kyc.onrender.com/api/verification-status/${verificationId}`,
         {
           headers: {
-            'Authorization': `Bearer ${accessToken}`
+            'Authorization': `Bearer ${accessToken}`,
+            'Content-Type': 'application/json'
           }
         }
       );
@@ -349,9 +352,12 @@ const VendorVerification = () => {
       return response.data.status;
     } catch (err) {
       console.error('Status check failed:', err);
+      const errorMessage = err.response?.data?.error || 
+                         (err.response?.status === 401 ? 'Session expired. Please log in again.' : 'Failed to check verification status');
+      
       setState(prev => ({
         ...prev,
-        error: err.response?.data?.error || 'Failed to check verification status'
+        error: errorMessage
       }));
       return null;
     }
@@ -380,14 +386,17 @@ const VendorVerification = () => {
   const startVerification = async (regenerate = false) => {
     if (!validateForm()) return;
 
-    setState({
+    setState(prev => ({
+      ...prev,
       loading: true,
       error: null,
       verificationStatus: null,
       pollCount: 0
-    });
+    }));
 
     try {
+      const accessToken = getAccessToken();
+      
       // Step 1: Create verification record in Django
       const createResponse = await axios.post(
         'https://cheetahx.onrender.com/kyc/verifications/',
@@ -397,7 +406,8 @@ const VendorVerification = () => {
         },
         {
           headers: {
-            'Authorization': `Bearer ${getAccessToken()}`
+            'Authorization': `Bearer ${accessToken}`,
+            'Content-Type': 'application/json'
           }
         }
       );
@@ -413,6 +423,11 @@ const VendorVerification = () => {
         userId: formData.email,
         verificationId: verificationId,
         levelName: 'kyc_verification'
+      }, {
+        headers: {
+          'Authorization': `Bearer ${accessToken}`,
+          'Content-Type': 'application/json'
+        }
       });
 
       setState(prev => ({
@@ -426,9 +441,12 @@ const VendorVerification = () => {
       window.open(linkResponse.data.url, '_blank');
 
     } catch (err) {
+      const errorMessage = err.response?.data?.error || 
+                         (err.response?.status === 401 ? 'Session expired. Please log in again.' : 'Verification failed');
+      
       setState(prev => ({
         ...prev,
-        error: err.response?.data?.error || 'Verification failed',
+        error: errorMessage,
         loading: false
       }));
     }
@@ -574,13 +592,15 @@ const VendorVerification = () => {
                 ) : 'Start Verification'}
               </button>
 
-              <button
-                className="secondary-button"
-                onClick={() => startVerification(true)}
-                disabled={state.loading}
-              >
-                Restart Verification
-              </button>
+              {state.verificationId && (
+                <button
+                  className="secondary-button"
+                  onClick={() => startVerification(true)}
+                  disabled={state.loading}
+                >
+                  Restart Verification
+                </button>
+              )}
             </div>
           </div>
         ) : (
@@ -591,6 +611,14 @@ const VendorVerification = () => {
           <div className="error-message-container">
             <div className="error-icon">!</div>
             <div>{state.error}</div>
+            {state.error.includes('Session expired') && (
+              <button 
+                className="secondary-button small"
+                onClick={() => window.location.href = '/login'}
+              >
+                Go to Login
+              </button>
+            )}
           </div>
         )}
       </div>
