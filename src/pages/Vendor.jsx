@@ -329,40 +329,6 @@ const VendorVerification = () => {
     return Object.keys(errors).length === 0;
   };
 
-  const checkVerificationStatus = useCallback(async (verificationId) => {
-    try {
-      const accessToken = getAccessToken();
-      const response = await axios.get(
-        `https://sumsub-cheetahx-kyc.onrender.com/api/verification-status/${verificationId}`,
-        {
-          headers: {
-            'Authorization': `Bearer ${accessToken}`,
-            'Content-Type': 'application/json'
-          }
-        }
-      );
-
-      setState(prev => ({
-        ...prev,
-        verificationStatus: response.data.status,
-        verificationResult: response.data.result,
-        pollCount: prev.pollCount + 1
-      }));
-
-      return response.data.status;
-    } catch (err) {
-      console.error('Status check failed:', err);
-      const errorMessage = err.response?.data?.error || 
-                         (err.response?.status === 401 ? 'Session expired. Please log in again.' : 'Failed to check verification status');
-      
-      setState(prev => ({
-        ...prev,
-        error: errorMessage
-      }));
-      return null;
-    }
-  }, []);
-
   // Polling effect
   useEffect(() => {
     let pollingInterval;
