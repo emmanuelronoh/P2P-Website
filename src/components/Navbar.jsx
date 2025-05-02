@@ -1,7 +1,7 @@
 import React from "react";
 import { useState, useEffect, useRef, useCallback } from "react";
 import { Link, useNavigate, useLocation } from "react-router-dom";
-import { ethers } from 'ethers';
+import { ethers } from 'ethers'
 import WalletConnectProvider from "@walletconnect/ethereum-provider";
 import { useAuth } from '../contexts/AuthContext';
 import {
@@ -341,18 +341,17 @@ const handleWalletDisconnect = useCallback(() => {
   localStorage.removeItem("walletAddress");
 }, []);
 
-const fetchBalance = useCallback(async (address, provider) => {
-  if (!provider || !address) return;
-
+const fetchBalance = async () => {
   try {
-    const ethersProvider = new ethers.providers.Web3Provider(provider);
-    const balance = await ethersProvider.getBalance(address);
-    setWalletState(prev => ({ ...prev, balance: ethers.utils.formatEther(balance) }));
+    const response = await axios.get('/api/user/balance', {
+      headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
+    });
+    setBalance(response.data.balance);
   } catch (error) {
-    console.error("Error fetching balance:", error);
-    setWalletState(prev => ({ ...prev, balance: "0.00" }));
+    console.error("Balance fetch failed:", error);
+    setBalance("0.00");
   }
-}, []);
+};
 
   const handleLogout = useCallback(async () => {
     try {
