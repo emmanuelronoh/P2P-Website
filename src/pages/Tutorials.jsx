@@ -260,10 +260,10 @@ const TutorialsPage = () => {
                         </div>
                     )
                 },
-                // Additional core trading tutorials would follow similar structure
+
             ]
         },
-        // Additional sections would follow the same pattern
+
     ];
 
     return (

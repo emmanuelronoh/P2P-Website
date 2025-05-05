@@ -70,11 +70,9 @@ const Support = () => {
       });
     } catch (error) {
       console.error('Error fetching support stats:', error);
-      // Use default values if API fails
     }
   };
   
-  // Check live chat availability
   const checkLiveChatAvailability = async () => {
     try {
       const response = await fetch(`${API_BASE_URL}/live-chat/status`);
@@ -87,7 +85,6 @@ const Support = () => {
     }
   };
   
-  // Handle form submission
   const handleSubmit = async (e) => {
     e.preventDefault();
     setIsSubmitting(true);
