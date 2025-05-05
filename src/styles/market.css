@@ -51,6 +51,7 @@
     display: inline-block;
     transition: all 0.3s ease;
     box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+    box-sizing:none
   }
   
   .become-vendor-btn:hover {
@@ -472,7 +473,7 @@
   }
   
   .trade-button.buy {
-    background: #2e7d32;
+    background: rgb(0 123 255);
   }
   
   .trade-button.sell {
@@ -684,7 +685,7 @@
   font-size: 2.5rem;
   color: #1a2b50;
   margin-bottom: 15px;
-  background: linear-gradient(90deg, #2c3e50, #4a90e2);
+  background: linear-gradient(90deg, #2c3e50, rgb(0 123 255));
 
   /* Standard and vendor-prefixed background-clip */
   background-clip: text;
@@ -706,7 +707,7 @@
   transform: translateX(-50%);
   width: 80px;
   height: 4px;
-  background: linear-gradient(90deg, #4a90e2, #2c3e50);
+  background: linear-gradient(90deg, rgb(0 123 255), #2c3e50);
   border-radius: 2px;
 }
 
@@ -731,7 +732,7 @@
   left: 50px;
   right: 50px;
   height: 3px;
-  background: linear-gradient(90deg, #4a90e2, rgba(74,144,226,0.2));
+  background: linear-gradient(90deg, rgb(0 123 255), rgba(74,144,226,0.2));
   z-index: 1;
 }
 
@@ -766,18 +767,18 @@
 
 .icon-circle circle {
   fill: #f0f5ff;
-  stroke: #4a90e2;
+  stroke: rgb(0 123 255);
   stroke-width: 3;
   transition: all 0.3s ease;
 }
 
 .step-card:hover .icon-circle circle {
-  fill: #4a90e2;
-  stroke: #4a90e2;
+  fill: rgb(0 123 255);
+  stroke: rgb(0 123 255);
 }
 
 .icon-circle path {
-  stroke: #4a90e2;
+  stroke: rgb(0 123 255);
   stroke-width: 5;
   stroke-linecap: round;
   stroke-linejoin: round;
@@ -822,7 +823,7 @@
 }
 
 .step-arrow path {
-  stroke: #4a90e2;
+  stroke: rgb(0 123 255);
   stroke-width: 2;
   stroke-linecap: round;
   stroke-linejoin: round;
@@ -835,7 +836,7 @@
 }
 
 .glow-button {
-  background: linear-gradient(90deg, #4a90e2, #2c3e50);
+  background: linear-gradient(90deg, rgb(0 123 255), #2c3e50);
   color: white;
   border: none;
   padding: 15px 35px;

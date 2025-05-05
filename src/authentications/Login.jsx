@@ -5,7 +5,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { FiMail, FiLock, FiEye, FiEyeOff, FiArrowRight } from "react-icons/fi";
 import axios from "axios";
 import { useAuth } from "../contexts/AuthContext"; // Import the auth context
-import "../styles/login.css";
+import "./login.css";
 
 const Login = () => {
     const [email, setEmail] = useState("");
@@ -78,9 +78,10 @@ const Login = () => {
     
             // Update auth context
             await authLogin({
-                token: response.data.accessToken,
+                accessToken: response.data.accessToken,
+                refreshToken: response.data.refreshToken,
                 user: response.data.user
-            });
+              });
     
             // Debug logging
             console.log("Login successful, tokens:", {
@@ -285,7 +286,7 @@ const Login = () => {
                                 className={`trade-type-btn ${tradeType === 'fiat' ? 'active' : ''}`}
                                 onClick={() => setTradeType('fiat')}
                             >
-                                Fiat
+                                Cash
                             </button>
                         </div>
                     </motion.div>

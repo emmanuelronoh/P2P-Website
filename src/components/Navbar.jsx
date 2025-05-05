@@ -62,7 +62,7 @@ const AdvertisementBar = () => {
   useEffect(() => {
     const fetchAds = async () => {
       try {
-        const response = await fetch('https://cheetahx.onrender.com/api/auth/advertisements/'); // Your API endpoint
+        const response = await fetch('https://cheetahx.onrender.com/api/auth/advertisements/'); 
         if (!response.ok) {
           throw new Error('Failed to fetch advertisements');
         }
@@ -261,43 +261,67 @@ const Navbar = ({ theme, toggleTheme }) => {
   const [signer, setSigner] = useState(null);
   const [chainId, setChainId] = useState(null);
 
-  // In Navbar.jsx, update the handleWalletConnect function:
-  const handleWalletConnect = useCallback((connectionData) => {
-    const { walletType, address, provider, chainId } = connectionData;
-
-    if (!address) return;
-
-    setWalletAddress(address);
-    localStorage.setItem("walletAddress", address);
-
-    if (provider) {
-      setProvider(provider);
-      const ethersProvider = new ethers.providers.Web3Provider(provider);
-      const signer = ethersProvider.getSigner();
-      setSigner(signer);
-      setChainId(chainId);
-
-      // Set up event listeners
-      provider.on('accountsChanged', (accounts) => {
-        if (accounts.length === 0) {
-          handleWalletDisconnect();
-        } else {
-          setWalletAddress(accounts[0]);
-          localStorage.setItem("walletAddress", accounts[0]);
+  const handleWalletConnect = useCallback(async (connectionData) => {
+    try {
+      const { walletType, address, provider, chainId } = connectionData;
+  
+      if (!address) {
+        throw new Error('No wallet address provided');
+      }
+  
+      // Validate provider
+      if (provider) {
+        if (typeof provider.request !== 'function') {
+          throw new Error('Invalid provider - does not implement EIP-1193');
         }
-      });
-
-      provider.on('chainChanged', (chainId) => {
-        setChainId(parseInt(chainId, 16));
-        window.location.reload();
-      });
-
-      provider.on('disconnect', () => {
-        handleWalletDisconnect();
-      });
+  
+        setProvider(provider);
+        
+        // Ethers v6 provider initialization
+        let ethersProvider;
+        try {
+          ethersProvider = new ethers.BrowserProvider(provider);
+          const signer = await ethersProvider.getSigner();
+          
+          setSigner(signer);
+          setChainId(chainId);
+          setWalletAddress(address);
+          localStorage.setItem("walletAddress", address);
+  
+          // Set up event listeners
+          provider.on('accountsChanged', (accounts) => {
+            if (accounts.length === 0) {
+              handleWalletDisconnect();
+            } else {
+              setWalletAddress(accounts[0]);
+              localStorage.setItem("walletAddress", accounts[0]);
+            }
+          });
+  
+          provider.on('chainChanged', (newChainId) => {
+            setChainId(parseInt(newChainId, 16));
+            window.location.reload();
+          });
+  
+          provider.on('disconnect', () => {
+            handleWalletDisconnect();
+          });
+  
+          // Fetch initial balance
+          await fetchBalance(address);
+        } catch (error) {
+          console.error('Provider initialization error:', error);
+          throw new Error('Failed to initialize provider');
+        }
+      }
+  
+      setShowWalletModal(false);
+      return true;
+    } catch (error) {
+      console.error('Wallet connection error:', error);
+      // You might want to set some error state here to show to the user
+      return false;
     }
-
-    setShowWalletModal(false);
   }, []);
 
   const handleWalletDisconnect = () => {
@@ -311,11 +335,11 @@ const Navbar = ({ theme, toggleTheme }) => {
 
   const fetchBalance = async (address) => {
     if (!provider || !address) return;
-
+  
     try {
-      const ethersProvider = new ethers.providers.Web3Provider(provider);
+      const ethersProvider = new ethers.BrowserProvider(provider);
       const balance = await ethersProvider.getBalance(address);
-      setBalance(ethers.utils.formatEther(balance));
+      setBalance(ethers.formatEther(balance));
     } catch (error) {
       console.error("Error fetching balance:", error);
       setBalance("0.00");
@@ -373,107 +397,107 @@ const Navbar = ({ theme, toggleTheme }) => {
       { label: "Register", path: "/register", icon: FaUserPlus }
     ];
 
-  const WalletInfo = () => {
-    const [localWalletAddress, setLocalWalletAddress] = useState(
-      localStorage.getItem("walletAddress") || null
-    );
-
-    useEffect(() => {
-      const handleStorageChange = () => {
-        setLocalWalletAddress(localStorage.getItem("walletAddress"));
-      };
-
-      window.addEventListener('storage', handleStorageChange);
-      return () => window.removeEventListener('storage', handleStorageChange);
-    }, []);
-
-    if (!localWalletAddress && !walletAddress) {
-      return (
-        <button
-          className="connect-wallet-btn"
-          onClick={() => setShowWalletModal(true)}
-        >
-          <FaWallet className="wallet-icon" />
-          {!isMobile ? "Connect Wallet" : "Connect"}
-        </button>
+    const WalletInfo = () => {
+      const [localWalletAddress, setLocalWalletAddress] = useState(
+        localStorage.getItem("walletAddress") || null
       );
-    }
-
-    const displayAddress = walletAddress || localWalletAddress;
-
-    return (
-      <div className="wallet-connected-container">
-        {!isMobile && (
-          <>
-            <div className="network-indicator">
-              {chainId === 1 ? (
-                <span className="mainnet">Mainnet</span>
-              ) : chainId === 5 ? (
-                <span className="testnet">Goerli</span>
-              ) : chainId === 56 ? (
-                <span className="bsc">BSC</span>
-              ) : chainId ? (
-                <span className="custom-chain">Chain {chainId}</span>
-              ) : (
-                <span className="unknown-network">Unknown</span>
-              )}
-            </div>
-            <div className="wallet-balance" onClick={() => navigate('/wallet')}>
-              {parseFloat(balance).toFixed(4)} ETH
-            </div>
-          </>
-        )}
-
-        <div className="wallet-address-dropdown">
+  
+      useEffect(() => {
+        const handleStorageChange = () => {
+          setLocalWalletAddress(localStorage.getItem("walletAddress"));
+        };
+  
+        window.addEventListener('storage', handleStorageChange);
+        return () => window.removeEventListener('storage', handleStorageChange);
+      }, []);
+  
+      const displayAddress = walletAddress || localWalletAddress;
+  
+      if (!displayAddress) {
+        return (
           <button
-            className="wallet-address-btn"
-            onClick={() => navigate('/wallet')}
-            aria-label="Wallet address"
+            className="connect-wallet-btn"
+            onClick={() => setShowWalletModal(true)}
           >
             <FaWallet className="wallet-icon" />
-            <span className="address-short">
-              {`${walletAddress.substring(0, 4)}...${walletAddress.substring(walletAddress.length - 4)}`}
-            </span>
-            {!isMobile && <FaChevronDown className="dropdown-chevron" />}
+            {!isMobile ? "Connect Wallet" : "Connect"}
           </button>
-
+        );
+      }
+  
+      return (
+        <div className="wallet-connected-container">
           {!isMobile && (
-            <div className="wallet-dropdown-menu">
-              <div className="wallet-dropdown-header">
-                <span className="full-address" title={walletAddress}>
-                  {walletAddress}
-                </span>
-                <span className="network-badge">
-                  {chainId === 1 ? 'Mainnet' :
-                    chainId === 5 ? 'Goerli' :
-                      chainId === 56 ? 'BSC' :
-                        chainId ? `Chain ${chainId}` : 'Unknown'}
-                </span>
+            <>
+              <div className="network-indicator">
+                {chainId === 1 ? (
+                  <span className="mainnet">Mainnet</span>
+                ) : chainId === 5 ? (
+                  <span className="testnet">Goerli</span>
+                ) : chainId === 56 ? (
+                  <span className="bsc">BSC</span>
+                ) : chainId ? (
+                  <span className="custom-chain">Chain {chainId}</span>
+                ) : (
+                  <span className="unknown-network">Unknown</span>
+                )}
               </div>
-              <button
-                className="wallet-dropdown-item"
-                onClick={() => navigate('/wallet')}
-              >
-                <FaWallet /> Wallet Dashboard
-              </button>
-              <button
-                className="wallet-dropdown-item"
-                onClick={() => navigate('/dashboard')}
-              >
-                <FaExchangeAlt /> Transactions
-              </button>
-              <button
-                className="wallet-dropdown-item disconnect"
-                onClick={handleWalletDisconnect}
-              >
-                <FaSignOutAlt /> Disconnect
-              </button>
-            </div>
+              <div className="wallet-balance" onClick={() => navigate('/wallet')}>
+                {parseFloat(balance).toFixed(4)} ETH
+              </div>
+            </>
           )}
+  
+          <div className="wallet-address-dropdown">
+            <button
+              className="wallet-address-btn"
+              onClick={() => navigate('/wallet')}
+              aria-label="Wallet address"
+            >
+              <FaWallet className="wallet-icon" />
+              <span className="address-short">
+                {displayAddress ? `${displayAddress.substring(0, 4)}...${displayAddress.substring(displayAddress.length - 4)}` : ''}
+              </span>
+              {!isMobile && <FaChevronDown className="dropdown-chevron" />}
+            </button>
+  
+            {!isMobile && displayAddress && (
+              <div className="wallet-dropdown-menu">
+                <div className="wallet-dropdown-header">
+                  <span className="full-address" title={displayAddress}>
+                    {displayAddress}
+                  </span>
+                  <span className="network-badge">
+                    {chainId === 1 ? 'Mainnet' :
+                      chainId === 5 ? 'Goerli' :
+                        chainId === 56 ? 'BSC' :
+                          chainId ? `Chain ${chainId}` : 'Unknown'}
+                  </span>
+                </div>
+                <button
+                  className="wallet-dropdown-item"
+                  onClick={() => navigate('/wallet')}
+                >
+                  <FaWallet /> Wallet Dashboard
+                </button>
+                <button
+                  className="wallet-dropdown-item"
+                  onClick={() => navigate('/dashboard')}
+                >
+                  <FaExchangeAlt /> Transactions
+                </button>
+                <button
+                  className="wallet-dropdown-item disconnect"
+                  onClick={handleWalletDisconnect}
+                >
+                  <FaSignOutAlt /> Disconnect
+                </button>
+              </div>
+            )}
+          </div>
         </div>
-      </div>
-    );
-  };
+      );
+    };
 
   return (
     <>

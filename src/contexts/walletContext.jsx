@@ -1,69 +1,114 @@
-
-import React, { createContext, useContext, useState, useEffect } from 'react';
+// walletContext.jsx
+import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
 import { ethers } from 'ethers';
 
-// Create context with proper typing
-const WalletContext = createContext({
-  address: null,
-  provider: null,
-  signer: null,
-  chainId: null,
-  balance: "0.00",
-  connectedWallets: [],
-  connectWallet: () => {},
-  disconnectWallet: () => {},
-  fetchBalance: () => {}
-});
+const WalletContext = createContext();
 
 export const WalletProvider = ({ children }) => {
-  // Initialize state with localStorage values
-  const [state, setState] = useState(() => {
-    try {
-      return {
-        address: localStorage.getItem('walletAddress') || null,
-        provider: null,
-        signer: null,
-        chainId: null,
-        balance: "0.00",
-        connectedWallets: JSON.parse(localStorage.getItem('connectedWallets') || '[]')
-      };
-    } catch (error) {
-      console.error('Error parsing localStorage:', error);
-      return {
-        address: null,
-        provider: null,
-        signer: null,
-        chainId: null,
-        balance: "0.00",
-        connectedWallets: []
-      };
-    }
+  const [walletState, setWalletState] = useState(() => {
+    // Initialize from localStorage
+    const savedAddress = localStorage.getItem('walletAddress');
+    const savedWallets = JSON.parse(localStorage.getItem('connectedWallets') || '[]');
+    const savedChainId = localStorage.getItem('chainId');
+    
+    return {
+      address: savedAddress,
+      provider: null,
+      signer: null,
+      chainId: savedChainId ? parseInt(savedChainId) : null,
+      balance: "0.00",
+      connectedWallets: savedWallets,
+      isConnected: !!savedAddress,
+    };
   });
 
-  // Memoized provider instance
-  const getProvider = (provider) => {
-    return new ethers.providers.Web3Provider(provider);
-  };
+  // Add event listeners for wallet changes
+  useEffect(() => {
+    const handleAccountsChanged = (accounts) => {
+      if (accounts.length === 0) {
+        disconnectWallet();
+      } else if (accounts[0] !== walletState.address) {
+        setWalletState(prev => ({
+          ...prev,
+          address: accounts[0],
+          isConnected: true
+        }));
+      }
+    };
 
-  const fetchBalance = async (address, provider) => {
+    const handleChainChanged = (chainId) => {
+      const parsedChainId = parseInt(chainId, 16);
+      setWalletState(prev => ({
+        ...prev,
+        chainId: parsedChainId
+      }));
+      window.location.reload();
+    };
+
+    const handleDisconnect = () => {
+      disconnectWallet();
+    };
+
+    if (walletState.provider?.provider?.on) {
+      const provider = walletState.provider.provider;
+      provider.on('accountsChanged', handleAccountsChanged);
+      provider.on('chainChanged', handleChainChanged);
+      provider.on('disconnect', handleDisconnect);
+
+      return () => {
+        provider.removeListener('accountsChanged', handleAccountsChanged);
+        provider.removeListener('chainChanged', handleChainChanged);
+        provider.removeListener('disconnect', handleDisconnect);
+      };
+    }
+  }, [walletState.provider, walletState.address]);
+
+  // Sync localStorage with state changes
+  useEffect(() => {
+    if (walletState.address) {
+      localStorage.setItem('walletAddress', walletState.address);
+      localStorage.setItem('chainId', walletState.chainId?.toString() || '');
+    } else {
+      localStorage.removeItem('walletAddress');
+      localStorage.removeItem('chainId');
+    }
+    localStorage.setItem('connectedWallets', JSON.stringify(walletState.connectedWallets));
+  }, [walletState.address, walletState.chainId, walletState.connectedWallets]);
+
+  const getProvider = useCallback((provider) => {
+    try {
+      if (!provider) return null;
+      return new ethers.BrowserProvider(provider);
+    } catch (error) {
+      console.error('Error creating provider:', error);
+      return null;
+    }
+  }, []);
+
+  const fetchBalance = useCallback(async (address, provider) => {
     if (!address || !provider) return "0.00";
-    
     try {
       const ethersProvider = getProvider(provider);
       const balance = await ethersProvider.getBalance(address);
-      return ethers.utils.formatEther(balance);
+      const formattedBalance = ethers.formatEther(balance);
+      setWalletState(prev => ({ ...prev, balance: formattedBalance }));
+      return formattedBalance;
     } catch (error) {
       console.error('Error fetching balance:', error);
       return "0.00";
     }
-  };
+  }, [getProvider]);
 
-  const connectWallet = async (walletType, address, provider) => {
-    if (!address || !provider) return false;
+  const connectWallet = useCallback(async (connectionData) => {
+    const { walletType, address, provider, chainId } = connectionData;
+    
+    if (!address) return false;
 
     try {
       const ethersProvider = getProvider(provider);
-      const signer = ethersProvider.getSigner();
+      if (!ethersProvider) throw new Error('Failed to initialize provider');
+
+      const signer = await ethersProvider.getSigner();
       const network = await ethersProvider.getNetwork();
       const balance = await fetchBalance(address, provider);
 
@@ -77,97 +122,55 @@ export const WalletProvider = ({ children }) => {
 
       const updatedState = {
         address,
-        provider,
+        provider: ethersProvider,
         signer,
         chainId: network.chainId,
         balance,
-        connectedWallets: [...state.connectedWallets, newWallet]
+        connectedWallets: [...walletState.connectedWallets, newWallet],
+        isConnected: true
       };
 
-      setState(updatedState);
-      localStorage.setItem('walletAddress', address);
-      localStorage.setItem('connectedWallets', JSON.stringify(updatedState.connectedWallets));
+      setWalletState(updatedState);
       
       return true;
     } catch (error) {
       console.error('Connection error:', error);
       return false;
     }
-  };
+  }, [fetchBalance, getProvider, walletState.connectedWallets]);
 
-  const disconnectWallet = () => {
-    setState({
+  const disconnectWallet = useCallback(() => {
+    // Try to disconnect provider if possible
+    if (walletState.provider?.provider?.disconnect) {
+      walletState.provider.provider.disconnect();
+    }
+
+    setWalletState({
       address: null,
       provider: null,
       signer: null,
       chainId: null,
       balance: "0.00",
-      connectedWallets: []
+      connectedWallets: [],
+      isConnected: false
     });
-    localStorage.removeItem('walletAddress');
-    localStorage.removeItem('connectedWallets');
-  };
+  }, [walletState.provider]);
 
-  // Initialize wallet connection on mount
+  // Auto-fetch balance when address or provider changes
   useEffect(() => {
-    const initializeWallet = async () => {
-      if (state.address && window.ethereum) {
-        try {
-          const accounts = await window.ethereum.request({ method: 'eth_accounts' });
-          if (accounts.length > 0 && accounts[0] === state.address) {
-            const balance = await fetchBalance(state.address, window.ethereum);
-            setState(prev => ({
-              ...prev,
-              balance,
-              provider: window.ethereum
-            }));
-          }
-        } catch (error) {
-          console.error('Wallet initialization error:', error);
-        }
-      }
-    };
-
-    initializeWallet();
-
-    // Cleanup on unmount
-    return () => {
-      // Add any necessary cleanup
-    };
-  }, []);
-
-  // Handle account/chain changes
-  useEffect(() => {
-    if (!window.ethereum) return;
-
-    const handleAccountsChanged = (accounts) => {
-      if (accounts.length === 0) {
-        disconnectWallet();
-      } else if (accounts[0] !== state.address) {
-        connectWallet('metamask', accounts[0], window.ethereum);
-      }
-    };
-
-    const handleChainChanged = () => {
-      window.location.reload();
-    };
-
-    window.ethereum.on('accountsChanged', handleAccountsChanged);
-    window.ethereum.on('chainChanged', handleChainChanged);
-
-    return () => {
-      window.ethereum.removeListener('accountsChanged', handleAccountsChanged);
-      window.ethereum.removeListener('chainChanged', handleChainChanged);
-    };
-  }, [state.address]);
+    if (walletState.address && walletState.provider) {
+      fetchBalance(walletState.address, walletState.provider.provider);
+    }
+  }, [walletState.address, walletState.provider, fetchBalance]);
 
   return (
     <WalletContext.Provider
       value={{
-        ...state,
+        ...walletState,
         connectWallet,
         disconnectWallet,
-        fetchBalance: (address) => fetchBalance(address, state.provider)
+        fetchBalance,
+        getProvider
       }}
     >
       {children}

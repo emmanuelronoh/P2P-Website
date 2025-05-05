@@ -57,7 +57,7 @@ export const formatCurrency = (amount, currency, compact = false) => {
    * @param {number} [decimals=8] - Decimal places to show
    * @returns {string} Formatted amount
    */
-  export const formatCrypto = (amount, decimals = 8) => {
+  export const formatCrypto = (amount, decimals = 3) => {
     if (isNaN(amount)) return '-';
     return amount.toFixed(decimals).replace(/\.?0+$/, '');
   };

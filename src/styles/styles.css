@@ -98,7 +98,7 @@
   }
   
   .agree-button.enabled:hover {
-    background-color: #047857;
+    background-color: rgb(0 123 255);
   }
   
 /* Base Styles */
@@ -107,7 +107,7 @@
   --primary-dark: rgb(0 123 255);
   --primary-light: rgb(0 123 255);
   --secondary-color: rgb(0 123 255);
-  --secondary-dark: #009624;
+  --secondary-dark: rgb(0 123 255);
   --danger-color: #ff3d00;
   --warning-color: #ff9100;
   --text-primary: #263238;

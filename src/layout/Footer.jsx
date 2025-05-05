@@ -4,7 +4,7 @@ import { FaBitcoin, FaEthereum, FaTwitter, FaTelegram, FaDiscord, FaGithub, FaMe
 import { SiBinance, SiSolana, SiRipple } from 'react-icons/si';
 import { ToastContainer, toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
-import "../styles/Footer.css";
+import "./Footer.css";
 
 const CheetahXFooter = () => {
   const [email, setEmail] = useState('');
@@ -116,22 +116,8 @@ const CheetahXFooter = () => {
               <h3 className="links-heading">Navigation</h3>
               <ul className="links-list">
                 <li><a href="/">Home</a></li>
-                <li><a href="/exchange">Exchange</a></li>
                 <li><a href="/wallet">Wallet</a></li>
                 <li><a href="/markets">Markets</a></li>
-                <li><a href="/portfolio">Portfolio</a></li>
-              </ul>
-            </div>
-
-            {/* Resources Links */}
-            <div className="footer-links">
-              <h3 className="links-heading">Resources</h3>
-              <ul className="links-list">
-                <li><a href="/blog">Blog</a></li>
-                <li><a href="/documentation">Documentation</a></li>
-                <li><a href="/api">API</a></li>
-                <li><a href="/status">System Status</a></li>
-                <li><a href="/glossary">Crypto Glossary</a></li>
               </ul>
             </div>
             {/* Legal Links */}
@@ -140,7 +126,7 @@ const CheetahXFooter = () => {
               <ul className="links-list">
                 <li><a href="/privacy">Privacy Policy</a></li>
                 <li><a href="/terms">Terms of Service</a></li>
-                <li><a href="/aml">AML Policy</a></li>
+                <li><a href="/tutorials">Documentation</a></li>
                 <li><a href="/risk">Risk Disclosure</a></li>
                 <li><a href="/cookie">Cookie Policy</a></li>
               </ul>
@@ -150,11 +136,9 @@ const CheetahXFooter = () => {
             <div className="footer-links">
               <h3 className="links-heading">Support</h3>
               <ul className="links-list">
-                <li><a href="/help">Help Center</a></li>
-                <li><a href="/contact">Contact Us</a></li>
+                <li><a href="/support">Contact Us</a></li>
                 <li><a href="/faq">FAQ</a></li>
                 <li><a href="/feedback">Feedback</a></li>
-                <li><a href="/community">Community</a></li>
               </ul>
             </div>
           </div>
@@ -191,11 +175,8 @@ const CheetahXFooter = () => {
               <a href="https://twitter.com/cheetahx" aria-label="Twitter"><FaTwitter className="social-icon" /></a>
               <a href="https://t.me/cheetahx" aria-label="Telegram"><FaTelegram className="social-icon" /></a>
               <a href="https://discord.gg/cheetahx" aria-label="Discord"><FaDiscord className="social-icon" /></a>
-              <a href="https://github.com/cheetahx" aria-label="GitHub"><FaGithub className="social-icon" /></a>
               <a href="https://medium.com/cheetahx" aria-label="Medium"><FaMedium className="social-icon" /></a>
               <a href="https://linkedin.com/company/cheetahx" aria-label="LinkedIn"><FaLinkedin className="social-icon" /></a>
-              <a href="https://reddit.com/r/cheetahx" aria-label="Reddit"><FaReddit className="social-icon" /></a>
-              <a href="https://youtube.com/cheetahx" aria-label="YouTube"><FaYoutube className="social-icon" /></a>
             </div>
           </div>
         </div>
@@ -215,12 +196,6 @@ const CheetahXFooter = () => {
           <div className="language-selector">
             <select className="language-dropdown" aria-label="Language selector">
               <option value="en">English</option>
-              <option value="es">Español</option>
-              <option value="zh">中文</option>
-              <option value="ja">日本語</option>
-              <option value="ru">Русский</option>
-              <option value="de">Deutsch</option>
-              <option value="fr">Français</option>
             </select>
           </div>
         </div>

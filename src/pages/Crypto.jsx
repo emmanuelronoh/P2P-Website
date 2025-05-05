@@ -86,7 +86,7 @@ const AmountForm = ({ mode = 'create', initialData = {} }) => {
   // Calculate rate when relevant fields change
   useEffect(() => {
     if (formData.cryptoAmount && formData.secondaryAmount) {
-      const calculatedRate = (parseFloat(formData.secondaryAmount) / parseFloat(formData.cryptoAmount)).toFixed(8);
+      const calculatedRate = (parseFloat(formData.secondaryAmount) / parseFloat(formData.cryptoAmount)).toFixed(2);
       setFormData(prev => ({ ...prev, rate: calculatedRate }));
     }
   }, [formData.cryptoAmount, formData.secondaryAmount]);
@@ -122,7 +122,7 @@ const AmountForm = ({ mode = 'create', initialData = {} }) => {
     return (field === 'crypto'
       ? amount * parseFloat(formData.rate)
       : amount / parseFloat(formData.rate)
-    ).toFixed(8);
+    ).toFixed(2);
   };
 
   // Handle amount changes with auto-calculation

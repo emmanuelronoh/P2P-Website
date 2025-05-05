@@ -9,17 +9,21 @@ import '../styles/userProfile.css';
 const UserProfile = () => {
   const { userId } = useParams();
   const navigate = useNavigate();
-  const [profile, setProfile] = useState(null);
+  const [profile, setProfile] = useState({
+    reviews: [],
+  });
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [activeTab, setActiveTab] = useState('overview');
+  const [timeFilter, setTimeFilter] = useState('30'); // Default to last 30 days
+  const [typeFilter, setTypeFilter] = useState('all'); // Default to all types
 
   useEffect(() => {
     const fetchProfile = async () => {
 
       try {
-        const token = localStorage.getItem('accessToken'); // ✅ Move this up
-        const decoded = jwt_decode(token); // ✅ Now token is available
+        const token = localStorage.getItem('accessToken');
+        const decoded = jwt_decode(token);
         const userId = decoded.user_id;
 
         console.log("userId:", userId);
@@ -90,7 +94,7 @@ const UserProfile = () => {
           <div className="user-stats-summary">
             <div className="stat-item">
               <FaStar className="stat-icon" />
-              <div className="stat-value">{profile.rating.toFixed(1)}</div>
+              <div className="stat-value">{profile.rating?.toFixed(1) || '0.0'}</div>
               <div className="stat-label">Rating</div>
             </div>
             <div className="stat-item">
@@ -118,7 +122,7 @@ const UserProfile = () => {
           className={`tab-button ${activeTab === 'reviews' ? 'active' : ''}`}
           onClick={() => setActiveTab('reviews')}
         >
-          Reviews ({profile.reviews.length})
+          Reviews ({profile.reviews?.length || 0})
         </button>
         <button
           className={`tab-button ${activeTab === 'trade-history' ? 'active' : ''}`}
@@ -199,188 +203,278 @@ const UserProfile = () => {
               </div>
             </div>
           </div>
-                    
-                )}
 
-      {activeTab === 'reviews' && (
-        <div className="reviews-tab">
-          <div className="reviews-summary">
-            <div className="rating-overview">
-              <div className="average-rating">
-                {profile.rating.toFixed(1)} <FaStar className="star-icon" />
-              </div>
-              <div className="rating-distribution">
-                {[5, 4, 3, 2, 1].map((stars) => (
-                  <div key={stars} className="rating-bar">
-                    <span className="stars">{stars} <FaStar /></span>
-                    <div className="bar-container">
-                      <div
-                        className="bar-fill"
-                        style={{
-                          width: `${(profile.rating_distribution[stars] / profile.total_reviews) * 100}%`
-                        }}
-                      ></div>
-                    </div>
-                    <span className="count">{profile.rating_distribution[stars]}</span>
-                  </div>
-                ))}
-              </div>
-            </div>
-          </div>
+        )}
 
-          <div className="reviews-list">
-            {profile.reviews.map((review) => (
-              <div key={review.id} className="review-card">
-                <div className="review-header">
-                  <div className="reviewer-info">
-                    <img
-                      src={review.reviewer.avatar || 'https://i.ibb.co/PsXqD7Xd/groom-6925756.png'}
-                      alt={review.reviewer.username}
-                      className="reviewer-avatar"
-                    />
-                    <span className="reviewer-name">{review.reviewer.username}</span>
+        {activeTab === 'reviews' && (
+          <div className="reviews-tab">
+            {profile?.rating && (
+              <div className="reviews-summary">
+                <div className="rating-overview">
+                  <div className="average-rating">
+                    {(profile.rating || 0).toFixed(1)} <FaStar className="star-icon" />
                   </div>
-                  <div className="review-rating">
-                    {Array.from({ length: 5 }).map((_, i) => (
-                      <FaStar
-                        key={i}
-                        className={`star ${i < review.rating ? 'filled' : ''}`}
-                      />
-                    ))}
-                  </div>
-                  <div className="review-time">
-                    {new Date(review.timestamp).toLocaleDateString()}
-                  </div>
-                </div>
-                <div className="review-content">
-                  <p>{review.comment}</p>
-                </div>
-                {review.response && (
-                  <div className="review-response">
-                    <div className="response-header">
-                      <strong>Response from {profile.username}:</strong>
-                    </div>
-                    <p>{review.response}</p>
-                  </div>
-                )}
-              </div>
-            ))}
-          </div>
-        </div>
-      )}
-
-      {activeTab === 'trade-history' && (
-        <div className="trade-history-tab">
-          <div className="history-filters">
-            <select className="time-filter">
-              <option>Last 30 Days</option>
-              <option>Last 90 Days</option>
-              <option>Last Year</option>
-              <option>All Time</option>
-            </select>
-            <select className="type-filter">
-              <option>All Trades</option>
-              <option>Buy Trades</option>
-              <option>Sell Trades</option>
-            </select>
-          </div>
-
-          <div className="trades-list">
-            <table className="trades-table">
-              <thead>
-                <tr>
-                  <th>Date</th>
-                  <th>Type</th>
-                  <th>Amount</th>
-                  <th>Price</th>
-                  <th>Counterparty</th>
-                  <th>Status</th>
-                </tr>
-              </thead>
-              <tbody>
-                {profile.trade_history.map((trade) => (
-                  <tr key={trade.id}>
-                    <td>{new Date(trade.date).toLocaleDateString()}</td>
-                    <td className={`trade-type ${trade.type}`}>
-                      {trade.type}
-                    </td>
-                    <td>
-                      {trade.amount} {trade.currency}
-                    </td>
-                    <td>
-                      {trade.price} {trade.currency}/{trade.crypto}
-                    </td>
-                    <td className="counterparty">
-                      <img
-                        src={trade.counterparty.avatar || 'https://i.ibb.co/PsXqD7Xd/groom-6925756.png'}
-                        alt={trade.counterparty.username}
-                        className="counterparty-avatar"
-                      />
-                      {trade.counterparty.username}
-                    </td>
-                    <td className={`trade-status ${trade.status}`}>
-                      {trade.status}
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        </div>
-      )}
-
-      {activeTab === 'payment-methods' && (
-        <div className="payment-methods-tab">
-          <div className="payment-methods-list">
-            {profile.payment_methods.map((method) => (
-              <div key={method.id} className="payment-method-card">
-                <div className="method-header">
-                  <div className="method-name">
-                    <MdPayment className="method-icon" />
-                    {method.name}
-                  </div>
-                  <div className="method-status">
-                    {method.verified ? (
-                      <span className="verified-badge">
-                        <FaCheckCircle /> Verified
-                      </span>
-                    ) : (
-                      <span className="unverified-badge">
-                        Unverified
-                      </span>
-                    )}
-                  </div>
-                </div>
-                <div className="method-details">
-                  {method.details && (
-                    <div className="details">
-                      {Object.entries(method.details).map(([key, value]) => (
-                        <div key={key} className="detail-item">
-                          <span className="detail-label">{key}:</span>
-                          <span className="detail-value">{value}</span>
+                  {profile.rating_distribution && profile.total_reviews ? (
+                    <div className="rating-distribution">
+                      {[5, 4, 3, 2, 1].map((stars) => (
+                        <div key={stars} className="rating-bar">
+                          <span className="stars">{stars} <FaStar /></span>
+                          <div className="bar-container">
+                            <div
+                              className="bar-fill"
+                              style={{
+                                width: `${((profile.rating_distribution[stars] || 0) / (profile.total_reviews || 1)) * 100}%`
+                              }}
+                            ></div>
+                          </div>
+                          <span className="count">{profile.rating_distribution[stars] || 0}</span>
                         </div>
                       ))}
                     </div>
+                  ) : (
+                    <div className="no-ratings">No rating distribution available</div>
                   )}
                 </div>
-                <div className="method-limits">
-                  <div className="limit-item">
-                    <span>Min:</span>
-                    <strong>{method.min_limit} {method.currency}</strong>
+              </div>
+            )}
+
+            <div className="reviews-list">
+              {profile?.reviews?.length > 0 ? (
+                profile.reviews.map((review) => (
+                  <div key={review.id || Math.random()} className="review-card">
+                    <div className="review-header">
+                      <div className="reviewer-info">
+                        <img
+                          src={review.reviewer?.avatar || 'https://i.ibb.co/PsXqD7Xd/groom-6925756.png'}
+                          alt={review.reviewer?.username || 'Anonymous'}
+                          className="reviewer-avatar"
+                        />
+                        <span className="reviewer-name">
+                          {review.reviewer?.username || 'Anonymous'}
+                        </span>
+                      </div>
+                      <div className="review-rating">
+                        {Array.from({ length: 5 }).map((_, i) => (
+                          <FaStar
+                            key={i}
+                            className={`star ${i < (review.rating || 0) ? 'filled' : ''}`}
+                          />
+                        ))}
+                      </div>
+                      <div className="review-time">
+                        {review.timestamp ? new Date(review.timestamp).toLocaleDateString() : 'No date'}
+                      </div>
+                    </div>
+                    <div className="review-content">
+                      <p>{review.comment || 'No comment provided'}</p>
+                    </div>
+                    {review.response && (
+                      <div className="review-response">
+                        <div className="response-header">
+                          <strong>Response from {profile.username || 'User'}:</strong>
+                        </div>
+                        <p>{review.response}</p>
+                      </div>
+                    )}
                   </div>
-                  <div className="limit-item">
-                    <span>Max:</span>
-                    <strong>{method.max_limit} {method.currency}</strong>
+                ))
+              ) : (
+                <div className="no-reviews">No reviews yet</div>
+              )}
+            </div>
+          </div>
+        )}
+        {activeTab === 'trade-history' && (
+          <div className="trade-history-tab">
+            <div className="history-filters">
+              <select
+                className="time-filter"
+                value={timeFilter}
+                onChange={(e) => setTimeFilter(e.target.value)}
+              >
+                <option value="30">Last 30 Days</option>
+                <option value="90">Last 90 Days</option>
+                <option value="365">Last Year</option>
+                <option value="all">All Time</option>
+              </select>
+              <select
+                className="type-filter"
+                value={typeFilter}
+                onChange={(e) => setTypeFilter(e.target.value)}
+              >
+                <option value="all">All Trades</option>
+                <option value="buy">Buy Trades</option>
+                <option value="sell">Sell Trades</option>
+              </select>
+            </div>
+
+            <div className="trades-list">
+
+              {activeTab === 'trade-history' && (
+                <div className="trade-history-tab">
+                  <div className="history-filters">
+                    <select
+                      className="time-filter"
+                      value={timeFilter}
+                      onChange={(e) => setTimeFilter(e.target.value)}
+                    >
+                      <option value="30">Last 30 Days</option>
+                      <option value="90">Last 90 Days</option>
+                      <option value="365">Last Year</option>
+                      <option value="all">All Time</option>
+                    </select>
+                    <select
+                      className="type-filter"
+                      value={typeFilter}
+                      onChange={(e) => setTypeFilter(e.target.value)}
+                    >
+                      <option value="all">All Trades</option>
+                      <option value="buy">Buy Trades</option>
+                      <option value="sell">Sell Trades</option>
+                    </select>
+                  </div>
+
+                  <div className="trades-list">
+                    {profile?.trade_history?.length > 0 ? (
+                      <table className="trades-table">
+                        <thead>
+                          <tr>
+                            <th>Date</th>
+                            <th>Type</th>
+                            <th>Amount</th>
+                            <th>Price</th>
+                            <th>Counterparty</th>
+                            <th>Status</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {profile.trade_history
+                            .filter(trade => {
+                              if (!trade) return false;
+                              if (typeFilter === 'all') return true;
+                              return trade.type?.toLowerCase() === typeFilter;
+                            })
+                            .filter(trade => {
+                              if (!trade?.date) return false;
+                              if (timeFilter === 'all') return true;
+
+                              const days = parseInt(timeFilter);
+                              const tradeDate = new Date(trade.date);
+                              const cutoffDate = new Date();
+                              cutoffDate.setDate(cutoffDate.getDate() - days);
+                              return tradeDate >= cutoffDate;
+                            })
+                            .map((trade) => (
+                              <tr key={trade?.id || Math.random()}>
+                                <td>{trade?.date ? new Date(trade.date).toLocaleDateString() : 'N/A'}</td>
+                                <td className={`trade-type ${trade?.type || ''}`}>
+                                  {trade?.type || 'Unknown'}
+                                </td>
+                                <td>
+                                  {trade?.amount || '0'} {trade?.currency || ''}
+                                </td>
+                                <td>
+                                  {trade?.price || '0'} {trade?.currency || ''}/{trade?.crypto || ''}
+                                </td>
+                                <td className="counterparty">
+                                  <img
+                                    src={trade.counterparty?.avatar || 'https://i.ibb.co/PsXqD7Xd/groom-6925756.png'}
+                                    alt={trade.counterparty?.username || 'Unknown'}
+                                    className="counterparty-avatar"
+                                    onError={(e) => {
+                                      e.target.src = 'https://i.ibb.co/PsXqD7Xd/groom-6925756.png';
+                                    }}
+                                  />
+                                  {trade.counterparty?.username || 'Unknown'}
+                                </td>
+                                <td className={`trade-status ${trade?.status || ''}`}>
+                                  {trade?.status || 'Unknown'}
+                                </td>
+                              </tr>
+                            ))}
+                        </tbody>
+                      </table>
+                    ) : (
+                      <div className="no-trades-message">
+                        No trade history available
+                      </div>
+                    )}
                   </div>
                 </div>
-              </div>
-            ))}
+              )}
+            </div>
           </div>
-        </div>
-      )}
-    </div>
-        </div >
-    );
+        )}
+
+        {activeTab === 'payment-methods' && (
+          <div className="payment-methods-tab">
+            <div className="payment-methods-list">
+              {profile?.payment_methods?.length > 0 ? (
+                profile.payment_methods.map((method) => (
+                  <div key={method?.id || Math.random()} className="payment-method-card">
+                    <div className="method-header">
+                      <div className="method-name">
+                        <MdPayment className="method-icon" />
+                        {method?.name || 'Unknown Payment Method'}
+                      </div>
+                      <div className="method-status">
+                        {method?.verified ? (
+                          <span className="verified-badge">
+                            <FaCheckCircle /> Verified
+                          </span>
+                        ) : (
+                          <span className="unverified-badge">
+                            Unverified
+                          </span>
+                        )}
+                      </div>
+                    </div>
+
+                    <div className="method-details">
+                      {method?.details && typeof method.details === 'object' ? (
+                        <div className="details">
+                          {Object.entries(method.details).map(([key, value]) => (
+                            <div key={key} className="detail-item">
+                              <span className="detail-label">{key}:</span>
+                              <span className="detail-value">{value || 'N/A'}</span>
+                            </div>
+                          ))}
+                        </div>
+                      ) : (
+                        <div className="no-details">No payment details available</div>
+                      )}
+                    </div>
+
+                    <div className="method-limits">
+                      <div className="limit-item">
+                        <span>Min:</span>
+                        <strong>{method?.min_limit || '0'} {method?.currency || ''}</strong>
+                      </div>
+                      <div className="limit-item">
+                        <span>Max:</span>
+                        <strong>{method?.max_limit || '0'} {method?.currency || ''}</strong>
+                      </div>
+                    </div>
+                  </div>
+                ))
+              ) : (
+                <div className="no-payment-methods">
+                  <MdPayment className="no-methods-icon" />
+                  <p>No payment methods available</p>
+                  <button
+                    className="add-payment-method-btn"
+                    onClick={() => navigate('/settings/payment-methods')}
+                  >
+                    Add Payment Method
+                  </button>
+                </div>
+              )}
+            </div>
+          </div>
+        )}
+      </div>
+    </div >
+  );
 };
 
 export default UserProfile;

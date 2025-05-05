@@ -27,17 +27,18 @@ const DEFAULT_TRADER = {
       total_trades: 0,
       completion_rate: 0,
       avg_release_time: 0
-    }
+    },
+    wallet_address: null
   },
   trade_type: 'FIAT',
   transaction_type: 'BUY',
-  crypto_currency: 'XRP',
-  crypto_amount: '0',
-  min_amount: '0',
-  max_amount: '0',
-  secondary_currency: 'KES',
-  secondary_amount: '0',
-  rate: '0',
+  crypto_currency: '', // Changed from 'XRP' to empty string to avoid overriding
+  crypto_amount: 0, // Changed from string to number
+  min_amount: 0, // Changed from string to number
+  max_amount: 0, // Changed from string to number
+  secondary_currency: '', // Changed from 'KES' to empty string
+  secondary_amount: 0, // Changed from string to number
+  rate: 0, // Changed from string to number
   payment_methods: [],
   time_window: 30,
   terms: 'No terms specified',
@@ -50,16 +51,16 @@ const TradingService = {
   fetchTraders: async (filters) => {
     try {
       const accessToken = localStorage.getItem('accessToken');
-      
+
       // Prepare strict filters for API
       const apiFilters = {
         transaction_type: filters.tradeType.toUpperCase(), // 'BUY' or 'SELL'
         crypto_currency: filters.crypto,
-        ...(filters.paymentMethod !== 'Any' && { 
-          payment_methods: filters.paymentMethod 
+        ...(filters.paymentMethod !== 'Any' && {
+          payment_methods: filters.paymentMethod
         }),
-        ...(filters.location && { 
-          location: filters.location 
+        ...(filters.location && {
+          location: filters.location
         })
       };
 
@@ -106,6 +107,40 @@ const TradingService = {
       console.error("Error fetching trader details:", error);
       return DEFAULT_TRADER;
     }
+  },
+
+  checkVerificationStatus: async () => {
+    try {
+      const accessToken = localStorage.getItem('accessToken');
+      const userData = JSON.parse(localStorage.getItem('userData'));
+
+      if (!userData?.email) {
+        throw new Error('User email not found');
+      }
+
+      const response = await fetch(`${API_BASE_URL}/kyc/verifications/${userData.email}/`, {
+        headers: {
+          "Authorization": `Bearer ${accessToken}`
+        }
+      });
+
+      if (!response.ok) {
+        if (response.status === 404) {
+          return { verified: false, verificationExists: false };
+        }
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
+      const data = await response.json();
+      return {
+        verified: data.status === 'completed',
+        verificationExists: true,
+        verificationData: data
+      };
+    } catch (error) {
+      console.error("Error checking verification status:", error);
+      return { verified: false, verificationExists: false };
+    }
   }
 };
 
@@ -126,6 +161,7 @@ const Market = () => {
     itemsPerPage: 4,
     totalItems: 0
   });
+  const [isCheckingVerification, setIsCheckingVerification] = useState(false);
   const navigate = useNavigate();
 
   const filterMemo = useMemo(() => JSON.stringify(filters), [filters]);
@@ -164,17 +200,51 @@ const Market = () => {
       try {
         setLoading(true);
         setError(null);
-        const data = await TradingService.fetchTraders(currentFilters);
-        setTraders(data);
-        setPagination(prev => ({
-          ...prev,
-          totalItems: data.length,
-          currentPage: 1
-        }));
+
+        // Verify we have a token first
+        const token = localStorage.getItem('accessToken');
+        if (!token) {
+          throw new Error('Please login again');
+        }
+
+        // Prepare headers
+        const headers = {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        };
+
+        const queryParams = new URLSearchParams({
+          transaction_type: currentFilters.tradeType.toUpperCase(),
+          crypto_currency: currentFilters.crypto,
+          ...(currentFilters.paymentMethod !== 'Any' && {
+            payment_methods: currentFilters.paymentMethod
+          }),
+          ...(currentFilters.location && {
+            location: currentFilters.location
+          })
+        }).toString();
+
+        const response = await fetch(`${API_BASE_URL}/crypto/trade-offers/?${queryParams}`, {
+          method: "GET",
+          headers: headers,
+          credentials: 'include' // If using cookies
+        });
+
+        if (response.status === 401) {
+          // Token expired or invalid
+          localStorage.removeItem('accessToken');
+          throw new Error('Technical Error. Please login again.');
+        }
+
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`);
+        }
+
+        const data = await response.json();
+        setTraders(Array.isArray(data) ? data : []);
       } catch (err) {
-        setError("Failed to load traders. Please try again later.");
+        setError(err.message);
         console.error("Error fetching traders:", err);
-        setTraders([]);
       } finally {
         setLoading(false);
       }
@@ -182,29 +252,48 @@ const Market = () => {
     []
   );
 
+  const handleCreateOffer = async () => {
+    setIsCheckingVerification(true);
+    try {
+      const { verified, verificationExists } = await TradingService.checkVerificationStatus();
+
+      if (verified) {
+        navigate('/termsAndCondition');
+      } else if (verificationExists) {
+        // Verification exists but not approved - show appropriate message
+        navigate('/verification-pending'); // Or handle differently
+      } else {
+        navigate('/become-vendor');
+      }
+    } catch (error) {
+      console.error("Error:", error);
+      navigate('/become-vendor');
+    } finally {
+      setIsCheckingVerification(false);
+    }
+  };
+
   useEffect(() => {
     fetchTraders(filters);
     return () => fetchTraders.cancel();
   }, [filterMemo, fetchTraders]);
 
   const processedTraders = useMemo(() => {
-    // First apply strict filtering based on search query
     const filtered = searchQuery
       ? traders.filter(trader => {
-          const query = searchQuery.toLowerCase();
-          const safeTrader = { ...DEFAULT_TRADER, ...trader };
-          return (
-            safeTrader.creator?.username?.toLowerCase().includes(query) ||
-            safeTrader.payment_methods?.some(method => 
-              method.toLowerCase().includes(query)
-            ) ||
-            safeTrader.crypto_currency?.toLowerCase().includes(query) ||
-            safeTrader.secondary_currency?.toLowerCase().includes(query)
-          );
-        })
+        const query = searchQuery.toLowerCase();
+        const safeTrader = { ...DEFAULT_TRADER, ...trader };
+        return (
+          safeTrader.creator?.username?.toLowerCase().includes(query) ||
+          safeTrader.payment_methods?.some(method =>
+            method.toLowerCase().includes(query)
+          ) ||
+          safeTrader.crypto_currency?.toLowerCase().includes(query) ||
+          safeTrader.secondary_currency?.toLowerCase().includes(query)
+        );
+      })
       : traders;
 
-    // Then sort the results
     return [...filtered].sort((a, b) => {
       const safeA = { ...DEFAULT_TRADER, ...a };
       const safeB = { ...DEFAULT_TRADER, ...b };
@@ -247,28 +336,105 @@ const Market = () => {
   };
 
   const handleTradeClick = (trader) => {
-    const safeTrader = { ...DEFAULT_TRADER, ...trader };
-    
+    console.log('Original trader data:', trader);
+
+    // Validate trader object
+    if (!trader || typeof trader !== 'object') {
+      console.error('Invalid trader data:', trader);
+      alert('Invalid trading data. Please try another offer.');
+      return;
+    }
+
+    if (!trader.crypto_currency) {
+      console.error('Missing crypto_currency in trader data:', trader);
+      alert('This trading offer has incomplete information. Please try another offer.');
+      return;
+    }
+
+    // Safely merge with default trader structure
+    const safeTrader = {
+      ...DEFAULT_TRADER,
+      ...trader,
+      creator: {
+        ...DEFAULT_TRADER.creator,
+        ...(trader.creator || {}),
+        trade_stats: {
+          ...DEFAULT_TRADER.creator.trade_stats,
+          ...((trader.creator && trader.creator.trade_stats) || {})
+        }
+      },
+      crypto_currency: trader.crypto_currency.toUpperCase(),
+      secondary_currency: trader.secondary_currency ? trader.secondary_currency.toUpperCase() : 'UNKNOWN'
+    };
+
+    console.log('Merged trader data:', safeTrader);
+
+    // Map payment method IDs to readable names
+    const paymentMethods = Array.isArray(safeTrader.payment_methods)
+      ? safeTrader.payment_methods.map(method => {
+        if (typeof method === 'number') {
+          switch (method) {
+            case 9:
+              return 'M-PESA';
+            // Add more cases if needed
+            default:
+              return 'Unknown';
+          }
+        }
+        return String(method).trim();
+      })
+      : [String(safeTrader.payment_methods || 'Unknown').trim()];
+
+    const sellerWalletAddress = trader.creator.wallet_address;
+
+    // Build final trade data
     const tradeData = {
       trader: {
         id: safeTrader.id,
-        name: safeTrader.creator?.username || 'Anonymous',
-        rating: (safeTrader.creator?.trade_stats?.completion_rate || 0) / 20,
-        completedTrades: safeTrader.creator?.trade_stats?.total_trades || 0,
-        price: parseFloat(safeTrader.rate) || 0,
-        minLimit: parseFloat(safeTrader.min_amount) || 0,
-        maxLimit: parseFloat(safeTrader.max_amount) || 0,
-        paymentMethod: getPaymentMethods(safeTrader.payment_methods),
-        verifiedPayment: safeTrader.creator?.verification_status !== 'UNVERIFIED',
-        walletAddress: safeTrader.creator?.wallet_address || null,
-        terms: safeTrader.terms,
-        location: safeTrader.location
+        creator: {
+          id: safeTrader.creator.id,
+          username: safeTrader.creator.username,
+          trade_stats: {
+            total_trades: Number(safeTrader.creator.trade_stats?.total_trades) || 0,
+            completion_rate: Number(safeTrader.creator.trade_stats?.completion_rate) || 0
+          },
+          verification_status: safeTrader.creator.verification_status || 'UNVERIFIED',
+          walletAddress: sellerWalletAddress,
+        },
+        crypto_currency: safeTrader.crypto_currency,
+        crypto_amount: Number(safeTrader.crypto_amount) || 0,
+        min_amount: Number(safeTrader.min_amount) || 0,
+        max_amount: Number(safeTrader.max_amount) || 0,
+        secondary_currency: safeTrader.secondary_currency,
+        rate: Number(safeTrader.rate) || 0,
+        payment_methods: paymentMethods,
+        terms: String(safeTrader.terms || 'No terms specified').trim(),
+        location: String(safeTrader.location || 'Unknown').trim()
       },
-      tradeType: filters.tradeType,
-      crypto: safeTrader.crypto_currency
+      tradeType: String(filters.tradeType || '').toUpperCase(),
+      crypto: safeTrader.crypto_currency,
+      fiatCurrency: safeTrader.secondary_currency
     };
 
-    navigate("/amount", { state: tradeData });
+    // Final validations
+    if (!tradeData.trader.crypto_currency) {
+      console.error('Missing cryptocurrency in trade data:', tradeData);
+      alert('This offer has invalid cryptocurrency information. Please try another offer.');
+      return;
+    }
+
+    if (!tradeData.trader.secondary_currency) {
+      console.error('Missing fiat currency in trade data:', tradeData);
+      alert('This offer has invalid fiat currency information. Please try another offer.');
+      return;
+    }
+
+    console.log(`Initiating ${tradeData.tradeType} trade for ${tradeData.crypto}`, tradeData);
+
+    navigate("/amount", {
+      state: tradeData,
+      replace: true
+    });
   };
 
   const renderRatingStars = (completionRate) => {
@@ -282,8 +448,22 @@ const Market = () => {
   };
 
   const getPaymentMethods = (methods) => {
-    if (!methods || !Array.isArray(methods)) return 'Unknown';
-    return methods.join(', ') || 'Not specified';
+    if (!methods) return 'Unknown';
+
+    if (Array.isArray(methods)) {
+      return methods.map(method => {
+        if (typeof method === 'number') {
+          switch (method) {
+            case 9: return 'M-PESA';
+            // Add other mappings as needed
+            default: return 'Unknown';
+          }
+        }
+        return method;
+      }).join(', ') || 'Not specified';
+    }
+
+    return String(methods) || 'Not specified';
   };
 
   const getLocation = (location) => {
@@ -298,11 +478,19 @@ const Market = () => {
         <p className="market-subtitle">
           Trade directly with other users with escrow protection
         </p>
-        <div className="header-actions">
+        {/* <div className="header-actions">
           <Link to="/become-vendor" className="become-vendor-btn">
             Create Offer
           </Link>
-        </div>
+        </div> */}
+
+        <button
+          onClick={handleCreateOffer}
+          className="become-vendor-btn"
+          disabled={isCheckingVerification}
+        >
+          {isCheckingVerification ? 'Checking...' : 'Create Offer'}
+        </button>
       </div>
 
       <div className="filters-container">
@@ -332,12 +520,12 @@ const Market = () => {
               onChange={(e) => handleFilterChange("crypto", e.target.value)}
               className="market-select"
             >
-              <option value="XRP">Ripple (XRP)</option>
-              <option value="ETH">Ethereum (ETH)</option>
-              <option value="BTC">Bitcoin (BTC)</option>
-              <option value="USDT">Tether (USDT)</option>
-              <option value="BNB">Binance Coin (BNB)</option>
+              <option value="CHX">CHX</option>
+              <option value="USDT">USDT</option>
+              <option value="USDC">USDC</option>
+              <option value="DAI">DAI</option>
             </select>
+
           </div>
 
           <div className="filter-group">

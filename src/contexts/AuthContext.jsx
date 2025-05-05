@@ -1,10 +1,8 @@
-
 import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
 import axios from 'axios';
 
 // Create context outside the provider
 const AuthContext = createContext();
-
 
 const useAuth = () => {
   const context = useContext(AuthContext);
@@ -23,67 +21,6 @@ export const AuthProvider = ({ children }) => {
     error: null
   });
 
-  const verifyToken = useCallback(async () => {
-    try {
-      const token = localStorage.getItem('accessToken');
-      if (!token) return false;
-
-      const response = await axios.get('https://cheetahx.onrender.com/api/auth/validate-token', {
-        headers: { Authorization: `Bearer ${token}` }
-      });
-
-      return response.data.valid;
-    } catch (error) {
-      return false;
-    }
-  }, []);
-
-  const initializeAuth = useCallback(async () => {
-    const isValid = await verifyToken();
-    if (!isValid) {
-      setState(prev => ({ ...prev, loading: false }));
-      return;
-    }
-
-    const userData = localStorage.getItem('userData');
-    try {
-      setState({
-        user: JSON.parse(userData),
-        isAuthenticated: true,
-        loading: false,
-        error: null
-      });
-    } catch (e) {
-      setState({
-        user: null,
-        isAuthenticated: false,
-        loading: false,
-        error: 'Failed to parse user data'
-      });
-    }
-  }, [verifyToken]);
-
-  const login = useCallback(async (authData) => {
-    try {
-      localStorage.setItem('accessToken', authData.token);
-      localStorage.setItem('refreshToken', authData.refreshToken);
-      localStorage.setItem('userData', JSON.stringify(authData.user));
-
-      setState({
-        user: authData.user,
-        isAuthenticated: true,
-        loading: false,
-        error: null
-      });
-    } catch (error) {
-      setState(prev => ({
-        ...prev,
-        error: 'Failed to update authentication state'
-      }));
-      throw error;
-    }
-  }, []);
-
   const logout = useCallback(() => {
     localStorage.removeItem('accessToken');
     localStorage.removeItem('refreshToken');
@@ -95,6 +32,105 @@ export const AuthProvider = ({ children }) => {
       loading: false,
       error: null
     });
+  }, []);
+
+  const verifyToken = useCallback(async () => {
+    try {
+      const token = localStorage.getItem('accessToken');
+      if (!token) {
+        return false;
+      }
+
+      const response = await axios.get('https://cheetahx.onrender.com/api/auth/validate-token/', {  // Added trailing slash
+        headers: { 
+          Authorization: `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        },
+        withCredentials: true
+      });
+
+      if (!response.data?.valid) {
+        logout();
+        return false;
+      }
+      
+      return true;
+    } catch (error) {
+      // Don't logout on network errors, only on 401
+      if (error.response?.status === 401) {
+        logout();
+      }
+      return false;
+    }
+  }, [logout]);
+
+  const initializeAuth = useCallback(async () => {
+    try {
+      const isValid = await verifyToken();
+      if (!isValid) {
+        setState(prev => ({ ...prev, loading: false }));
+        return;
+      }
+
+      const userData = localStorage.getItem('userData');
+      if (!userData) {
+        logout();
+        return;
+      }
+
+      try {
+        const parsedUser = JSON.parse(userData);
+        setState({
+          user: parsedUser,
+          isAuthenticated: true,
+          loading: false,
+          error: null
+        });
+      } catch (e) {
+        console.error('Failed to parse user data:', e);
+        logout();
+      }
+    } catch (error) {
+      console.error('Auth initialization error:', error);
+      setState(prev => ({
+        ...prev,
+        loading: false,
+        error: 'Failed to initialize authentication'
+      }));
+    }
+  }, [verifyToken, logout]);
+
+  const login = useCallback(async (authData) => {
+    try {
+      // More comprehensive validation
+      if (!authData || !authData.accessToken || !authData.refreshToken || !authData.user) {
+        throw new Error('Invalid authentication data structure');
+      }
+
+      // Store tokens and user data
+      localStorage.setItem('accessToken', authData.accessToken);
+      localStorage.setItem('refreshToken', authData.refreshToken);
+      localStorage.setItem('userData', JSON.stringify(authData.user));
+
+      // Update state
+      setState({
+        user: authData.user,
+        isAuthenticated: true,
+        loading: false,
+        error: null
+      });
+
+      // Return success
+      return true;
+    } catch (error) {
+      console.error('Login error:', error);
+      setState(prev => ({
+        ...prev,
+        loading: false,
+        error: error.message || 'Failed to login'
+      }));
+      throw error;
+    }
   }, []);
 
   useEffect(() => {
@@ -115,9 +151,7 @@ export const AuthProvider = ({ children }) => {
   );
 };
 
-// Correct export
 export { useAuth };
-
 
 // import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
 // import axios from 'axios';

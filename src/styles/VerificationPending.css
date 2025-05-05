@@ -1,0 +1,330 @@
+/* Animations */
+@keyframes verification-page__pulse-animation {
+  0% { transform: scale(1); opacity: 1; }
+  50% { transform: scale(1.05); opacity: 0.7; }
+  100% { transform: scale(1); opacity: 1; }
+}
+
+@keyframes verification-page__spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+/* Base Styles */
+.verification-page {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 100vh;
+  padding: 2rem;
+  background-color: #f5f7fa;
+}
+
+.verification-page__card {
+  width: 100%;
+  max-width: 800px;
+  border-radius: 16px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.08);
+  overflow: hidden;
+  background: white;
+}
+
+.verification-page__header {
+  padding: 2rem;
+  background: #008cff;
+  color: white;
+  text-align: center;
+  position: relative;
+}
+
+.verification-page__header h1 {
+  margin: 0.5rem 0 0;
+  font-size: 1.8rem;
+  font-weight: 600;
+}
+
+.verification-page__subtitle {
+  margin: 0.5rem 0 0;
+  opacity: 0.9;
+  font-size: 1rem;
+}
+
+.verification-page__icon-container {
+  position: relative;
+  display: inline-block;
+}
+
+.verification-page__icon {
+  font-size: 2.5rem;
+  filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.2));
+}
+
+.verification-page__pulse {
+  position: absolute;
+  top: -10px;
+  left: -10px;
+  right: -10px;
+  bottom: -10px;
+  border: 2px solid rgba(255, 255, 255, 0.4);
+  border-radius: 50%;
+  animation: verification-page__pulse-animation 2s infinite;
+  pointer-events: none;
+}
+
+.verification-page__content {
+  padding: 2rem;
+}
+
+.verification-page__progress {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 2.5rem;
+  position: relative;
+}
+
+.verification-page__progress-step {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  position: relative;
+  z-index: 1;
+  color: #B0BEC5;
+  font-weight: 400;
+}
+
+.verification-page__progress-step--completed {
+  color: #008cff;
+}
+
+.verification-page__progress-step--active {
+  color: #FF7043;
+  font-weight: 600;
+}
+
+.verification-page__step-icon {
+  font-size: 1.5rem;
+  margin-bottom: 0.5rem;
+}
+
+.verification-page__pulse-dot {
+  width: 16px;
+  height: 16px;
+  background: #FF7043;
+  border-radius: 50%;
+  margin-bottom: 0.5rem;
+  position: relative;
+}
+
+.verification-page__pulse-dot::after {
+  content: '';
+  position: absolute;
+  top: -4px;
+  left: -4px;
+  right: -4px;
+  bottom: -4px;
+  background: rgba(255, 112, 67, 0.3);
+  border-radius: 50%;
+  animation: verification-page__pulse-animation 2s infinite;
+}
+
+.verification-page__progress-step span {
+  font-size: 0.9rem;
+  white-space: nowrap;
+}
+
+.verification-page__progress-line {
+  flex-grow: 1;
+  height: 2px;
+  background: #E0E0E0;
+  margin: 0 0.5rem;
+}
+
+.verification-page__progress-line--active {
+  background: #008cff;
+}
+
+.verification-page__details {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 1.5rem;
+  margin-bottom: 2rem;
+}
+
+.verification-page__alert {
+  display: flex;
+  gap: 1rem;
+  padding: 1.5rem;
+  border-radius: 12px;
+  border-left: 4px solid #4CAF50;
+}
+
+.verification-page__alert--warning {
+  background: #FFF8E1;
+  border-left-color: #FFA000;
+}
+
+.verification-page__alert-icon {
+  font-size: 1.5rem;
+  color: #4CAF50;
+  margin-top: 0.2rem;
+}
+
+.verification-page__alert--warning .verification-page__alert-icon {
+  color: #FFA000;
+}
+
+.verification-page__alert-content {
+  flex: 1;
+}
+
+.verification-page__alert-content h3 {
+  margin: 0 0 0.5rem;
+  font-size: 1.1rem;
+  color: #333;
+}
+
+.verification-page__alert-content p {
+  margin: 0 0 0.5rem;
+  color: #555;
+  line-height: 1.5;
+}
+
+.verification-page__alert-content ul {
+  margin: 0.5rem 0 0;
+  padding-left: 1.2rem;
+  color: #555;
+}
+
+.verification-page__alert-content li {
+  margin-bottom: 0.3rem;
+}
+
+.verification-page__actions {
+  display: flex;
+  gap: 1rem;
+  margin-bottom: 2rem;
+}
+
+.verification-page__button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  padding: 0.8rem 1.5rem;
+  border-radius: 8px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s;
+  border: none;
+  font-size: 1rem;
+}
+
+.verification-page__button:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
+}
+
+.verification-page__button svg {
+  font-size: 1.1rem;
+}
+
+.verification-page__button--primary {
+  background: #008cff;
+  color: white;
+}
+
+.verification-page__button--primary:hover {
+  transform: translateY(-2px);
+}
+
+.verification-page__button--secondary {
+  background: white;
+  color: #3f51b5;
+  border: 1px solid #3f51b5;
+}
+
+.verification-page__button--secondary:hover {
+  background: rgba(63, 81, 181, 0.05);
+}
+
+.verification-page__status-check {
+  text-align: center;
+  margin-bottom: 2rem;
+}
+
+.verification-page__last-checked {
+  font-size: 0.8rem;
+  color: #777;
+}
+
+.verification-page__faq {
+  border-top: 1px solid #eee;
+  padding-top: 1.5rem;
+}
+
+.verification-page__faq-title {
+  margin: 0 0 1.5rem;
+  font-size: 1.2rem;
+  color: #333;
+  text-align: center;
+}
+
+.verification-page__faq-item {
+  margin-bottom: 1.5rem;
+  padding: 0%;
+}
+
+.verification-page__faq-item h4 {
+  margin: 0 0 0.5rem;
+  font-size: 1rem;
+  color: #008cff;
+}
+
+.verification-page__faq-item p {
+  margin: 0;
+  color: #555;
+  line-height: 1.5;
+}
+
+/* Responsive Styles */
+@media (max-width: 768px) {
+  .verification-page__content {
+    padding: 1.5rem;
+  }
+}
+
+@media (max-width: 600px) {
+  .verification-page__progress {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 1rem;
+    margin-bottom: 1.5rem;
+  }
+
+  .verification-page__progress-step {
+    flex-direction: row;
+    gap: 0.5rem;
+  }
+
+  .verification-page__progress-step .verification-page__step-icon,
+  .verification-page__progress-step .verification-page__pulse-dot {
+    margin-bottom: 0;
+  }
+
+  .verification-page__progress-line {
+    width: 2px;
+    height: 20px;
+    margin: 0.2rem 0 0.2rem 7px;
+  }
+}
+
+@media (max-width: 480px) {
+  .verification-page__alert {
+    flex-direction: column;
+  }
+
+  .verification-page__actions {
+    flex-direction: column;
+  }
+}

@@ -5,7 +5,8 @@ import {
   Routes,
   Route,
   Outlet,
-  useNavigate
+  useNavigate,
+  Navigate
 } from "react-router-dom";
 import AOS from 'aos';
 import 'aos/dist/aos.css';
@@ -13,21 +14,26 @@ import { AuthProvider, useAuth } from './contexts/AuthContext';
 import { WalletProvider } from './contexts/walletContext';
 
 // Import all your pages and components as before...
-import Home from "./pages/Home";
-import HomeFiat from "./pages/Home-fiat";
+import Home from "./layout/Home";
+import Cookie from './Footer_links/Cookie';
+import Risk from "./Footer_links/Risk";
+import HomeFiat from "./layout/Home-fiat";
 import NavbarP2P from "./components/NavbarP2P";
 import Dashboard from "./pages/Dashboard";
 import DashboardFiatPage from "./pages/DashboadFiat";
-import Register from "./pages/Register";
-import Login from "./pages/Login";
-import Footer from "./pages/Footer";
+import Register from "./authentications/Register";
+import Login from "./authentications/Login";
+import Footer from "./layout/Footer";
 import "./styles/theme.css";
 import Messages from "./pages/Messages";
+import Terms from "./Footer_links/Terms";
+import Privacy from "./Footer_links/Privacy";
 import MessagesP2p from "./pages/Messages-p2p";
 import Wallet from "./pages/Wallet";
 import Vendor from "./pages/Vendor";
 import Amount from "./pages/Amount";
-import VerifyOTP from "./components/VerifyOTP";
+import Feedback from "./Footer_links/Feedback";
+import VerifyOTP from "./authentications/VerifyOTP";
 import FiatP2P from "./components/FiatP2P";
 import Support from "./pages/Support";
 import Tutorials from "./pages/Tutorials";
@@ -38,17 +44,15 @@ import NotificationsPage from "./pages/NotificationsFiat";
 import ProfileDetails from "./pages/ProfileDetails";
 import Market from "./pages/Market";
 import ForgotPassword from "./components/ForgotPassword";
-import TermsAndCondition from "./pages/TermsAndCondition";
+import TermsAndCondition from "./Footer_links/TermsAndCondition";
 import CryptoListing from "./pages/CryptoListing";
-import DashboardVendors from "./pages/DashboardVendors";
 import Navbar from "./components/Navbar";
 import "uikit/dist/css/uikit.min.css";
 import ResetPassword from "./components/ResetPassword";
+import VerificationPending from "./pages/VerificationPending";
 
-// Create a ThemeContext
 export const ThemeContext = React.createContext();
 
-// New Loading Components
 const LoadingScreen = () => {
   const { theme } = React.useContext(ThemeContext);
   const [progress, setProgress] = useState(0);
@@ -62,10 +66,9 @@ const LoadingScreen = () => {
   const [currentTip, setCurrentTip] = useState(0);
 
   useEffect(() => {
-    // Simulate progress (replace with actual loading progress if possible)
     const interval = setInterval(() => {
       setProgress(prev => {
-        if (prev >= 95) return prev; // Stop at 95% to wait for actual load
+        if (prev >= 95) return prev; 
         return prev + Math.random() * 10;
       });
     }, 300);
@@ -180,7 +183,7 @@ function AppWrapper() {
   );
 }
 
-// Layout components (remain the same as before)
+// Layout components
 function MainLayout() {
   const { theme } = React.useContext(ThemeContext);
 
@@ -245,6 +248,68 @@ function FullPageLayout() {
   );
 }
 
+// Enhanced route protection components
+function PrivateRoute({ children }) {
+  const { isAuthenticated, loading, checkTokenValidity } = useAuth();
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    if (!loading && !isAuthenticated) {
+      navigate("/login", { replace: true, state: { from: location.pathname } });
+    }
+    
+    // Check token validity periodically
+    const interval = setInterval(() => {
+      checkTokenValidity();
+    }, 300000); // Check every 5 minutes
+
+    return () => clearInterval(interval);
+  }, [isAuthenticated, loading, navigate, checkTokenValidity]);
+
+  if (loading) {
+    return <SkeletonLoader type="dashboard" />;
+  }
+
+  return isAuthenticated ? children : null;
+}
+
+function PublicOnlyRoute({ children }) {
+  const { isAuthenticated, loading } = useAuth();
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    if (!loading && isAuthenticated) {
+      const tradeType = localStorage.getItem("tradeType");
+      const redirectPath = tradeType === "fiat" ? "/fiat-p2p" : "/market";
+      navigate(redirectPath, { replace: true });
+    }
+  }, [isAuthenticated, loading, navigate]);
+
+  if (loading) {
+    return <SkeletonLoader />;
+  }
+
+  return !isAuthenticated ? children : null;
+}
+
+function VerifiedUserRoute({ children }) {
+  const { isAuthenticated, user, loading } = useAuth();
+
+  if (loading) {
+    return <SkeletonLoader type="dashboard" />;
+  }
+
+  if (!isAuthenticated) {
+    return <Navigate to="/login" replace />;
+  }
+
+  if (!user?.isVerified) {
+    return <Navigate to="/verification-pending" replace />;
+  }
+
+  return children;
+}
+
 function AppInner() {
   const { loading: authLoading } = useAuth();
   const [showLoader, setShowLoader] = useState(true);
@@ -256,10 +321,9 @@ function AppInner() {
       setShowSkeleton(false);
       const timer = setTimeout(() => {
         setShowSkeleton(true);
-      }, 3000); // Show skeleton after 3 seconds if still loading
+      }, 3000);
       return () => clearTimeout(timer);
     } else {
-      // Add a minimum display time for the loader (1.5s) for better UX
       const timer = setTimeout(() => {
         setShowLoader(false);
         setShowSkeleton(false);
@@ -278,90 +342,213 @@ function AppInner() {
 
   return (
     <Routes>
-      {/* Your existing route configuration remains the same */}
+      {/* Public routes */}
       <Route element={<MainLayout />}>
         <Route path="/" element={<Home />} />
-        <Route path="/dashboard" element={<PrivateRoute><Dashboard /></PrivateRoute>} />
-        <Route path="/register" element={<Register />} />
+        <Route path="/register" element={<PublicOnlyRoute><Register /></PublicOnlyRoute>} />
         <Route path="/login" element={<PublicOnlyRoute><Login /></PublicOnlyRoute>} />
-        <Route path="/verify-otp" element={<VerifyOTP />} />
-        <Route path="/forgot-password" element={<ForgotPassword />} />
-        <Route path="/reset-password/:uidb64/:token" element={<ResetPassword />} />
-        <Route path="/wallet" element={<PrivateRoute><Wallet /></PrivateRoute>} />
+        <Route path="/verify-otp" element={<PublicOnlyRoute><VerifyOTP /></PublicOnlyRoute>} />
+        <Route path="/forgot-password" element={<PublicOnlyRoute><ForgotPassword /></PublicOnlyRoute>} />
+        <Route path="/reset-password/:uidb64/:token" element={<PublicOnlyRoute><ResetPassword /></PublicOnlyRoute>} />
         <Route path="/market" element={<Market />} />
-        <Route path="/profile/:username" element={<Profile />} />
-        <Route path="/notifications" element={<Notifications />} />
-        <Route path="/support" element={<Support />} />
-        <Route path="/amount" element={<Amount />} />
-        <Route path="/tutorials" element={<Tutorials />} />
-        <Route path="/become-vendor" element={<Vendor />} />
-        <Route path="/profile-details/:username" element={<ProfileDetails />} />
+        <Route path="/terms" element={<Terms />} />
+        <Route path="/cookie" element={<Cookie />} />
         <Route path="/termsAndcondition" element={<TermsAndCondition />} />
-        <Route path="/cryptolisting" element={<CryptoListing />} />
         <Route path="/faq" element={<Faq />} />
-        <Route path="/DashboardVendors" element={<DashboardVendors />} />
-        <Route path="/profile-details-users/:userId" element={<ProfileDetails />} />
+        <Route path="/privacy" element={<Privacy />} />
+        <Route path="/risk" element={<Risk />} />
+        <Route path="/feedback" element={<Feedback />} />
+        <Route path="/profile/:username" element={<Profile />} />
+      </Route>
+
+      {/* Authenticated but not necessarily verified routes */}
+      <Route element={<MainLayout />}>
+        <Route path="/verification-pending" element={<PrivateRoute><VerificationPending /></PrivateRoute>} />
+      </Route>
+
+      {/* Fully protected routes (authenticated and verified) */}
+      <Route element={<MainLayout />}>
+        <Route path="/dashboard" element={
+          <PrivateRoute>
+            <VerifiedUserRoute>
+              <Dashboard />
+            </VerifiedUserRoute>
+          </PrivateRoute>
+        } />
+        <Route path="/wallet" element={
+          <PrivateRoute>
+            <VerifiedUserRoute>
+              <Wallet />
+            </VerifiedUserRoute>
+          </PrivateRoute>
+        } />
+        <Route path="/amount" element={
+          <PrivateRoute>
+            <VerifiedUserRoute>
+              <Amount />
+            </VerifiedUserRoute>
+          </PrivateRoute>
+        } />
+        <Route path="/become-vendor" element={
+          <PrivateRoute>
+            <VerifiedUserRoute>
+              <Vendor />
+            </VerifiedUserRoute>
+          </PrivateRoute>
+        } />
+        <Route path="/profile-details/:username" element={
+          <PrivateRoute>
+            <VerifiedUserRoute>
+              <ProfileDetails />
+            </VerifiedUserRoute>
+          </PrivateRoute>
+        } />
+        <Route path="/profile-details-users/:userId" element={
+          <PrivateRoute>
+            <VerifiedUserRoute>
+              <ProfileDetails />
+            </VerifiedUserRoute>
+          </PrivateRoute>
+        } />
+        <Route path="/cryptolisting" element={
+          <PrivateRoute>
+            <VerifiedUserRoute>
+              <CryptoListing />
+            </VerifiedUserRoute>
+          </PrivateRoute>
+        } />
+        <Route path="/tutorials" element={
+          <PrivateRoute>
+            <VerifiedUserRoute>
+              <Tutorials />
+            </VerifiedUserRoute>
+          </PrivateRoute>
+        } />
+        <Route path="/support" element={
+          <PrivateRoute>
+            <VerifiedUserRoute>
+              <Support />
+            </VerifiedUserRoute>
+          </PrivateRoute>
+        } />
       </Route>
 
       <Route element={<MessagesLayout />}>
-        <Route path="/messages" element={<Messages />} />
+        <Route path="/messages" element={
+          <PrivateRoute>
+            <VerifiedUserRoute>
+              <Messages />
+            </VerifiedUserRoute>
+          </PrivateRoute>
+        } />
       </Route>
 
+      {/* P2P Routes */}
       <Route element={<P2PLayout />}>
-        <Route path="/fiat-p2p" element={<FiatP2P />} />
-        <Route path="/home-fiat" element={<HomeFiat />} />
-        <Route path="/notifications-p2p" element={<NotificationsPage />} />
-        <Route path="/dashboard-fiat" element={<DashboardFiatPage />} />
-        <Route path="/become-vendor-fiat" element={<Vendor />} />
-        <Route path="/faq-fiat" element={<Faq />} />
-        <Route path="/support-fiat" element={<Support />} />
-        <Route path="/tutorials-fiat" element={<Tutorials />} />
-        <Route path="/profile-details-user/:userId" element={<ProfileDetails />} />
-        <Route path="/profile-fiat/:username" element={<Profile />} />
+        <Route path="/fiat-p2p" element={
+          <PrivateRoute>
+            <VerifiedUserRoute>
+              <FiatP2P />
+            </VerifiedUserRoute>
+          </PrivateRoute>
+        } />
+        <Route path="/home-fiat" element={
+          <PrivateRoute>
+            <VerifiedUserRoute>
+              <HomeFiat />
+            </VerifiedUserRoute>
+          </PrivateRoute>
+        } />
+        <Route path="/notifications-p2p" element={
+          <PrivateRoute>
+            <VerifiedUserRoute>
+              <NotificationsPage />
+            </VerifiedUserRoute>
+          </PrivateRoute>
+        } />
+        <Route path="/dashboard-fiat" element={
+          <PrivateRoute>
+            <VerifiedUserRoute>
+              <DashboardFiatPage />
+            </VerifiedUserRoute>
+          </PrivateRoute>
+        } />
+        <Route path="/become-vendor-fiat" element={
+          <PrivateRoute>
+            <VerifiedUserRoute>
+              <Vendor />
+            </VerifiedUserRoute>
+          </PrivateRoute>
+        } />
+        <Route path="/faq-fiat" element={
+          <PrivateRoute>
+            <VerifiedUserRoute>
+              <Faq />
+            </VerifiedUserRoute>
+          </PrivateRoute>
+        } />
+        <Route path="/support-fiat" element={
+          <PrivateRoute>
+            <VerifiedUserRoute>
+              <Support />
+            </VerifiedUserRoute>
+          </PrivateRoute>
+        } />
+        <Route path="/tutorials-fiat" element={
+          <PrivateRoute>
+            <VerifiedUserRoute>
+              <Tutorials />
+            </VerifiedUserRoute>
+          </PrivateRoute>
+        } />
+        <Route path="/profile-details-user/:userId" element={
+          <PrivateRoute>
+            <VerifiedUserRoute>
+              <ProfileDetails />
+            </VerifiedUserRoute>
+          </PrivateRoute>
+        } />
+        <Route path="/profile-fiat/:username" element={
+          <PrivateRoute>
+            <VerifiedUserRoute>
+              <Profile />
+            </VerifiedUserRoute>
+          </PrivateRoute>
+        } />
       </Route>
+
       <Route element={<P2PMessagesLayout />}>
-        <Route path="/messages-p2p" element={<MessagesP2p />} />
-        <Route path="/chat-room-fiat" element={<MessagesP2p />} />
-        <Route path="/chat-room-fiat-crypto" element={<MessagesP2p />} />
+        <Route path="/messages-p2p" element={
+          <PrivateRoute>
+            <VerifiedUserRoute>
+              <MessagesP2p />
+            </VerifiedUserRoute>
+          </PrivateRoute>
+        } />
+        <Route path="/chat-room-fiat" element={
+          <PrivateRoute>
+            <VerifiedUserRoute>
+              <MessagesP2p />
+            </VerifiedUserRoute>
+          </PrivateRoute>
+        } />
+        <Route path="/chat-room-fiat-crypto" element={
+          <PrivateRoute>
+            <VerifiedUserRoute>
+              <MessagesP2p />
+            </VerifiedUserRoute>
+          </PrivateRoute>
+        } />
       </Route>
 
       <Route element={<FullPageLayout />}>
-        {/* Full-page routes */}
+        {/* Full-page routes can be added here */}
       </Route>
+
+      {/* Fallback route */}
+      <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>
   );
-}
-
-// Private and PublicOnly Route Guards (remain the same)
-function PrivateRoute({ children }) {
-  const { isAuthenticated } = useAuth();
-  const navigate = useNavigate();
-
-  useEffect(() => {
-    if (!isAuthenticated) {
-      navigate("/login", { replace: true });
-    }
-  }, [isAuthenticated, navigate]);
-
-  return isAuthenticated ? children : null;
-}
-
-function PublicOnlyRoute({ children }) {
-  const { isAuthenticated } = useAuth();
-  const navigate = useNavigate();
-
-  useEffect(() => {
-    if (isAuthenticated) {
-      const tradeType = localStorage.getItem("tradeType");
-      if (tradeType === "fiat") {
-        navigate("/fiat-p2p", { replace: true });
-      } else {
-        navigate("/market", { replace: true });
-      }
-    }
-  }, [isAuthenticated, navigate]);
-
-  return !isAuthenticated ? children : null;
 }
 
 export default AppWrapper;

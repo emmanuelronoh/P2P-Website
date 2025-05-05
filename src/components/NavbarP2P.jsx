@@ -323,7 +323,6 @@ const Navbar = ({ toggleTheme, theme }) => {
     // Menu items configuration
     const marketItems = [
         { label: "Stocks", path: "/market/stocks", icon: FaChartLine },
-        { label: "Become a Vendor", path: "/become-vendor-fiat", icon: FaGlobe },
     ];
 
     const helpItems = [

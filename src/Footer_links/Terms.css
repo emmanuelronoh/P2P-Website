@@ -1,0 +1,90 @@
+.terms-container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 2rem;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    color: #333;
+    line-height: 1.6;
+  }
+  
+  .terms-header {
+    text-align: center;
+    margin-bottom: 2rem;
+    padding-bottom: 1rem;
+    border-bottom: 1px solid #eaeaea;
+  }
+  
+  .terms-header h1 {
+    color: #2c3e50;
+    font-size: 2.5rem;
+    margin-bottom: 0.5rem;
+  }
+  
+  .effective-date {
+    color: #7f8c8d;
+    font-style: italic;
+  }
+  
+  .terms-content {
+    background-color: #fff;
+    padding: 2rem;
+    border-radius: 8px;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+  }
+  
+  .terms-section {
+    margin-bottom: 2rem;
+  }
+  
+  .terms-section h2 {
+    color: #2c3e50;
+    font-size: 1.5rem;
+    margin-bottom: 1rem;
+    padding-bottom: 0.5rem;
+    border-bottom: 1px solid #f1f1f1;
+  }
+  
+  .terms-section p {
+    margin-bottom: 1rem;
+  }
+  
+  .terms-section ul {
+    margin-left: 1.5rem;
+    margin-bottom: 1rem;
+  }
+  
+  .terms-section li {
+    margin-bottom: 0.5rem;
+  }
+  
+  .acceptance-section {
+    margin-top: 3rem;
+    padding: 1.5rem;
+    background-color: #f8f9fa;
+    border-radius: 6px;
+    border-left: 4px solid #3498db;
+  }
+  
+  .terms-footer {
+    margin-top: 3rem;
+    text-align: center;
+    padding-top: 1.5rem;
+    border-top: 1px solid #eaeaea;
+    color: #7f8c8d;
+    font-size: 0.9rem;
+  }
+  
+  /* Responsive design */
+  @media (max-width: 768px) {
+    .terms-container {
+      padding: 1rem;
+    }
+    
+    .terms-header h1 {
+      font-size: 2rem;
+    }
+    
+    .terms-content {
+      padding: 1rem;
+    }
+  }

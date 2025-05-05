@@ -338,6 +338,20 @@
   justify-content: center;
 }
 
+/* In your CSS file */
+.Toastify__toast {
+  font-family: 'Your Font', sans-serif;
+  border-radius: 8px;
+}
+
+.Toastify__toast--success {
+  background: #4caf50;
+}
+
+.Toastify__toast--error {
+  background: #f44336;
+}
+
 .btn-primary {
   padding: 0.75rem 1.5rem;
   background: rgb(0 123 255);
