@@ -23,7 +23,7 @@ const CheetahXFooter = () => {
         headers['Authorization'] = `Bearer ${accessToken}`;
       }
 
-      const response = await fetch('http://127.0.0.1:8000/api/auth/subscribe/', {
+      const response = await fetch('https://cheetahx.onrender.com/api/auth/subscribe/', {
         method: 'POST',
         headers,
         body: JSON.stringify({ email }),

@@ -36,7 +36,7 @@ const Feedback = () => {
         throw new Error('Authentication required. Please log in.');
       }
 
-      const response = await fetch('http://127.0.0.1:8000/users/support/api/feedback/', {
+      const response = await fetch('https://cheetahx.onrender.com/users/support/api/feedback/', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
