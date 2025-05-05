@@ -364,49 +364,25 @@ function AppInner() {
       {/* Authenticated but not necessarily verified routes */}
       <Route element={<MainLayout />}>
         <Route path="/verification-pending" element={<PrivateRoute><VerificationPending /></PrivateRoute>} />
+        <Route path="/dashboard" element={<PrivateRoute><Dashboard /></PrivateRoute>} />
+        <Route path="/wallet" element={<PrivateRoute><Wallet /></PrivateRoute>} />
+        <Route path="/become-vendor" element={<PrivateRoute><Vendor /></PrivateRoute>} />
+        <Route path="/profile-details/:username" element={<PrivateRoute><ProfileDetails /></PrivateRoute>} />
+        <Route path="/profile-details-users/:userId" element={<PrivateRoute><ProfileDetails /></PrivateRoute>} />
+        <Route path="/tutorials" element={<PrivateRoute><Tutorials /></PrivateRoute>} />
+        <Route path="/support" element={<PrivateRoute><Support /></PrivateRoute>} />
       </Route>
 
-      {/* Fully protected routes (authenticated and verified) */}
+      <Route element={<MessagesLayout />}>
+        <Route path="/messages" element={<PrivateRoute><Messages /></PrivateRoute>} />
+      </Route>
+
+      {/* Fully protected routes (authenticated and verified) - Only for sensitive operations */}
       <Route element={<MainLayout />}>
-        <Route path="/dashboard" element={
-          <PrivateRoute>
-            <VerifiedUserRoute>
-              <Dashboard />
-            </VerifiedUserRoute>
-          </PrivateRoute>
-        } />
-        <Route path="/wallet" element={
-          <PrivateRoute>
-            <VerifiedUserRoute>
-              <Wallet />
-            </VerifiedUserRoute>
-          </PrivateRoute>
-        } />
         <Route path="/amount" element={
           <PrivateRoute>
             <VerifiedUserRoute>
               <Amount />
-            </VerifiedUserRoute>
-          </PrivateRoute>
-        } />
-        <Route path="/become-vendor" element={
-          <PrivateRoute>
-            <VerifiedUserRoute>
-              <Vendor />
-            </VerifiedUserRoute>
-          </PrivateRoute>
-        } />
-        <Route path="/profile-details/:username" element={
-          <PrivateRoute>
-            <VerifiedUserRoute>
-              <ProfileDetails />
-            </VerifiedUserRoute>
-          </PrivateRoute>
-        } />
-        <Route path="/profile-details-users/:userId" element={
-          <PrivateRoute>
-            <VerifiedUserRoute>
-              <ProfileDetails />
             </VerifiedUserRoute>
           </PrivateRoute>
         } />
@@ -417,128 +393,26 @@ function AppInner() {
             </VerifiedUserRoute>
           </PrivateRoute>
         } />
-        <Route path="/tutorials" element={
-          <PrivateRoute>
-            <VerifiedUserRoute>
-              <Tutorials />
-            </VerifiedUserRoute>
-          </PrivateRoute>
-        } />
-        <Route path="/support" element={
-          <PrivateRoute>
-            <VerifiedUserRoute>
-              <Support />
-            </VerifiedUserRoute>
-          </PrivateRoute>
-        } />
       </Route>
 
-      <Route element={<MessagesLayout />}>
-        <Route path="/messages" element={
-          <PrivateRoute>
-            <VerifiedUserRoute>
-              <Messages />
-            </VerifiedUserRoute>
-          </PrivateRoute>
-        } />
-      </Route>
-
-      {/* P2P Routes */}
+      {/* P2P Routes - Most don't need verification */}
       <Route element={<P2PLayout />}>
-        <Route path="/fiat-p2p" element={
-          <PrivateRoute>
-            <VerifiedUserRoute>
-              <FiatP2P />
-            </VerifiedUserRoute>
-          </PrivateRoute>
-        } />
-        <Route path="/home-fiat" element={
-          <PrivateRoute>
-            <VerifiedUserRoute>
-              <HomeFiat />
-            </VerifiedUserRoute>
-          </PrivateRoute>
-        } />
-        <Route path="/notifications-p2p" element={
-          <PrivateRoute>
-            <VerifiedUserRoute>
-              <NotificationsPage />
-            </VerifiedUserRoute>
-          </PrivateRoute>
-        } />
-        <Route path="/dashboard-fiat" element={
-          <PrivateRoute>
-            <VerifiedUserRoute>
-              <DashboardFiatPage />
-            </VerifiedUserRoute>
-          </PrivateRoute>
-        } />
-        <Route path="/become-vendor-fiat" element={
-          <PrivateRoute>
-            <VerifiedUserRoute>
-              <Vendor />
-            </VerifiedUserRoute>
-          </PrivateRoute>
-        } />
-        <Route path="/faq-fiat" element={
-          <PrivateRoute>
-            <VerifiedUserRoute>
-              <Faq />
-            </VerifiedUserRoute>
-          </PrivateRoute>
-        } />
-        <Route path="/support-fiat" element={
-          <PrivateRoute>
-            <VerifiedUserRoute>
-              <Support />
-            </VerifiedUserRoute>
-          </PrivateRoute>
-        } />
-        <Route path="/tutorials-fiat" element={
-          <PrivateRoute>
-            <VerifiedUserRoute>
-              <Tutorials />
-            </VerifiedUserRoute>
-          </PrivateRoute>
-        } />
-        <Route path="/profile-details-user/:userId" element={
-          <PrivateRoute>
-            <VerifiedUserRoute>
-              <ProfileDetails />
-            </VerifiedUserRoute>
-          </PrivateRoute>
-        } />
-        <Route path="/profile-fiat/:username" element={
-          <PrivateRoute>
-            <VerifiedUserRoute>
-              <Profile />
-            </VerifiedUserRoute>
-          </PrivateRoute>
-        } />
+        <Route path="/fiat-p2p" element={<PrivateRoute><FiatP2P /></PrivateRoute>} />
+        <Route path="/home-fiat" element={<PrivateRoute><HomeFiat /></PrivateRoute>} />
+        <Route path="/notifications-p2p" element={<PrivateRoute><NotificationsPage /></PrivateRoute>} />
+        <Route path="/dashboard-fiat" element={<PrivateRoute><DashboardFiatPage /></PrivateRoute>} />
+        <Route path="/become-vendor-fiat" element={<PrivateRoute><Vendor /></PrivateRoute>} />
+        <Route path="/faq-fiat" element={<PrivateRoute><Faq /></PrivateRoute>} />
+        <Route path="/support-fiat" element={<PrivateRoute><Support /></PrivateRoute>} />
+        <Route path="/tutorials-fiat" element={<PrivateRoute><Tutorials /></PrivateRoute>} />
+        <Route path="/profile-details-user/:userId" element={<PrivateRoute><ProfileDetails /></PrivateRoute>} />
+        <Route path="/profile-fiat/:username" element={<PrivateRoute><Profile /></PrivateRoute>} />
       </Route>
 
       <Route element={<P2PMessagesLayout />}>
-        <Route path="/messages-p2p" element={
-          <PrivateRoute>
-            <VerifiedUserRoute>
-              <MessagesP2p />
-            </VerifiedUserRoute>
-          </PrivateRoute>
-        } />
-        <Route path="/chat-room-fiat" element={
-          <PrivateRoute>
-            <VerifiedUserRoute>
-              <MessagesP2p />
-            </VerifiedUserRoute>
-          </PrivateRoute>
-        } />
-        <Route path="/chat-room-fiat-crypto" element={
-          <PrivateRoute>
-            <VerifiedUserRoute>
-              <MessagesP2p />
-            </VerifiedUserRoute>
-          </PrivateRoute>
-        } />
+        <Route path="/messages-p2p" element={<PrivateRoute><MessagesP2p /></PrivateRoute>} />
+        <Route path="/chat-room-fiat" element={<PrivateRoute><MessagesP2p /></PrivateRoute>} />
+        <Route path="/chat-room-fiat-crypto" element={<PrivateRoute><MessagesP2p /></PrivateRoute>} />
       </Route>
 
       <Route element={<FullPageLayout />}>
