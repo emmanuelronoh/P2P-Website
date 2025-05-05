@@ -1,5 +1,4 @@
-import React from "react";
-import { useState, useEffect } from "react";
+import React, { useState, useEffect } from "react";
 import axios from "axios";
 import { useNavigate, Link } from "react-router-dom";
 import "./register.css";
@@ -35,6 +34,65 @@ const Register = () => {
     const [showPassword, setShowPassword] = useState(false);
     const [showConfirmPassword, setShowConfirmPassword] = useState(false);
     const [touchedFields, setTouchedFields] = useState({});
+    const [checkingEmail, setCheckingEmail] = useState(false);
+    const [checkingUsername, setCheckingUsername] = useState(false);
+
+    // Debounce function to limit API calls
+    const debounce = (func, delay) => {
+        let timeoutId;
+        return function(...args) {
+            clearTimeout(timeoutId);
+            timeoutId = setTimeout(() => func.apply(this, args), delay);
+        };
+    };
+
+    // Check if email exists in database
+    const checkEmailAvailability = async (email) => {
+        if (!email || !/^\S+@\S+\.\S+$/.test(email)) return;
+        
+        setCheckingEmail(true);
+        try {
+            const response = await axios.get(
+                `https://cheetahx.onrender.com/api/auth/check-email/?email=${encodeURIComponent(email)}`
+            );
+            if (response.data.exists) {
+                setFieldErrors(prev => ({
+                    ...prev,
+                    email: "This email is already registered"
+                }));
+            }
+        } catch (error) {
+            console.error("Email check error:", error);
+        } finally {
+            setCheckingEmail(false);
+        }
+    };
+
+    // Check if username exists in database
+    const checkUsernameAvailability = async (username) => {
+        if (!username) return;
+        
+        setCheckingUsername(true);
+        try {
+            const response = await axios.get(
+                `https://cheetahx.onrender.com/api/auth/check-username/?username=${encodeURIComponent(username)}`
+            );
+            if (response.data.exists) {
+                setFieldErrors(prev => ({
+                    ...prev,
+                    username: "This username is already taken"
+                }));
+            }
+        } catch (error) {
+            console.error("Username check error:", error);
+        } finally {
+            setCheckingUsername(false);
+        }
+    };
+
+    // Debounced versions of the check functions
+    const debouncedCheckEmail = debounce(checkEmailAvailability, 500);
+    const debouncedCheckUsername = debounce(checkUsernameAvailability, 500);
 
     // Password strength meter with detailed feedback
     const checkPasswordStrength = (password) => {
@@ -48,69 +106,133 @@ const Register = () => {
 
         // Length check
         if (password.length < 8) {
-            feedback.push("Password should be at least 8 characters");
+            feedback.push("At least 8 characters");
         } else {
             strength++;
         }
 
         // Uppercase check
         if (!/[A-Z]/.test(password)) {
-            feedback.push("Add at least one uppercase letter");
+            feedback.push("one uppercase letter");
+        } else {
+            strength++;
+        }
+
+        // Lowercase check
+        if (!/[a-z]/.test(password)) {
+            feedback.push("one lowercase letter");
         } else {
             strength++;
         }
 
         // Number/special char check
-        if (!/[0-9!@#$%^&*(),.?":{}|<>]/.test(password)) {
-            feedback.push("Add at least one number or special character");
+        if (!/[0-9]/.test(password)) {
+            feedback.push("one number");
+        } else {
+            strength++;
+        }
+
+        // Special char check
+        if (!/[!@#$%^&*(),.?":{}|<>]/.test(password)) {
+            feedback.push("one special character");
         } else {
             strength++;
         }
 
         // Very strong check
-        if (password.length >= 12 && /[A-Z]/.test(password) && /[0-9!@#$%^&*(),.?":{}|<>]/.test(password)) {
-            strength = 4;
-            feedback = ["Very strong password!"];
+        if (password.length >= 12 && strength >= 4) {
+            strength = 5;
+            feedback = ["Excellent password!"];
         }
 
         setPasswordStrength({
             score: strength,
-            feedback: feedback.length > 0 ? feedback.join(". ") : "Strong password!"
+            feedback: feedback.length > 0 ? 
+                `Should contain: ${feedback.join(", ")}` : 
+                "Strong password!"
         });
+    };
+
+    const validateField = (name, value) => {
+        let error = "";
+        
+        if (!value) {
+            error = "This field is required";
+        } else {
+            switch (name) {
+                case "email":
+                    if (!/^\S+@\S+\.\S+$/.test(value)) {
+                        error = "Please enter a valid email address";
+                    }
+                    break;
+                case "phone_number":
+                    if (!/^\+?[0-9]{10,15}$/.test(value)) {
+                        error = "Please enter a valid phone number";
+                    }
+                    break;
+                case "username":
+                    if (!/^[a-zA-Z0-9_]{4,30}$/.test(value)) {
+                        error = "4-30 characters, letters, numbers and underscores only";
+                    }
+                    break;
+                case "password":
+                    if (value.length < 8) {
+                        error = "Password must be at least 8 characters";
+                    }
+                    break;
+                case "confirm_password":
+                    if (value !== formData.password) {
+                        error = "Passwords do not match";
+                    }
+                    break;
+            }
+        }
+        
+        return error;
     };
 
     const handleChange = (e) => {
         const { name, value } = e.target;
-        setFormData({ ...formData, [name]: value });
+        setFormData(prev => ({ ...prev, [name]: value }));
         
-        // Clear error when user starts typing
-        if (fieldErrors[name]) {
-            setFieldErrors({ ...fieldErrors, [name]: "" });
-        }
+        // Validate the field
+        const error = validateField(name, value);
+        setFieldErrors(prev => ({ ...prev, [name]: error }));
         
         // Update touched fields
         if (!touchedFields[name]) {
-            setTouchedFields({ ...touchedFields, [name]: true });
+            setTouchedFields(prev => ({ ...prev, [name]: true }));
         }
         
-        // Check password strength in real-time
+        // Special handling for specific fields
         if (name === "password") {
             checkPasswordStrength(value);
+            // Also validate confirm_password if it's been touched
+            if (touchedFields.confirm_password) {
+                const confirmError = validateField("confirm_password", formData.confirm_password);
+                setFieldErrors(prev => ({ ...prev, confirm_password: confirmError }));
+            }
+        } else if (name === "email") {
+            debouncedCheckEmail(value);
+        } else if (name === "username") {
+            debouncedCheckUsername(value);
         }
     };
 
     const handleBlur = (e) => {
-        const { name } = e.target;
+        const { name, value } = e.target;
         if (!touchedFields[name]) {
-            setTouchedFields({ ...touchedFields, [name]: true });
+            setTouchedFields(prev => ({ ...prev, [name]: true }));
         }
+        
+        // Validate the field on blur
+        const error = validateField(name, value);
+        setFieldErrors(prev => ({ ...prev, [name]: error }));
     };
 
-    // Helper function to format backend errors for display
     const formatBackendErrors = (errors) => {
         const formattedErrors = {};
         
-        // Handle different error response formats
         if (typeof errors === 'string') {
             return { non_field_errors: [errors] };
         }
@@ -136,90 +258,81 @@ const Register = () => {
         e.preventDefault();
         setLoading(true);
         setMessage(null);
-        setFieldErrors({
-            username: "",
-            email: "",
-            password: "",
-            confirm_password: "",
-            first_name: "",
-            last_name: "",
-            phone_number: "",
-        });
-
-        // Frontend validation
+        
+        // Validate all fields before submission
         let hasErrors = false;
-        const newErrors = { ...fieldErrors };
-
-        // Check required fields
+        const newErrors = {};
+        
         for (const field in formData) {
-            if (!formData[field]) {
-                newErrors[field] = "This field is required";
-                hasErrors = true;
-            }
+            const error = validateField(field, formData[field]);
+            newErrors[field] = error;
+            if (error) hasErrors = true;
         }
-
-        // Password validation
-        if (formData.password !== formData.confirm_password) {
-            newErrors.confirm_password = "Passwords do not match";
-            hasErrors = true;
-        }
-
-        if (passwordStrength.score < 2) {
+        
+        // Additional password validation
+        if (passwordStrength.score < 3) {
             newErrors.password = "Please choose a stronger password. " + passwordStrength.feedback;
             hasErrors = true;
         }
-
-        // Email format validation
-        if (formData.email && !/^\S+@\S+\.\S+$/.test(formData.email)) {
-            newErrors.email = "Please enter a valid email address";
-            hasErrors = true;
-        }
-
+        
         if (hasErrors) {
             setFieldErrors(newErrors);
             setLoading(false);
+            setMessage({
+                type: "error",
+                text: "Please correct the errors in the form"
+            });
             return;
         }
-
+        
         try {
             const response = await axios.post(
                 "https://cheetahx.onrender.com/api/auth/register/", 
-                formData
-            );
-
-            setMessage({ 
-                type: "success", 
-                text: response.data.message || "Registration successful! Please check your email for verification." 
-            });
-            
-            setTimeout(() => navigate("/verify-otp"), 3000);
-        } catch (error) {
-            let errorMessage = "Registration failed. Please check the form and try again.";
-            let backendErrors = {};
-            
-            if (error.response) {
-                if (error.response.data) {
-                    // Format backend errors
-                    backendErrors = formatBackendErrors(error.response.data);
-                    
-                    // Set field-specific errors
-                    const updatedFieldErrors = { ...fieldErrors };
-                    for (const field in backendErrors) {
-                        if (field in updatedFieldErrors) {
-                            updatedFieldErrors[field] = backendErrors[field];
-                        }
-                    }
-                    setFieldErrors(updatedFieldErrors);
-
-                    // Set general error message if no field-specific errors
-                    if (Object.keys(backendErrors).length === 0) {
-                        errorMessage = "An unexpected error occurred. Please try again.";
-                    } else if (backendErrors.non_field_errors) {
-                        errorMessage = backendErrors.non_field_errors.join(' ');
+                formData,
+                {
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    validateStatus: function (status) {
+                        return status >= 200 && status < 500;
                     }
                 }
+            );
+
+            if (response.status === 200) {
+                setMessage({ 
+                    type: "success", 
+                    text: response.data.message || "Registration successful! Please check your email for verification." 
+                });
+                setTimeout(() => navigate("/verify-otp"), 3000);
+            } else {
+                const backendErrors = formatBackendErrors(response.data);
+                const updatedFieldErrors = { ...fieldErrors };
+                
+                for (const field in backendErrors) {
+                    if (field in updatedFieldErrors) {
+                        updatedFieldErrors[field] = backendErrors[field];
+                    }
+                }
+                
+                setFieldErrors(updatedFieldErrors);
+                
+                const errorMessage = backendErrors.non_field_errors ? 
+                    backendErrors.non_field_errors.join(' ') : 
+                    "Registration failed. Please check the form and try again.";
+                
+                setMessage({
+                    type: "error",
+                    text: errorMessage
+                });
+            }
+        } catch (error) {
+            let errorMessage = "Registration failed. Please try again later.";
+            
+            if (error.response) {
+                errorMessage = error.response.data.detail || errorMessage;
             } else if (error.request) {
-                errorMessage = "Network error. Please check your internet connection and try again.";
+                errorMessage = "Network error. Please check your internet connection.";
             }
             
             setMessage({
@@ -231,19 +344,27 @@ const Register = () => {
         }
     };
 
-    // Check if all required fields are filled
     const isFormValid = () => {
-        return (
-            formData.username &&
-            formData.email &&
-            formData.password &&
-            formData.confirm_password &&
-            formData.first_name &&
-            formData.last_name &&
-            formData.phone_number &&
-            formData.password === formData.confirm_password &&
-            passwordStrength.score >= 2
-        );
+        // Check all required fields are filled
+        for (const field in formData) {
+            if (!formData[field]) return false;
+        }
+        
+        // Check no field errors
+        for (const field in fieldErrors) {
+            if (fieldErrors[field]) return false;
+        }
+        
+        // Check password strength
+        if (passwordStrength.score < 3) return false;
+        
+        // Check passwords match
+        if (formData.password !== formData.confirm_password) return false;
+        
+        // Check no async validations are running
+        if (checkingEmail || checkingUsername) return false;
+        
+        return true;
     };
 
     return (
@@ -265,10 +386,10 @@ const Register = () => {
                     </div>
                 )}
 
-                <form onSubmit={handleSubmit} className="register-form">
+                <form onSubmit={handleSubmit} className="register-form" noValidate>
                     <div className="form-row">
                         <div className="form-group">
-                            <label htmlFor="first_name">First Name</label>
+                            <label htmlFor="first_name">First Name*</label>
                             <input
                                 type="text"
                                 id="first_name"
@@ -279,14 +400,18 @@ const Register = () => {
                                 onBlur={handleBlur}
                                 required
                                 className={fieldErrors.first_name ? "error" : ""}
+                                aria-invalid={!!fieldErrors.first_name}
+                                aria-describedby={fieldErrors.first_name ? "first_name-error" : undefined}
                             />
                             {fieldErrors.first_name && (
-                                <span className="error-message">{fieldErrors.first_name}</span>
+                                <span id="first_name-error" className="error-message">
+                                    {fieldErrors.first_name}
+                                </span>
                             )}
                         </div>
 
                         <div className="form-group">
-                            <label htmlFor="last_name">Last Name</label>
+                            <label htmlFor="last_name">Last Name*</label>
                             <input
                                 type="text"
                                 id="last_name"
@@ -297,15 +422,19 @@ const Register = () => {
                                 onBlur={handleBlur}
                                 required
                                 className={fieldErrors.last_name ? "error" : ""}
+                                aria-invalid={!!fieldErrors.last_name}
+                                aria-describedby={fieldErrors.last_name ? "last_name-error" : undefined}
                             />
                             {fieldErrors.last_name && (
-                                <span className="error-message">{fieldErrors.last_name}</span>
+                                <span id="last_name-error" className="error-message">
+                                    {fieldErrors.last_name}
+                                </span>
                             )}
                         </div>
                     </div>
 
                     <div className="form-group">
-                        <label htmlFor="username">Username</label>
+                        <label htmlFor="username">Username*</label>
                         <input
                             type="text"
                             id="username"
@@ -316,14 +445,21 @@ const Register = () => {
                             onBlur={handleBlur}
                             required
                             className={fieldErrors.username ? "error" : ""}
+                            aria-invalid={!!fieldErrors.username}
+                            aria-describedby={fieldErrors.username ? "username-error" : undefined}
                         />
                         {fieldErrors.username && (
-                            <span className="error-message">{fieldErrors.username}</span>
+                            <span id="username-error" className="error-message">
+                                {fieldErrors.username}
+                            </span>
+                        )}
+                        {checkingUsername && (
+                            <span className="checking-message">Checking username availability...</span>
                         )}
                     </div>
 
                     <div className="form-group">
-                        <label htmlFor="email">Email</label>
+                        <label htmlFor="email">Email*</label>
                         <input
                             type="email"
                             id="email"
@@ -334,33 +470,43 @@ const Register = () => {
                             onBlur={handleBlur}
                             required
                             className={fieldErrors.email ? "error" : ""}
+                            aria-invalid={!!fieldErrors.email}
+                            aria-describedby={fieldErrors.email ? "email-error" : undefined}
                         />
                         {fieldErrors.email && (
-                            <span className="error-message">{fieldErrors.email}</span>
+                            <span id="email-error" className="error-message">
+                                {fieldErrors.email}
+                            </span>
+                        )}
+                        {checkingEmail && (
+                            <span className="checking-message">Checking email availability...</span>
                         )}
                     </div>
 
                     <div className="form-group">
-                        <label htmlFor="phone_number">Phone Number</label>
+                        <label htmlFor="phone_number">Phone Number*</label>
                         <input
                             type="tel"
                             id="phone_number"
                             name="phone_number"
-                            placeholder="1234567890"
+                            placeholder="+1234567890"
                             value={formData.phone_number}
                             onChange={handleChange}
                             onBlur={handleBlur}
                             required
-                            inputMode="numeric"
                             className={fieldErrors.phone_number ? "error" : ""}
+                            aria-invalid={!!fieldErrors.phone_number}
+                            aria-describedby={fieldErrors.phone_number ? "phone_number-error" : undefined}
                         />
                         {fieldErrors.phone_number && (
-                            <span className="error-message">{fieldErrors.phone_number}</span>
+                            <span id="phone_number-error" className="error-message">
+                                {fieldErrors.phone_number}
+                            </span>
                         )}
                     </div>
 
                     <div className="form-group password-group">
-                        <label htmlFor="password">Password</label>
+                        <label htmlFor="password">Password*</label>
                         <div className="password-input-container">
                             <input
                                 type={showPassword ? "text" : "password"}
@@ -368,13 +514,12 @@ const Register = () => {
                                 name="password"
                                 placeholder="Create a password"
                                 value={formData.password}
-                                onChange={(e) => {
-                                    handleChange(e);
-                                    checkPasswordStrength(e.target.value);
-                                }}
+                                onChange={handleChange}
                                 onBlur={handleBlur}
                                 required
                                 className={fieldErrors.password ? "error" : ""}
+                                aria-invalid={!!fieldErrors.password}
+                                aria-describedby={fieldErrors.password ? "password-error" : undefined}
                             />
                             <button
                                 type="button"
@@ -396,15 +541,20 @@ const Register = () => {
                             </button>
                         </div>
                         {fieldErrors.password && (
-                            <span className="error-message">{fieldErrors.password}</span>
+                            <span id="password-error" className="error-message">
+                                {fieldErrors.password}
+                            </span>
                         )}
                         
                         <div className="password-strength-meter">
                             <div className="strength-bars">
-                                {[1, 2, 3, 4].map((level) => (
+                                {[1, 2, 3, 4, 5].map((level) => (
                                     <div
                                         key={level}
-                                        className={`strength-bar ${passwordStrength.score >= level ? `strength-${passwordStrength.score}` : ""}`}
+                                        className={`strength-bar ${
+                                            passwordStrength.score >= level ? 
+                                            `strength-${passwordStrength.score}` : ""
+                                        }`}
                                     ></div>
                                 ))}
                             </div>
@@ -417,7 +567,7 @@ const Register = () => {
                     </div>
 
                     <div className="form-group password-group">
-                        <label htmlFor="confirm_password">Confirm Password</label>
+                        <label htmlFor="confirm_password">Confirm Password*</label>
                         <div className="password-input-container">
                             <input
                                 type={showConfirmPassword ? "text" : "password"}
@@ -429,6 +579,8 @@ const Register = () => {
                                 onBlur={handleBlur}
                                 required
                                 className={fieldErrors.confirm_password ? "error" : ""}
+                                aria-invalid={!!fieldErrors.confirm_password}
+                                aria-describedby={fieldErrors.confirm_password ? "confirm_password-error" : undefined}
                             />
                             <button
                                 type="button"
@@ -450,7 +602,9 @@ const Register = () => {
                             </button>
                         </div>
                         {fieldErrors.confirm_password && (
-                            <span className="error-message">{fieldErrors.confirm_password}</span>
+                            <span id="confirm_password-error" className="error-message">
+                                {fieldErrors.confirm_password}
+                            </span>
                         )}
                     </div>
 
@@ -458,6 +612,7 @@ const Register = () => {
                         type="submit"
                         className="submit-button"
                         disabled={loading || !isFormValid()}
+                        aria-busy={loading}
                     >
                         {loading ? (
                             <>
@@ -483,5 +638,3 @@ const Register = () => {
 };
 
 export default Register;
-
-
