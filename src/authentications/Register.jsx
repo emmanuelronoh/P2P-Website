@@ -40,7 +40,7 @@ const Register = () => {
     // Debounce function to limit API calls
     const debounce = (func, delay) => {
         let timeoutId;
-        return function(...args) {
+        return function (...args) {
             clearTimeout(timeoutId);
             timeoutId = setTimeout(() => func.apply(this, args), delay);
         };
@@ -49,7 +49,7 @@ const Register = () => {
     // Check if email exists in database
     const checkEmailAvailability = async (email) => {
         if (!email || !/^\S+@\S+\.\S+$/.test(email)) return;
-        
+
         setCheckingEmail(true);
         try {
             const response = await axios.get(
@@ -71,7 +71,7 @@ const Register = () => {
     // Check if username exists in database
     const checkUsernameAvailability = async (username) => {
         if (!username) return;
-        
+
         setCheckingUsername(true);
         try {
             const response = await axios.get(
@@ -98,7 +98,7 @@ const Register = () => {
     const checkPasswordStrength = (password) => {
         let strength = 0;
         let feedback = [];
-        
+
         if (password.length === 0) {
             setPasswordStrength({ score: 0, feedback: "" });
             return;
@@ -147,15 +147,15 @@ const Register = () => {
 
         setPasswordStrength({
             score: strength,
-            feedback: feedback.length > 0 ? 
-                `Should contain: ${feedback.join(", ")}` : 
+            feedback: feedback.length > 0 ?
+                `Should contain: ${feedback.join(", ")}` :
                 "Strong password!"
         });
     };
 
     const validateField = (name, value) => {
         let error = "";
-        
+
         if (!value) {
             error = "This field is required";
         } else {
@@ -170,9 +170,10 @@ const Register = () => {
                         error = "Please enter a valid phone number";
                     }
                     break;
+
                 case "username":
-                    if (!/^[a-zA-Z0-9_]{4,30}$/.test(value)) {
-                        error = "4-30 characters, letters, numbers and underscores only";
+                    if (!/^[a-zA-Z][a-zA-Z0-9_]{3,29}$/.test(value)) {
+                        error = "4-30 characters, must start with a letter, and can only contain letters, numbers and underscores";
                     }
                     break;
                 case "password":
@@ -187,23 +188,23 @@ const Register = () => {
                     break;
             }
         }
-        
+
         return error;
     };
 
     const handleChange = (e) => {
         const { name, value } = e.target;
         setFormData(prev => ({ ...prev, [name]: value }));
-        
+
         // Validate the field
         const error = validateField(name, value);
         setFieldErrors(prev => ({ ...prev, [name]: error }));
-        
+
         // Update touched fields
         if (!touchedFields[name]) {
             setTouchedFields(prev => ({ ...prev, [name]: true }));
         }
-        
+
         // Special handling for specific fields
         if (name === "password") {
             checkPasswordStrength(value);
@@ -224,7 +225,7 @@ const Register = () => {
         if (!touchedFields[name]) {
             setTouchedFields(prev => ({ ...prev, [name]: true }));
         }
-        
+
         // Validate the field on blur
         const error = validateField(name, value);
         setFieldErrors(prev => ({ ...prev, [name]: error }));
@@ -232,15 +233,15 @@ const Register = () => {
 
     const formatBackendErrors = (errors) => {
         const formattedErrors = {};
-        
+
         if (typeof errors === 'string') {
             return { non_field_errors: [errors] };
         }
-        
+
         if (Array.isArray(errors)) {
             return { non_field_errors: errors };
         }
-        
+
         for (const field in errors) {
             if (Array.isArray(errors[field])) {
                 formattedErrors[field] = errors[field].join(' ');
@@ -250,7 +251,7 @@ const Register = () => {
                 formattedErrors[field] = errors[field];
             }
         }
-        
+
         return formattedErrors;
     };
 
@@ -258,23 +259,23 @@ const Register = () => {
         e.preventDefault();
         setLoading(true);
         setMessage(null);
-        
+
         // Validate all fields before submission
         let hasErrors = false;
         const newErrors = {};
-        
+
         for (const field in formData) {
             const error = validateField(field, formData[field]);
             newErrors[field] = error;
             if (error) hasErrors = true;
         }
-        
+
         // Additional password validation
         if (passwordStrength.score < 3) {
             newErrors.password = "Please choose a stronger password. " + passwordStrength.feedback;
             hasErrors = true;
         }
-        
+
         if (hasErrors) {
             setFieldErrors(newErrors);
             setLoading(false);
@@ -284,10 +285,10 @@ const Register = () => {
             });
             return;
         }
-        
+
         try {
             const response = await axios.post(
-                "https://cheetahx.onrender.com/api/auth/register/", 
+                "https://cheetahx.onrender.com/api/auth/register/",
                 formData,
                 {
                     headers: {
@@ -300,27 +301,27 @@ const Register = () => {
             );
 
             if (response.status === 200) {
-                setMessage({ 
-                    type: "success", 
-                    text: response.data.message || "Registration successful! Please check your email for verification." 
+                setMessage({
+                    type: "success",
+                    text: response.data.message || "Registration successful! Please check your email for verification."
                 });
                 setTimeout(() => navigate("/verify-otp"), 3000);
             } else {
                 const backendErrors = formatBackendErrors(response.data);
                 const updatedFieldErrors = { ...fieldErrors };
-                
+
                 for (const field in backendErrors) {
                     if (field in updatedFieldErrors) {
                         updatedFieldErrors[field] = backendErrors[field];
                     }
                 }
-                
+
                 setFieldErrors(updatedFieldErrors);
-                
-                const errorMessage = backendErrors.non_field_errors ? 
-                    backendErrors.non_field_errors.join(' ') : 
+
+                const errorMessage = backendErrors.non_field_errors ?
+                    backendErrors.non_field_errors.join(' ') :
                     "Registration failed. Please check the form and try again.";
-                
+
                 setMessage({
                     type: "error",
                     text: errorMessage
@@ -328,13 +329,13 @@ const Register = () => {
             }
         } catch (error) {
             let errorMessage = "Registration failed. Please try again later.";
-            
+
             if (error.response) {
                 errorMessage = error.response.data.detail || errorMessage;
             } else if (error.request) {
                 errorMessage = "Network error. Please check your internet connection.";
             }
-            
+
             setMessage({
                 type: "error",
                 text: errorMessage
@@ -349,21 +350,21 @@ const Register = () => {
         for (const field in formData) {
             if (!formData[field]) return false;
         }
-        
+
         // Check no field errors
         for (const field in fieldErrors) {
             if (fieldErrors[field]) return false;
         }
-        
+
         // Check password strength
         if (passwordStrength.score < 3) return false;
-        
+
         // Check passwords match
         if (formData.password !== formData.confirm_password) return false;
-        
+
         // Check no async validations are running
         if (checkingEmail || checkingUsername) return false;
-        
+
         return true;
     };
 
@@ -545,16 +546,15 @@ const Register = () => {
                                 {fieldErrors.password}
                             </span>
                         )}
-                        
+
                         <div className="password-strength-meter">
                             <div className="strength-bars">
                                 {[1, 2, 3, 4, 5].map((level) => (
                                     <div
                                         key={level}
-                                        className={`strength-bar ${
-                                            passwordStrength.score >= level ? 
-                                            `strength-${passwordStrength.score}` : ""
-                                        }`}
+                                        className={`strength-bar ${passwordStrength.score >= level ?
+                                                `strength-${passwordStrength.score}` : ""
+                                            }`}
                                     ></div>
                                 ))}
                             </div>
