@@ -11,7 +11,7 @@ import {
 } from 'react-icons/fi';
 
 // API configuration
-const API_BASE_URL = 'https://cheetahx.onrender.com/api/dashboard/';
+const API_BASE_URL = 'http://127.0.0.1:8000/api/dashboard/';
 const axiosInstance = axios.create({
   baseURL: API_BASE_URL,
   timeout: 10000,
@@ -49,7 +49,7 @@ const Dashboard = () => {
           axiosInstance.get('/users/stats/'),
           axiosInstance.get('/trades/stats/'),
           axiosInstance.get('/transactions/recent/'),
-          axiosInstance.get('https://cheetahx.onrender.com/crypto/notifications/'),
+          axiosInstance.get('http://127.0.0.1:8000/crypto/notifications/'),
           axiosInstance.get('/reputation/')
         ]);
 
@@ -86,7 +86,7 @@ const Dashboard = () => {
 
   const markNotificationAsRead = async (notificationId) => {
     try {
-      await axiosInstance.patch(`https://cheetahx.onrender.com/crypto/notifications/${notificationId}/mark-read/`);
+      await axiosInstance.patch(`http://127.0.0.1:8000/crypto/notifications/${notificationId}/mark-read/`);
       setDashboardData(prev => ({
         ...prev,
         notifications: prev.notifications.map(n =>
@@ -188,10 +188,6 @@ const Dashboard = () => {
               <span className={`status-indicator ${available ? 'online' : 'offline'}`}></span>
               <span>{available ? 'Online' : 'Offline'}</span>
             </div>
-            <button className="support-button">
-              <FiMessageSquare className="support-icon" />
-              <span>Support</span>
-            </button>
           </div>
         </div>
 

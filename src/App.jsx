@@ -50,6 +50,7 @@ import Navbar from "./components/Navbar";
 import "uikit/dist/css/uikit.min.css";
 import ResetPassword from "./components/ResetPassword";
 import VerificationPending from "./pages/VerificationPending";
+import InvitationsPage from "./pages/InvitationsPage";
 
 export const ThemeContext = React.createContext();
 
@@ -359,6 +360,7 @@ function AppInner() {
         <Route path="/risk" element={<Risk />} />
         <Route path="/feedback" element={<Feedback />} />
         <Route path="/profile/:username" element={<Profile />} />
+        <Route path="/invitations" element={<InvitationsPage />} />
       </Route>
 
       {/* Authenticated but not necessarily verified routes */}

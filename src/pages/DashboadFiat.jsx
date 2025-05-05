@@ -1,49 +1,148 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import axios from 'axios';
 import '../styles/dashboard.css';
 import profileImage from '../assets/cheetah-logo.png';
-import { FiBell, FiMessageSquare, FiDollarSign, FiCreditCard, FiBarChart2, FiShield, FiSettings, 
-  FiArrowUp, FiArrowDown, FiTrendingUp, FiClock, FiCheckCircle, FiUsers, 
-  FiLayers, FiPieChart, FiRefreshCw, FiExternalLink } from 'react-icons/fi';
+import { useNavigate } from 'react-router-dom';
+import {
+  FiBell, FiMessageSquare, FiDollarSign, FiCreditCard, FiBarChart2,
+  FiShield, FiSettings, FiArrowUp, FiArrowDown, FiTrendingUp,
+  FiClock, FiCheckCircle, FiUsers, FiLayers, FiPieChart,
+  FiRefreshCw, FiExternalLink, FiAlertCircle, FiLoader
+} from 'react-icons/fi';
+
+// API configuration
+const API_BASE_URL = 'http://127.0.0.1:8000/api/dashboard/';
+const axiosInstance = axios.create({
+  baseURL: API_BASE_URL,
+  timeout: 10000,
+  headers: {
+    'Authorization': `Bearer ${localStorage.getItem('accessToken')}`,
+    'Content-Type': 'application/json'
+  }
+});
 
 const Dashboard = () => {
   const [activeTab, setActiveTab] = useState('overview');
   const [available, setAvailable] = useState(true);
   const [showNotification, setShowNotification] = useState(true);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+  const navigate = useNavigate();
 
-  // Mock data - replace with real data from your backend
-  const userStats = {
-    totalTrades: 24,
-    completionRate: 92.5,
-    responseRate: 100,
-    rating: 4.8,
-    disputes: 0,
-    activeTrades: 2,
-    currency: 'USD'
+  const handleInviteFriends = () => {
+    navigate('/invitations');
   };
 
-  const tradeStats = {
-    buy: 15,
-    sell: 9,
-    totalVolume: 45200,
-    thisMonth: 3200
+  const goToDashboard = () => {
+    navigate('/dashboard');
   };
 
-  const recentTransactions = [
-    { id: 1, type: 'buy', amount: 0.25, currency: 'BTC', fiatValue: 15000, counterparty: 'crypto_whale', status: 'completed', time: '2 hours ago' },
-    { id: 2, type: 'sell', amount: 1.2, currency: 'ETH', fiatValue: 3600, counterparty: 'new_trader_2023', status: 'in progress', time: '5 hours ago' },
-    { id: 3, type: 'buy', amount: 500, currency: 'USDT', fiatValue: 500, counterparty: 'stable_arbitrageur', status: 'completed', time: '1 day ago' },
-  ];
+  // State for all data
+  const [dashboardData, setDashboardData] = useState({
+    userStats: null,
+    tradeStats: null,
+    recentTransactions: [],
+    notifications: [],
+    reputation: null
+  });
 
-  const notifications = [
-    { id: 1, type: 'trade', message: 'New trade request from crypto_whale', time: '10 min ago', read: false },
-    { id: 2, type: 'system', message: 'System update scheduled for tomorrow', time: '2 hours ago', read: true },
-    { id: 3, type: 'promotion', message: 'Special bonus for completing 3 trades this week', time: '1 day ago', read: true },
-  ];
+  // Fetch dashboard data
+  useEffect(() => {
+    const fetchDashboardData = async () => {
+      try {
+        setLoading(true);
+        setError(null);
 
-  const toggleAvailability = () => {
-    setAvailable(!available);
+        // You might want to use Promise.all for parallel requests
+        const [userRes, tradesRes, transactionsRes, notificationsRes, reputationRes] = await Promise.all([
+          axiosInstance.get('/users/stats/'),
+          axiosInstance.get('/trades/stats/'),
+          axiosInstance.get('/transactions/recent/'),
+          axiosInstance.get('http://127.0.0.1:8000/crypto/notifications/'),
+          axiosInstance.get('/reputation/')
+        ]);
+
+        setDashboardData({
+          userStats: userRes.data,
+          tradeStats: tradesRes.data,
+          recentTransactions: transactionsRes.data,
+          notifications: notificationsRes.data,
+          reputation: reputationRes.data
+        });
+
+      } catch (err) {
+        console.error('Failed to fetch dashboard data:', err);
+        setError('Failed to load dashboard data. Please try again later.');
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchDashboardData();
+  }, []);
+
+  // Toggle availability status
+  const toggleAvailability = async () => {
+    try {
+      const newStatus = !available;
+      await axiosInstance.patch('/users/availability/', { available: newStatus });
+      setAvailable(newStatus);
+    } catch (err) {
+      console.error('Failed to update availability:', err);
+      // You might want to show a toast notification here
+    }
   };
+  const handleClick = () => {
+    navigate('/fiat-p2p');
+  };
+
+
+  const markNotificationAsRead = async (notificationId) => {
+    try {
+      await axiosInstance.patch(`http://127.0.0.1:8000/crypto/notifications/${notificationId}/mark-read/`);
+      setDashboardData(prev => ({
+        ...prev,
+        notifications: prev.notifications.map(n =>
+          n.id === notificationId ? { ...n, read: true } : n
+        )
+      }));
+    } catch (err) {
+      console.error('Failed to mark notification as read:', err);
+    }
+  };
+
+  // Handle tab change
+  const handleTabChange = (tab) => {
+    setActiveTab(tab);
+    // Here you could add logic to fetch tab-specific data if needed
+  };
+
+  const handleViewMarketPrices = () => {
+    navigate('/fiat-p2p');
+  };
+
+  if (loading) {
+    return (
+      <div className="dashboard-loading">
+        <FiLoader className="loading-spinner" />
+        <p>Loading dashboard...</p>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="dashboard-error">
+        <FiAlertCircle className="error-icon" />
+        <p>{error}</p>
+        <button onClick={() => window.location.reload()}>Retry</button>
+      </div>
+    );
+  }
+
+  // Destructure data for easier access
+  const { userStats, tradeStats, recentTransactions, notifications, reputation } = dashboardData;
 
   return (
     <div className="cheetahx-dashboard">
@@ -51,54 +150,77 @@ const Dashboard = () => {
       <div className="dashboard-content">
         {/* Sidebar */}
         <div className="dashboard-sidebar">
+          <div className="user-profile">
+            <div className="profile-image">
+              {userStats?.username?.[0]?.toUpperCase() || 'U'}
+            </div>
+            <div className="profile-info">
+              <h3>{userStats?.username || 'User'}</h3>
+              <p className="profile-level">
+                Level {reputation?.level || 1} {reputation?.title || 'Trader'}
+              </p>
+            </div>
+          </div>
+
+
           <div className="sidebar-menu">
-            <button 
+            <button
               className={`menu-item ${activeTab === 'overview' ? 'active' : ''}`}
-              onClick={() => setActiveTab('overview')}
+              onClick={() => handleTabChange('overview')}
             >
               <FiBarChart2 className="menu-icon" />
               <span>Overview</span>
             </button>
-            <button 
+            <button
               className={`menu-item ${activeTab === 'trades' ? 'active' : ''}`}
-              onClick={() => setActiveTab('trades')}
+              onClick={() => handleTabChange('trades')}
             >
               <FiRefreshCw className="menu-icon" />
               <span>My Trades</span>
             </button>
-            <button 
+            <button
               className={`menu-item ${activeTab === 'wallet' ? 'active' : ''}`}
-              onClick={() => setActiveTab('wallet')}
+              onClick={() => handleTabChange('wallet')}
             >
               <FiCreditCard className="menu-icon" />
               <span>Wallet Balance</span>
             </button>
-            <button 
+            <button
               className={`menu-item ${activeTab === 'reputation' ? 'active' : ''}`}
-              onClick={() => setActiveTab('reputation')}
+              onClick={() => handleTabChange('reputation')}
             >
               <FiShield className="menu-icon" />
               <span>Reputation</span>
             </button>
-            <button 
+            <button
               className={`menu-item ${activeTab === 'settings' ? 'active' : ''}`}
-              onClick={() => setActiveTab('settings')}
+              onClick={() => handleTabChange('settings')}
             >
               <FiSettings className="menu-icon" />
               <span>Settings</span>
             </button>
           </div>
+
+          <div className="sidebar-footer">
+            <div className="online-status">
+              <span className={`status-indicator ${available ? 'online' : 'offline'}`}></span>
+              <span>{available ? 'Online' : 'Offline'}</span>
+            </div>
+          </div>
         </div>
 
         {/* Main Content Area */}
         <div className="dashboard-main">
-          {showNotification && (
+          {showNotification && notifications.some(n => !n.read) && (
             <div className="notification-banner">
               <div className="notification-content">
                 <FiBell className="notification-icon" />
-                <p>Complete your profile verification to increase your trade limits and gain trust.</p>
+                <p>You have {notifications.filter(n => !n.read).length} unread notifications</p>
               </div>
-              <button className="notification-close" onClick={() => setShowNotification(false)}>
+              <button
+                className="notification-close"
+                onClick={() => setShowNotification(false)}
+              >
                 &times;
               </button>
             </div>
@@ -106,7 +228,7 @@ const Dashboard = () => {
 
           <div className="welcome-section">
             <div className="welcome-header">
-              <h1>Welcome back, Emmanuel!</h1>
+              <h1>Welcome back, {userStats?.first_name || 'Trader'}!</h1>
               <p>Here's what's happening with your P2P trading today</p>
             </div>
             <div className="availability-toggle">
@@ -114,10 +236,10 @@ const Dashboard = () => {
                 {available ? 'Online' : 'Offline'}
               </span>
               <label className="toggle-switch">
-                <input 
-                  type="checkbox" 
-                  checked={available} 
-                  onChange={toggleAvailability} 
+                <input
+                  type="checkbox"
+                  checked={available}
+                  onChange={toggleAvailability}
                 />
                 <span className="slider round"></span>
               </label>
@@ -131,10 +253,19 @@ const Dashboard = () => {
                 <FiDollarSign className="stat-icon" />
                 <h3>Total Trades</h3>
               </div>
-              <div className="stat-value">{userStats.totalTrades}</div>
+              <div className="stat-value">{userStats?.total_trades || 0}</div>
               <div className="stat-trend">
-                <FiTrendingUp className="trend-icon up" />
-                <span className="trend-text up">12% from last week</span>
+                {userStats?.trades_trend === 'up' ? (
+                  <>
+                    <FiTrendingUp className="trend-icon up" />
+                    <span className="trend-text up">{userStats.trades_change}% from last week</span>
+                  </>
+                ) : (
+                  <>
+                    <FiTrendingUp className="trend-icon down" />
+                    <span className="trend-text down">{userStats?.trades_change || 0}% from last week</span>
+                  </>
+                )}
               </div>
             </div>
 
@@ -143,10 +274,19 @@ const Dashboard = () => {
                 <FiCheckCircle className="stat-icon" />
                 <h3>Completion Rate</h3>
               </div>
-              <div className="stat-value">{userStats.completionRate}%</div>
+              <div className="stat-value">{userStats?.completion_rate || 0}%</div>
               <div className="stat-trend">
-                <FiTrendingUp className="trend-icon up" />
-                <span className="trend-text up">2.5% from last month</span>
+                {userStats?.completion_trend === 'up' ? (
+                  <>
+                    <FiTrendingUp className="trend-icon up" />
+                    <span className="trend-text up">{userStats.completion_change}% from last month</span>
+                  </>
+                ) : (
+                  <>
+                    <FiTrendingUp className="trend-icon down" />
+                    <span className="trend-text down">{userStats?.completion_change || 0}% from last month</span>
+                  </>
+                )}
               </div>
             </div>
 
@@ -155,10 +295,12 @@ const Dashboard = () => {
                 <FiUsers className="stat-icon" />
                 <h3>Active Trades</h3>
               </div>
-              <div className="stat-value">{userStats.activeTrades}</div>
+              <div className="stat-value">{userStats?.active_trades || 0}</div>
               <div className="stat-trend">
                 <FiClock className="trend-icon neutral" />
-                <span className="trend-text neutral">2 in progress</span>
+                <span className="trend-text neutral">
+                  {userStats?.active_trades || 0} in progress
+                </span>
               </div>
             </div>
 
@@ -167,10 +309,19 @@ const Dashboard = () => {
                 <FiShield className="stat-icon" />
                 <h3>Dispute Rate</h3>
               </div>
-              <div className="stat-value">{userStats.disputes}%</div>
+              <div className="stat-value">{userStats?.dispute_rate || 0}%</div>
               <div className="stat-trend">
-                <FiTrendingUp className="trend-icon down" />
-                <span className="trend-text down">Industry avg. 5%</span>
+                {userStats?.dispute_trend === 'down' ? (
+                  <>
+                    <FiTrendingUp className="trend-icon up" />
+                    <span className="trend-text up">Industry avg. {userStats?.industry_avg_dispute || 5}%</span>
+                  </>
+                ) : (
+                  <>
+                    <FiTrendingUp className="trend-icon down" />
+                    <span className="trend-text down">Industry avg. {userStats?.industry_avg_dispute || 5}%</span>
+                  </>
+                )}
               </div>
             </div>
           </div>
@@ -183,7 +334,7 @@ const Dashboard = () => {
                 View All <FiExternalLink className="action-icon" />
               </button>
             </div>
-            
+
             <div className="activity-content">
               <div className="trade-chart">
                 <div className="chart-header">
@@ -191,58 +342,63 @@ const Dashboard = () => {
                   <div className="chart-legend">
                     <div className="legend-item buy">
                       <span className="legend-color"></span>
-                      <span>Buy ({tradeStats.buy})</span>
+                      <span>Buy ({tradeStats?.buy_count || 0})</span>
                     </div>
                     <div className="legend-item sell">
                       <span className="legend-color"></span>
-                      <span>Sell ({tradeStats.sell})</span>
+                      <span>Sell ({tradeStats?.sell_count || 0})</span>
                     </div>
                   </div>
                 </div>
                 <div className="chart-placeholder">
-                  <div className="chart-bar" style={{ height: '80%' }}></div>
-                  <div className="chart-bar" style={{ height: '60%' }}></div>
-                  <div className="chart-bar" style={{ height: '45%' }}></div>
-                  <div className="chart-bar" style={{ height: '75%' }}></div>
-                  <div className="chart-bar" style={{ height: '90%' }}></div>
-                  <div className="chart-bar" style={{ height: '30%' }}></div>
-                  <div className="chart-bar" style={{ height: '50%' }}></div>
+                  {tradeStats?.weekly_volume?.map((volume, index) => (
+                    <div
+                      key={index}
+                      className="chart-bar"
+                      style={{ height: `${(volume / tradeStats.max_weekly_volume) * 80}%` }}
+                    ></div>
+                  ))}
                 </div>
                 <div className="chart-xaxis">
-                  <span>Week 1</span>
-                  <span>Week 2</span>
-                  <span>Week 3</span>
-                  <span>Week 4</span>
+                  {tradeStats?.weekly_labels?.map((label, index) => (
+                    <span key={index}>{label}</span>
+                  ))}
                 </div>
               </div>
 
               <div className="recent-transactions">
                 <h3>Recent Transactions</h3>
                 <div className="transactions-list">
-                  {recentTransactions.map(tx => (
-                    <div key={tx.id} className="transaction-item">
-                      <div className="tx-icon">
-                        {tx.type === 'buy' ? (
-                          <FiArrowDown className="tx-icon-buy" />
-                        ) : (
-                          <FiArrowUp className="tx-icon-sell" />
-                        )}
-                      </div>
-                      <div className="tx-details">
-                        <div className="tx-amount">
-                          {tx.amount} {tx.currency}
-                          <span className="tx-fiat">~{userStats.currency}{tx.fiatValue}</span>
+                  {recentTransactions.length > 0 ? (
+                    recentTransactions.map(tx => (
+                      <div key={tx.id} className="transaction-item">
+                        <div className="tx-icon">
+                          {tx.type === 'buy' ? (
+                            <FiArrowDown className="tx-icon-buy" />
+                          ) : (
+                            <FiArrowUp className="tx-icon-sell" />
+                          )}
                         </div>
-                        <div className="tx-meta">
-                          <span className="tx-counterparty">with {tx.counterparty}</span>
-                          <span className="tx-time">{tx.time}</span>
+                        <div className="tx-details">
+                          <div className="tx-amount">
+                            {tx.amount} {tx.currency}
+                            <span className="tx-fiat">~{userStats?.currency || 'USD'}{tx.fiat_value}</span>
+                          </div>
+                          <div className="tx-meta">
+                            <span className="tx-counterparty">with {tx.counterparty}</span>
+                            <span className="tx-time">{tx.time_ago}</span>
+                          </div>
+                        </div>
+                        <div className={`tx-status ${tx.status.replace(' ', '-')}`}>
+                          {tx.status}
                         </div>
                       </div>
-                      <div className={`tx-status ${tx.status.replace(' ', '-')}`}>
-                        {tx.status}
-                      </div>
+                    ))
+                  ) : (
+                    <div className="no-transactions">
+                      <p>No recent transactions</p>
                     </div>
-                  ))}
+                  )}
                 </div>
               </div>
             </div>
@@ -260,82 +416,62 @@ const Dashboard = () => {
             <div className="reputation-content">
               <div className="level-progress">
                 <div className="progress-track">
-                  <div className="progress-step active">
-                    <div className="step-marker">1</div>
-                    <div className="step-info">
-                      <h4>New Trader</h4>
-                      <p>Complete 5 trades to level up</p>
+                  {reputation?.levels?.map((level, index) => (
+                    <div
+                      key={level.id}
+                      className={`progress-step ${level.achieved ? 'active' : ''} ${level.next ? 'next' : ''}`}
+                    >
+                      <div className="step-marker">{index + 1}</div>
+                      <div className="step-info">
+                        <h4>{level.title}</h4>
+                        <p>{level.requirements}</p>
+                        {level.progress && (
+                          <div className="progress-bar">
+                            <div
+                              className="progress-fill"
+                              style={{ width: `${level.progress}%` }}
+                            ></div>
+                          </div>
+                        )}
+                      </div>
                     </div>
-                  </div>
-                  <div className="progress-step">
-                    <div className="step-marker">2</div>
-                    <div className="step-info">
-                      <h4>Verified Trader</h4>
-                      <p>Complete KYC and 20+ trades</p>
-                    </div>
-                  </div>
-                  <div className="progress-step">
-                    <div className="step-marker">3</div>
-                    <div className="step-info">
-                      <h4>Trusted Trader</h4>
-                      <p>50+ trades with 95%+ rating</p>
-                    </div>
-                  </div>
+                  ))}
                 </div>
               </div>
 
               <div className="rating-card">
                 <div className="rating-score">
-                  <div className="score-value">{userStats.rating}</div>
+                  <div className="score-value">{reputation?.rating || 0}</div>
                   <div className="score-stars">
                     {[...Array(5)].map((_, i) => (
-                      <span 
-                        key={i} 
-                        className={`star ${i < Math.floor(userStats.rating) ? 'filled' : ''} 
-                          ${i === Math.floor(userStats.rating) && userStats.rating % 1 >= 0.5 ? 'half' : ''}`}
+                      <span
+                        key={i}
+                        className={`star ${i < Math.floor(reputation?.rating || 0) ? 'filled' : ''} 
+                          ${i === Math.floor(reputation?.rating || 0) && (reputation?.rating || 0) % 1 >= 0.5 ? 'half' : ''}`}
                       >
                         ★
                       </span>
                     ))}
                   </div>
-                  <div className="score-count">from 12 reviews</div>
+                  <div className="score-count">from {reputation?.total_reviews || 0} reviews</div>
                 </div>
                 <div className="rating-details">
-                  <div className="rating-bar">
-                    <span className="bar-label">5 stars</span>
-                    <div className="bar-container">
-                      <div className="bar-fill" style={{ width: '70%' }}></div>
-                    </div>
-                    <span className="bar-count">8</span>
-                  </div>
-                  <div className="rating-bar">
-                    <span className="bar-label">4 stars</span>
-                    <div className="bar-container">
-                      <div className="bar-fill" style={{ width: '25%' }}></div>
-                    </div>
-                    <span className="bar-count">3</span>
-                  </div>
-                  <div className="rating-bar">
-                    <span className="bar-label">3 stars</span>
-                    <div className="bar-container">
-                      <div className="bar-fill" style={{ width: '5%' }}></div>
-                    </div>
-                    <span className="bar-count">1</span>
-                  </div>
-                  <div className="rating-bar">
-                    <span className="bar-label">2 stars</span>
-                    <div className="bar-container">
-                      <div className="bar-fill" style={{ width: '0%' }}></div>
-                    </div>
-                    <span className="bar-count">0</span>
-                  </div>
-                  <div className="rating-bar">
-                    <span className="bar-label">1 star</span>
-                    <div className="bar-container">
-                      <div className="bar-fill" style={{ width: '0%' }}></div>
-                    </div>
-                    <span className="bar-count">0</span>
-                  </div>
+                  {[5, 4, 3, 2, 1].map(stars => {
+                    const ratingCount = reputation?.rating_distribution?.[stars] || 0;
+                    const ratingPercentage = reputation?.total_reviews
+                      ? (ratingCount / reputation.total_reviews) * 100
+                      : 0;
+
+                    return (
+                      <div className="rating-bar" key={stars}>
+                        <span className="bar-label">{stars} stars</span>
+                        <div className="bar-container">
+                          <div className="bar-fill" style={{ width: `${ratingPercentage}%` }}></div>
+                        </div>
+                        <span className="bar-count">{ratingCount}</span>
+                      </div>
+                    );
+                  })}
                 </div>
               </div>
             </div>
@@ -345,19 +481,19 @@ const Dashboard = () => {
           <div className="quick-actions">
             <h2>Quick Actions</h2>
             <div className="actions-grid">
-              <button className="action-card">
+              <button className="action-card" onClick={handleClick}>
                 <FiCreditCard className="action-icon" />
                 <span>Create New Offer</span>
               </button>
-              <button className="action-card">
+              <button className="action-card" onClick={handleViewMarketPrices}>
                 <FiDollarSign className="action-icon" />
                 <span>View Market Prices</span>
               </button>
-              <button className="action-card">
+              <button className="action-card" onClick={handleInviteFriends}>
                 <FiUsers className="action-icon" />
                 <span>Invite Friends</span>
               </button>
-              <button className="action-card">
+              <button className="action-card" onClick={goToDashboard}>
                 <FiLayers className="action-icon" />
                 <span>Trade History</span>
               </button>

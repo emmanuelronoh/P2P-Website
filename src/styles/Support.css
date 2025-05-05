@@ -228,7 +228,7 @@
   .support-cta {
     text-align: center;
     padding: 2rem;
-    background: linear-gradient(135deg, rgb(0 123 255));
+    background: linear-gradient(135deg, #007bff);
     border-radius: 12px;
     color: white;
     margin-top: 2rem;

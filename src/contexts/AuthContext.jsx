@@ -41,7 +41,7 @@ export const AuthProvider = ({ children }) => {
         return false;
       }
 
-      const response = await axios.get('https://cheetahx.onrender.com/api/auth/validate-token/', {  // Added trailing slash
+      const response = await axios.get('http://127.0.0.1:8000/api/auth/validate-token/', {  // Added trailing slash
         headers: { 
           Authorization: `Bearer ${token}`,
           'Content-Type': 'application/json'
@@ -179,7 +179,7 @@ export { useAuth };
 //       const token = localStorage.getItem('accessToken');
 //       if (!token) return false;
 
-//       const response = await axios.get('https://cheetahx.onrender.com/api/auth/validate-token/', {
+//       const response = await axios.get('http://127.0.0.1:8000/api/auth/validate-token/', {
 //         headers: { Authorization: `Bearer ${token}` }
 //       });
 
@@ -256,7 +256,7 @@ export { useAuth };
 //         throw new Error('No refresh token available');
 //       }
 
-//       const response = await axios.post('https://cheetahx.onrender.com/api/auth/refresh-token/', {
+//       const response = await axios.post('http://127.0.0.1:8000/api/auth/refresh-token/', {
 //         refreshToken
 //       });
 

@@ -31,7 +31,7 @@ const SecurityVerification = ({ onComplete, onCancel }) => {
       setIsLoading(true);
       setError('');
       console.log('Token being sent:', localStorage.getItem('accessToken'));
-      const response = await axios.post('https://cheetahx.onrender.com/crypto/api/auth/send-verification-code/', {
+      const response = await axios.post('http://127.0.0.1:8000/crypto/api/auth/send-verification-code/', {
         // You might want to include trade details here
       }, {
         headers: {
@@ -59,7 +59,7 @@ const SecurityVerification = ({ onComplete, onCancel }) => {
       setIsLoading(true);
       setError('');
       
-      const response = await axios.post('https://cheetahx.onrender.com/crypto/api/auth/verify-code/', {
+      const response = await axios.post('http://127.0.0.1:8000/crypto/api/auth/verify-code/', {
         code: verificationCode,
         // Include any trade context if needed
       }, {

@@ -17,6 +17,8 @@ const FiatP2P = () => {
     const handleLearnMoreClick = () => {
         navigate('/tutorials-fiat');
     };
+    const [selectedTab, setSelectedTab] = useState('All');
+
 
     // Separate state for order placement and filtering
     const [orderState, setOrderState] = useState({
@@ -92,10 +94,10 @@ const FiatP2P = () => {
 
             // Fetch all data in parallel
             const [ordersResponse, paymentMethodsResponse, userOrdersResponse, priceTrendsResponse] = await Promise.all([
-                axios.get('https://cheetahx.onrender.com/escrow/orders/', { headers }),
-                axios.get('https://cheetahx.onrender.com/escrow/payment-methods-fiat/', { headers }),
-                axios.get('https://cheetahx.onrender.com/escrow/user-orders/', { headers }),
-                axios.get('https://cheetahx.onrender.com/escrow/price-trends/', { headers }),
+                axios.get('http://127.0.0.1:8000/escrow/orders/', { headers }),
+                axios.get('http://127.0.0.1:8000/escrow/payment-methods-fiat/', { headers }),
+                axios.get('http://127.0.0.1:8000/escrow/user-orders/', { headers }),
+                axios.get('http://127.0.0.1:8000/escrow/price-trends/', { headers }),
             ]);
 
             // Transform market orders
@@ -213,7 +215,7 @@ const FiatP2P = () => {
             }
 
             await axios.delete(
-                `https://cheetahx.onrender.com/escrow/orders/${orderId}/`,
+                `http://127.0.0.1:8000/escrow/orders/${orderId}/`,
                 {
                     headers: {
                         'Authorization': `Bearer ${token}`,
@@ -233,38 +235,43 @@ const FiatP2P = () => {
             alert(`Failed to cancel order: ${error.response?.data?.error || error.message}`);
         }
     };
+    // Filter user orders by status tab
+const filteredUserOrders = uiState.userOrders.filter(order => {
+    if (selectedTab === 'All') return true;
+    return order.status.toLowerCase() === selectedTab.toLowerCase();
+});
 
-    // Filter and sort orders - now only uses filterState
-    const filteredOrders = uiState.orders
-        .filter(order => order.type === (uiState.activeTab === 'buy' ? 'sell' : 'buy'))
-        .filter(order =>
-            (filterState.sellCurrency === 'all' || order.sellCurrency === filterState.sellCurrency) &&
-            (filterState.receiveCurrency === 'all' || order.receiveCurrency === filterState.receiveCurrency)
+// Filter and sort marketplace orders
+const filteredMarketOrders = uiState.orders
+    .filter(order => order.type === (uiState.activeTab === 'buy' ? 'sell' : 'buy'))
+    .filter(order =>
+        (filterState.sellCurrency === 'all' || order.sellCurrency === filterState.sellCurrency) &&
+        (filterState.receiveCurrency === 'all' || order.receiveCurrency === filterState.receiveCurrency)
+    )
+    .filter(order => filterState.paymentMethod === 'all' ||
+        order.paymentMethods.some(method => method.id === parseInt(filterState.paymentMethod))
+    )
+    .filter(order =>
+        filterState.searchQuery === '' ||
+        order.user.toLowerCase().includes(filterState.searchQuery.toLowerCase()) ||
+        order.paymentMethods.some(method =>
+            method.name.toLowerCase().includes(filterState.searchQuery.toLowerCase())
         )
-        .filter(order => filterState.paymentMethod === 'all' ||
-            order.paymentMethods.some(method => method.id === parseInt(filterState.paymentMethod))
-        )
-        .filter(order =>
-            filterState.searchQuery === '' ||
-            order.user.toLowerCase().includes(filterState.searchQuery.toLowerCase()) ||
-            order.paymentMethods.some(method =>
-                method.name.toLowerCase().includes(filterState.searchQuery.toLowerCase())
-            )
-        )
-        .sort((a, b) => {
-            if (filterState.sortBy === 'price') {
-                return filterState.sortOrder === 'asc' ? a.price - b.price : b.price - a.price;
-            } else if (filterState.sortBy === 'rating') {
-                return filterState.sortOrder === 'asc' ? a.rating - b.rating : b.rating - a.rating;
-            } else if (filterState.sortBy === 'amount') {
-                return filterState.sortOrder === 'asc' ? a.amount - b.amount : b.amount - a.amount;
-            }
-            return 0;
-        });
+    )
+    .sort((a, b) => {
+        if (filterState.sortBy === 'price') {
+            return filterState.sortOrder === 'asc' ? a.price - b.price : b.price - a.price;
+        } else if (filterState.sortBy === 'rating') {
+            return filterState.sortOrder === 'asc' ? a.rating - b.rating : b.rating - a.rating;
+        } else if (filterState.sortBy === 'amount') {
+            return filterState.sortOrder === 'asc' ? a.amount - b.amount : b.amount - a.amount;
+        }
+        return 0;
+    });
 
     // Calculate market price
     const calculateMarketPrice = () => {
-        const relevantOrders = filteredOrders.filter(o =>
+        const relevantOrders = filteredMarketOrders.filter(o =>
             o.type === (uiState.activeTab === 'buy' ? 'sell' : 'buy') &&
             o.sellCurrency === filterState.sellCurrency &&
             o.receiveCurrency === filterState.receiveCurrency
@@ -295,7 +302,7 @@ const FiatP2P = () => {
         try {
             const token = localStorage.getItem('accessToken');
             const response = await axios.post(
-                'https://cheetahx.onrender.com/chat-room/api/trades/initiate/',
+                'http://127.0.0.1:8000/chat-room/api/trades/initiate/',
                 {
                     order_id: order.id,
                     trade_type: uiState.activeTab,
@@ -370,7 +377,7 @@ const FiatP2P = () => {
 
             // Make the API call to create the order
             const response = await axios.post(
-                'https://cheetahx.onrender.com/escrow/orders/',
+                'http://127.0.0.1:8000/escrow/orders/',
                 orderData,
                 {
                     headers: {
@@ -381,7 +388,7 @@ const FiatP2P = () => {
             );
 
             // After successful creation, fetch the updated orders list
-            const refreshedOrders = await axios.get('https://cheetahx.onrender.com/escrow/user-orders/', {
+            const refreshedOrders = await axios.get('http://127.0.0.1:8000/escrow/user-orders/', {
                 headers: {
                     Authorization: `Bearer ${token}`,
                     'Content-Type': 'application/json'
@@ -826,14 +833,15 @@ const FiatP2P = () => {
                                     </tr>
                                 </thead>
                                 <tbody>
-                                    {filteredOrders.length === 0 ? (
+                                    {filteredMarketOrders.length === 0 ? (
                                         <tr className="no-orders">
                                             <td colSpan="5">
                                                 No {uiState.activeTab === 'buy' ? 'sell' : 'buy'} orders matching your filters.
                                             </td>
                                         </tr>
                                     ) : (
-                                        filteredOrders.map(order => (
+                                        
+                                        filteredMarketOrders.map(order => (
                                             <tr key={order.id} className="order-row">
                                                 <td className="trader-cell">
                                                     <div className="trader-info">
@@ -905,13 +913,21 @@ const FiatP2P = () => {
                 <div className="user-orders-section">
                     <div className="section-header">
                         <h2>Your Orders</h2>
+
+
                         <div className="order-tabs">
-                            <button className="tab active">All</button>
-                            <button className="tab">Open</button>
-                            <button className="tab">Completed</button>
-                            <button className="tab">Cancelled</button>
+                            {['All', 'Open', 'Completed', 'Cancelled'].map(tab => (
+                                <button
+                                    key={tab}
+                                    className={`tab ${selectedTab === tab ? 'active' : ''}`}
+                                    onClick={() => setSelectedTab(tab)}
+                                >
+                                    {tab}
+                                </button>
+                            ))}
                         </div>
                     </div>
+
 
                     <div className="user-orders-table-container">
                         <table className="user-orders-table">

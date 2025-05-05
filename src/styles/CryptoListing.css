@@ -344,9 +344,6 @@
   border-radius: 8px;
 }
 
-.Toastify__toast--success {
-  background: #4caf50;
-}
 
 .Toastify__toast--error {
   background: #f44336;

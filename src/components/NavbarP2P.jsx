@@ -37,7 +37,7 @@ const AdvertisementBar = () => {
   useEffect(() => {
     const fetchAds = async () => {
       try {
-        const response = await fetch('https://cheetahx.onrender.com/api/auth/advertisements/'); // Your API endpoint
+        const response = await fetch('http://127.0.0.1:8000/api/auth/advertisements/'); // Your API endpoint
         if (!response.ok) {
           throw new Error('Failed to fetch advertisements');
         }
@@ -322,7 +322,9 @@ const Navbar = ({ toggleTheme, theme }) => {
 
     // Menu items configuration
     const marketItems = [
-        { label: "Stocks", path: "/market/stocks", icon: FaChartLine },
+        { label: "Create Offer", path: "/market", icon: FaChartLine },
+        { label: "Trade History", path: "/dashboard", icon: FaChartLine },
+
     ];
 
     const helpItems = [
@@ -487,14 +489,6 @@ const Navbar = ({ toggleTheme, theme }) => {
                             </>
                         )}
 
-                        {/* Theme toggle */}
-                        <button
-                            className="p2p-theme-toggle"
-                            onClick={toggleTheme}
-                            aria-label="Toggle theme"
-                        >
-                            {theme === "light" ? <FaMoon /> : <FaSun />}
-                        </button>
                     </div>
                 </div>
             </header>

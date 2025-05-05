@@ -13,7 +13,7 @@ import { RiExchangeDollarFill } from "react-icons/ri";
 import debounce from "lodash.debounce";
 import "../styles/market.css";
 
-const API_BASE_URL = "https://cheetahx.onrender.com";
+const API_BASE_URL = "http://127.0.0.1:8000";
 
 const DEFAULT_TRADER = {
   id: '',
@@ -521,26 +521,40 @@ const Market = () => {
               className="market-select"
             >
               <option value="CHX">CHX</option>
+              <option value="">Select a cryptocurrency</option>
               <option value="USDT">USDT</option>
               <option value="USDC">USDC</option>
               <option value="DAI">DAI</option>
+              <option value="BTC">BTC</option>
+              <option value="ETH">ETH</option>
+              <option value="BNB">BNB</option>
+              <option value="XRP">XRP</option>
+              <option value="SOL">SOL</option>
+              <option value="ADA">ADA</option>
+              <option value="DOGE">DOGE</option>
+              <option value="DOT">DOT</option>
+              <option value="SHIB">SHIB</option>
+              <option value="MATIC">MATIC</option>
+              <option value="LTC">LTC</option>
             </select>
 
           </div>
 
           <div className="filter-group">
-            <label>Payment Method</label>
+            <label>Crypto Wallet</label>
             <select
               value={filters.paymentMethod}
               onChange={(e) => handleFilterChange("paymentMethod", e.target.value)}
               className="market-select"
             >
-              <option value="Any">Any Payment Method</option>
-              <option value="M-PESA">M-PESA</option>
-              <option value="Bank Transfer">Bank Transfer</option>
-              <option value="PayPal">PayPal</option>
+              <option value="Any">Any Wallet</option>
+              <option value="Metamask">Metamask</option>
+              <option value="Trust Wallet">Trust Wallet</option>
+              <option value="Coinbase Wallet">Coinbase Wallet</option>
+              <option value="Binance Wallet">Binance Wallet</option>
             </select>
           </div>
+
 
           <div className="filter-group">
             <label>Location</label>
@@ -549,12 +563,25 @@ const Market = () => {
               onChange={(e) => handleFilterChange("location", e.target.value)}
               className="market-select"
             >
+              <option value="Any">🌍 All African Locations</option>
               <option value="Kenya">🇰🇪 Kenya</option>
-              <option value="Germany">🇩🇪 Germany</option>
-              <option value="USA">🇺🇸 United States</option>
-              <option value="UK">🇬🇧 United Kingdom</option>
+              <option value="Nigeria">🇳🇬 Nigeria</option>
+              <option value="South Africa">🇿🇦 South Africa</option>
+              <option value="Egypt">🇪🇬 Egypt</option>
+              <option value="Ghana">🇬🇭 Ghana</option>
+              <option value="Uganda">🇺🇬 Uganda</option>
+              <option value="Tanzania">🇹🇿 Tanzania</option>
+              <option value="Ethiopia">🇪🇹 Ethiopia</option>
+              <option value="Rwanda">🇷🇼 Rwanda</option>
+              <option value="Morocco">🇲🇦 Morocco</option>
+              <option value="Algeria">🇩🇿 Algeria</option>
+              <option value="Cameroon">🇨🇲 Cameroon</option>
+              <option value="Zambia">🇿🇲 Zambia</option>
+              <option value="Zimbabwe">🇿🇼 Zimbabwe</option>
+              <option value="Senegal">🇸🇳 Senegal</option>
             </select>
           </div>
+
         </div>
 
         <div className="search-sort-container">

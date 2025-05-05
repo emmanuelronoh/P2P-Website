@@ -4,7 +4,7 @@ import { ToastContainer, toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import "../styles/CryptoListing.css"
 
-const BASE_URL = 'https://cheetahx.onrender.com/crypto/';
+const BASE_URL = 'http://127.0.0.1:8000/crypto/';
 
 const AmountForm = ({ mode = 'create', initialData = {} }) => {
   // Form state

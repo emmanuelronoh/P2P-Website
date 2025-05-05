@@ -354,7 +354,21 @@
     background: rgba(0, 0, 0, 0.05);
     color: var(--primary-color);
 }
+.p2p-no-hover-line {
+    text-decoration: none !important;
+    outline: none !important;
+    border: none !important;
+  }
+  
+  .p2p-no-hover-line:focus,
+  .p2p-no-hover-line:active,
+  .p2p-no-hover-line:hover {
+    text-decoration: none !important;
+    outline: none !important;
+    border: none !important;
+  }
 
+  
 .p2p-notification-badge,
 .p2p-message-badge {
     position: absolute;

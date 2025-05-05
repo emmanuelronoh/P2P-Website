@@ -344,7 +344,7 @@ export default VendorVerification;
       
 //       // Step 1: Create verification record in Django
 //       const createResponse = await axios.post(
-//         'https://cheetahx.onrender.com/kyc/verifications/',
+//         'http://127.0.0.1:8000/kyc/verifications/',
 //         {
 //           email: formData.email,
 //           level_name: 'kyc_verification'

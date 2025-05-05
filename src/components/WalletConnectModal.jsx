@@ -9,7 +9,7 @@ import WalletConnectProvider from "@walletconnect/ethereum-provider";
 import axios from 'axios';
 import '../styles/ConnectWalletModal.css';
 
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'https://cheetahx.onrender.com/';
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://127.0.0.1:8000/';
 const WALLET_CONNECT_ENDPOINT = `${API_BASE_URL}wallet-connect/connect/`;
 const WALLET_TRACK_ENDPOINT = `${API_BASE_URL}wallet-connect/track/`;
 
@@ -64,16 +64,16 @@ const ConnectWalletModal = ({ onClose, onConnect, setWalletAddress }) => {
       if (!ethereum) {
         throw new Error('Ethereum provider not found');
       }
-      
+
       // Handle multiple providers case (like Coinbase + MetaMask)
       if (ethereum.providers?.length > 0) {
         // Try to find the specific provider we want
-        const targetProvider = ethereum.providers.find(p => 
+        const targetProvider = ethereum.providers.find(p =>
           p.isMetaMask || p.isTrust || p.isCoinbaseWallet || p.isBinance
         ) || ethereum.providers[0];
         return new BrowserProvider(targetProvider);
       }
-      
+
       return new BrowserProvider(ethereum);
     } catch (error) {
       console.error('Error creating provider:', error);
@@ -87,7 +87,7 @@ const ConnectWalletModal = ({ onClose, onConnect, setWalletAddress }) => {
       if (!token) {
         throw new Error('Login Again');
       }
-  
+
       const response = await axios.post(WALLET_TRACK_ENDPOINT, walletData, {
         headers: {
           'Content-Type': 'application/json',
@@ -95,26 +95,26 @@ const ConnectWalletModal = ({ onClose, onConnect, setWalletAddress }) => {
         },
         timeout: 10000
       });
-  
+
       // Handle successful response (200 or 201)
       if (response.status === 200 || response.status === 201) {
         return response.data;
       }
-  
+
       throw new Error('Unexpected response from server');
     } catch (error) {
       // Handle 200 status with "already connected" message
-      if (error.response?.status === 200 && 
-          error.response?.data?.detail?.includes('already connected')) {
+      if (error.response?.status === 200 &&
+        error.response?.data?.detail?.includes('already connected')) {
         return { alreadyConnected: true };
       }
-      
+
       // Handle 400 validation error
-      if (error.response?.status === 400 && 
-          error.response?.data?.wallet_address?.includes('already connected')) {
+      if (error.response?.status === 400 &&
+        error.response?.data?.wallet_address?.includes('already connected')) {
         return { alreadyConnected: true };
       }
-      
+
       console.error('Error tracking wallet connection:', error);
       throw error;
     }
@@ -336,54 +336,93 @@ const ConnectWalletModal = ({ onClose, onConnect, setWalletAddress }) => {
       throw new Error(error.message || 'Failed to connect to MetaMask');
     }
   }, [getEthereumProvider, getProvider, isMetaMaskInstalled, resetConnection]);
-
-  // Similar improvements for other wallet connection functions (TrustWallet, Binance, Coinbase)
-  // [Previous implementations were good, just ensure consistent error handling]
-
-  // Enhanced WalletConnect implementation
+  
   const connectWithWalletConnect = useCallback(async () => {
+    let walletConnectProvider;
     try {
-      const walletConnectProvider = new WalletConnectProvider({
+      setConnectionState('connecting');
+      setErrorMessage('');
+  
+      // Initialize WalletConnect provider
+      walletConnectProvider = new WalletConnectProvider({
         rpc: {
           1: "https://mainnet.infura.io/v3/YOUR_INFURA_PROJECT_ID",
           56: "https://bsc-dataseed.binance.org/",
           137: "https://polygon-rpc.com/"
         },
-        chainId: 1, // Default to Ethereum mainnet
+        chainId: 1,
+        qrcode: true,
         bridge: "https://bridge.walletconnect.org",
         qrcodeModalOptions: {
           mobileLinks: ['metamask', 'trust', 'rainbow', 'argent', 'imtoken']
         }
       });
-
+  
+      // First enable the provider to initialize the connector
+      await walletConnectProvider.enable();
+  
+      // Check if connector exists
+      if (!walletConnectProvider.connector) {
+        throw new Error('WalletConnect connector failed to initialize');
+      }
+  
+      // Set up event listeners after ensuring connector exists
       walletConnectProvider.connector.on("display_uri", (err, payload) => {
+        if (err) {
+          console.error('URI display error:', err);
+          setErrorMessage('Failed to generate connection QR code');
+          setConnectionState('error');
+          return;
+        }
         const uri = payload.params[0];
         setUri(uri);
+        
+        // QR code expiration (30 seconds)
+        setTimeout(() => {
+          if (connectionState === 'connecting' && !provider) {
+            setErrorMessage('QR code expired. Please try again.');
+            setConnectionState('error');
+            try {
+              walletConnectProvider.disconnect();
+            } catch (e) {
+              console.error('Error disconnecting expired session:', e);
+            }
+          }
+        }, 30000);
       });
-
-      await walletConnectProvider.enable();
+  
+      walletConnectProvider.connector.on("connect", (error) => {
+        if (error) {
+          console.error("WalletConnect connect error:", error);
+          setErrorMessage('Connection failed. Please try again.');
+          setConnectionState('error');
+        }
+      });
+  
+      walletConnectProvider.connector.on("session_update", (error) => {
+        if (error) {
+          console.error("WalletConnect session update error:", error);
+        }
+      });
+  
+      walletConnectProvider.connector.on("disconnect", (error) => {
+        if (error) {
+          console.error("WalletConnect disconnect error:", error);
+        }
+        resetConnection();
+      });
+  
+      // Get provider and signer
       const provider = getProvider(walletConnectProvider);
       const signer = await provider.getSigner();
       const address = await signer.getAddress();
       const network = await provider.getNetwork();
-
+  
+      // Update state
       setProvider(provider);
       setConnector(walletConnectProvider.connector);
       setAccounts([address]);
-
-      // Set up event listeners
-      walletConnectProvider.on("accountsChanged", (accounts) => {
-        setAccounts(accounts);
-      });
-
-      walletConnectProvider.on("chainChanged", () => {
-        window.location.reload();
-      });
-
-      walletConnectProvider.on("disconnect", () => {
-        resetConnection();
-      });
-
+  
       return {
         wallet: 'walletconnect',
         address,
@@ -393,19 +432,43 @@ const ConnectWalletModal = ({ onClose, onConnect, setWalletAddress }) => {
       };
     } catch (error) {
       console.error('WalletConnect error:', error);
-      throw new Error(error.message || 'Failed to connect via WalletConnect');
+  
+      let errorMsg = 'Failed to connect via WalletConnect';
+      if (error.message.includes('User closed modal')) {
+        errorMsg = 'Connection canceled by user';
+      } else if (error.message.includes('Session disconnected')) {
+        errorMsg = 'Session expired. Please try again.';
+      } else if (error.message.includes('URI expired')) {
+        errorMsg = 'QR code expired. Please try again.';
+      } else if (error.message.includes('initialization failed')) {
+        errorMsg = 'WalletConnect initialization failed. Please try again.';
+      }
+  
+      setConnectionState('error');
+      setErrorMessage(errorMsg);
+  
+      // Clean up if walletConnectProvider was initialized
+      if (walletConnectProvider) {
+        try {
+          await walletConnectProvider.disconnect();
+        } catch (cleanupError) {
+          console.error('Error cleaning up WalletConnect:', cleanupError);
+        }
+      }
+  
+      throw new Error(errorMsg);
     }
-  }, [getProvider, resetConnection]);
+  }, [getProvider, resetConnection, connectionState, provider]);
 
   // Add these wallet connection functions before handleWalletConnect
   const connectTrustWallet = useCallback(async () => {
     const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
-  
+
     if (isMobile) {
       try {
         // First check if we can detect Trust Wallet
         const trustWalletDetected = isTrustWalletInstalled();
-        
+
         // If we can't detect it, offer alternatives
         if (!trustWalletDetected) {
           const useWalletConnect = window.confirm(
@@ -416,7 +479,7 @@ const ConnectWalletModal = ({ onClose, onConnect, setWalletAddress }) => {
           }
           throw new Error('Trust Wallet not detected on your device');
         }
-  
+
         // Try to open Trust Wallet with fallback
         try {
           // Create a hidden iframe to test the deep link
@@ -424,12 +487,12 @@ const ConnectWalletModal = ({ onClose, onConnect, setWalletAddress }) => {
           iframe.style.display = 'none';
           iframe.src = 'trust://';
           document.body.appendChild(iframe);
-          
+
           // Remove the iframe after a short delay
           setTimeout(() => {
             document.body.removeChild(iframe);
           }, 100);
-          
+
           // If we get here, the deep link probably worked
           await new Promise((resolve, reject) => {
             const checkProvider = () => {
@@ -442,15 +505,15 @@ const ConnectWalletModal = ({ onClose, onConnect, setWalletAddress }) => {
             setTimeout(() => reject(new Error('Timeout waiting for Trust Wallet response')), 10000);
             checkProvider();
           });
-  
+
           const ethereum = await getEthereumProvider('trustwallet');
           const provider = getProvider(ethereum);
           const signer = await provider.getSigner();
           const address = await signer.getAddress();
           const network = await provider.getNetwork();
-  
+
           setProvider(provider);
-  
+
           return {
             wallet: 'trustwallet',
             address,
@@ -463,11 +526,11 @@ const ConnectWalletModal = ({ onClose, onConnect, setWalletAddress }) => {
         }
       } catch (error) {
         console.error('Trust Wallet mobile connection error:', error);
-        throw new Error('Failed to connect to Trust Wallet. ' + 
+        throw new Error('Failed to connect to Trust Wallet. ' +
           (error.message.includes('not detected') ? '' : 'Please make sure it is installed and try again.'));
       }
     }
-  
+
     // Desktop browser handling
     if (!isTrustWalletInstalled()) {
       const shouldInstall = window.confirm(
@@ -478,16 +541,16 @@ const ConnectWalletModal = ({ onClose, onConnect, setWalletAddress }) => {
       }
       throw new Error('Trust Wallet extension required. Please install it to continue.');
     }
-  
+
     try {
       const ethereum = await getEthereumProvider('trustwallet');
       const provider = getProvider(ethereum);
       const signer = await provider.getSigner();
       const address = await signer.getAddress();
       const network = await provider.getNetwork();
-  
+
       setProvider(provider);
-  
+
       // Set up event listeners
       ethereum.on('chainChanged', () => window.location.reload());
       ethereum.on('accountsChanged', (newAccounts) => {
@@ -496,7 +559,7 @@ const ConnectWalletModal = ({ onClose, onConnect, setWalletAddress }) => {
           resetConnection();
         }
       });
-  
+
       return {
         wallet: 'trustwallet',
         address,
@@ -505,7 +568,7 @@ const ConnectWalletModal = ({ onClose, onConnect, setWalletAddress }) => {
       };
     } catch (error) {
       console.error('Trust Wallet connection error:', error);
-      
+
       // Enhanced error messages
       let errorMessage = 'Failed to connect to Trust Wallet';
       if (error.code === 4001) {
@@ -515,142 +578,186 @@ const ConnectWalletModal = ({ onClose, onConnect, setWalletAddress }) => {
       } else if (error.message) {
         errorMessage += ': ' + error.message;
       }
-      
+
       throw new Error(errorMessage);
     }
   }, [getEthereumProvider, getProvider, isTrustWalletInstalled, resetConnection, connectWithWalletConnect]);
 
-  
-const connectBinanceChain = useCallback(async () => {
-  const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
 
-  if (isMobile) {
+  const connectBinanceChain = useCallback(async () => {
+    const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+
+    if (isMobile) {
+      try {
+        const walletConnectProvider = new WalletConnectProvider({
+          rpc: {
+            56: "https://bsc-dataseed.binance.org/",
+            97: "https://data-seed-prebsc-1-s1.binance.org:8545/"
+          },
+          chainId: 56,
+          bridge: "https://bridge.walletconnect.org",
+          qrcodeModalOptions: {
+            mobileLinks: ['trust', 'metamask', 'binance']
+          }
+        });
+
+        walletConnectProvider.connector.on("display_uri", (err, payload) => {
+          const uri = payload.params[0];
+          setUri(uri);
+        });
+
+        await walletConnectProvider.enable();
+        const provider = getProvider(walletConnectProvider);
+        const signer = await provider.getSigner();
+        const address = await signer.getAddress();
+        const network = await provider.getNetwork();
+
+        setProvider(provider);
+        setAccounts([address]);
+        setConnector(walletConnectProvider.connector);
+
+        return {
+          wallet: 'binance',
+          address,
+          provider,
+          chainId: Number(network.chainId),
+          walletConnectProvider
+        };
+      } catch (error) {
+        console.error('Binance Chain Wallet mobile connection error:', error);
+        throw new Error('Failed to connect via WalletConnect. Please try again.');
+      }
+    }
+
+    if (!isBinanceInstalled()) {
+      const shouldInstall = window.confirm(
+        'Binance Chain Wallet extension not detected. Would you like to be redirected to install it?'
+      );
+      if (shouldInstall) {
+        window.open('https://www.binance.org/en/download', '_blank');
+      }
+      throw new Error('Binance Chain Wallet extension required');
+    }
+
     try {
-      const walletConnectProvider = new WalletConnectProvider({
-        rpc: {
-          56: "https://bsc-dataseed.binance.org/",
-          97: "https://data-seed-prebsc-1-s1.binance.org:8545/"
-        },
-        chainId: 56,
-        bridge: "https://bridge.walletconnect.org",
-        qrcodeModalOptions: {
-          mobileLinks: ['trust', 'metamask', 'binance']
+      const binanceChain = window.BinanceChain;
+      await binanceChain.request({ method: 'eth_requestAccounts' });
+      const accounts = await binanceChain.request({ method: 'eth_accounts' });
+      if (accounts.length === 0) {
+        throw new Error('No accounts found. Please unlock your wallet.');
+      }
+
+      const chainId = await binanceChain.request({ method: 'eth_chainId' });
+      const provider = getProvider(binanceChain);
+      const signer = await provider.getSigner();
+      const address = await signer.getAddress();
+
+      setProvider(provider);
+      setAccounts(accounts);
+
+      binanceChain.on('chainChanged', (newChainId) => {
+        window.location.reload();
+      });
+
+      binanceChain.on('accountsChanged', (newAccounts) => {
+        setAccounts(newAccounts);
+        if (newAccounts.length === 0) {
+          console.log('Binance Chain Wallet account disconnected');
         }
       });
 
-      walletConnectProvider.connector.on("display_uri", (err, payload) => {
-        const uri = payload.params[0];
-        setUri(uri);
-      });
-
-      await walletConnectProvider.enable();
-      const provider = getProvider(walletConnectProvider);
-      const signer = await provider.getSigner();
-      const address = await signer.getAddress();
-      const network = await provider.getNetwork();
-
-      setProvider(provider);
-      setAccounts([address]);
-      setConnector(walletConnectProvider.connector);
-
       return {
         wallet: 'binance',
-        address,
+        address: accounts[0],
         provider,
-        chainId: Number(network.chainId),
-        walletConnectProvider
+        chainId: parseInt(chainId)
       };
     } catch (error) {
-      console.error('Binance Chain Wallet mobile connection error:', error);
-      throw new Error('Failed to connect via WalletConnect. Please try again.');
-    }
-  }
-
-  if (!isBinanceInstalled()) {
-    const shouldInstall = window.confirm(
-      'Binance Chain Wallet extension not detected. Would you like to be redirected to install it?'
-    );
-    if (shouldInstall) {
-      window.open('https://www.binance.org/en/download', '_blank');
-    }
-    throw new Error('Binance Chain Wallet extension required');
-  }
-
-  try {
-    const binanceChain = window.BinanceChain;
-    await binanceChain.request({ method: 'eth_requestAccounts' });
-    const accounts = await binanceChain.request({ method: 'eth_accounts' });
-    if (accounts.length === 0) {
-      throw new Error('No accounts found. Please unlock your wallet.');
-    }
-
-    const chainId = await binanceChain.request({ method: 'eth_chainId' });
-    const provider = getProvider(binanceChain);
-    const signer = await provider.getSigner();
-    const address = await signer.getAddress();
-
-    setProvider(provider);
-    setAccounts(accounts);
-
-    binanceChain.on('chainChanged', (newChainId) => {
-      window.location.reload();
-    });
-
-    binanceChain.on('accountsChanged', (newAccounts) => {
-      setAccounts(newAccounts);
-      if (newAccounts.length === 0) {
-        console.log('Binance Chain Wallet account disconnected');
+      console.error('Binance Chain Wallet connection error:', error);
+      if (error.code === 4001) {
+        throw new Error('Please connect your Binance Chain Wallet account to continue.');
+      } else if (error.code === -32002) {
+        throw new Error('Binance Chain Wallet is already processing a request. Please check your extension.');
+      } else if (error.message.includes('User denied account authorization')) {
+        throw new Error('Connection canceled. Please approve the connection request in your wallet.');
+      } else {
+        throw new Error(error.message || 'Failed to connect Binance Chain Wallet. Please try again.');
       }
-    });
-
-    return {
-      wallet: 'binance',
-      address: accounts[0],
-      provider,
-      chainId: parseInt(chainId)
-    };
-  } catch (error) {
-    console.error('Binance Chain Wallet connection error:', error);
-    if (error.code === 4001) {
-      throw new Error('Please connect your Binance Chain Wallet account to continue.');
-    } else if (error.code === -32002) {
-      throw new Error('Binance Chain Wallet is already processing a request. Please check your extension.');
-    } else if (error.message.includes('User denied account authorization')) {
-      throw new Error('Connection canceled. Please approve the connection request in your wallet.');
-    } else {
-      throw new Error(error.message || 'Failed to connect Binance Chain Wallet. Please try again.');
     }
-  }
-}, [getProvider, isBinanceInstalled]);
+  }, [getProvider, isBinanceInstalled]);
 
-const connectCoinbaseWallet = useCallback(async () => {
-  const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+  const connectCoinbaseWallet = useCallback(async () => {
+    const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
 
-  if (isMobile) {
-    try {
-      const walletLink = new WalletLink({
-        appName: "Your App Name",
-        appLogoUrl: "https://your-app-logo.png",
-        darkMode: false
-      });
+    if (isMobile) {
+      try {
+        const walletLink = new WalletLink({
+          appName: "Your App Name",
+          appLogoUrl: "https://your-app-logo.png",
+          darkMode: false
+        });
 
-      const ethereum = walletLink.makeWeb3Provider(
-        "https://mainnet.infura.io/v3/YOUR_INFURA_PROJECT_ID",
-        1
+        const ethereum = walletLink.makeWeb3Provider(
+          "https://mainnet.infura.io/v3/YOUR_INFURA_PROJECT_ID",
+          1
+        );
+
+        const accounts = await ethereum.request({ method: 'eth_requestAccounts' });
+        if (!accounts || accounts.length === 0) {
+          throw new Error('No accounts found');
+        }
+
+        const provider = getProvider(ethereum);
+        const signer = await provider.getSigner();
+        const address = await signer.getAddress();
+        const network = await provider.getNetwork();
+
+        setProvider(provider);
+        setAccounts(accounts);
+
+        ethereum.on('accountsChanged', (newAccounts) => {
+          setAccounts(newAccounts);
+          if (newAccounts.length === 0) {
+            console.log('Coinbase Wallet account disconnected');
+          }
+        });
+
+        return {
+          wallet: 'coinbase',
+          address,
+          provider,
+          chainId: Number(network.chainId),
+          walletLink
+        };
+      } catch (error) {
+        console.error('Coinbase Wallet mobile connection error:', error);
+        throw new Error('Failed to connect via Coinbase Wallet. Please try again.');
+      }
+    }
+
+    if (!isCoinbaseInstalled()) {
+      const shouldInstall = window.confirm(
+        'Coinbase Wallet extension not detected. Would you like to be redirected to install it?'
       );
-
-      const accounts = await ethereum.request({ method: 'eth_requestAccounts' });
-      if (!accounts || accounts.length === 0) {
-        throw new Error('No accounts found');
+      if (shouldInstall) {
+        window.open('https://www.coinbase.com/wallet/downloads', '_blank');
       }
+      throw new Error('Coinbase Wallet extension required');
+    }
 
+    try {
+      const ethereum = await getEthereumProvider('coinbase');
       const provider = getProvider(ethereum);
       const signer = await provider.getSigner();
       const address = await signer.getAddress();
       const network = await provider.getNetwork();
 
       setProvider(provider);
-      setAccounts(accounts);
+      setAccounts([address]);
+
+      ethereum.on('chainChanged', (newChainId) => {
+        window.location.reload();
+      });
 
       ethereum.on('accountsChanged', (newAccounts) => {
         setAccounts(newAccounts);
@@ -663,233 +770,189 @@ const connectCoinbaseWallet = useCallback(async () => {
         wallet: 'coinbase',
         address,
         provider,
-        chainId: Number(network.chainId),
-        walletLink
+        chainId: Number(network.chainId)
       };
     } catch (error) {
-      console.error('Coinbase Wallet mobile connection error:', error);
-      throw new Error('Failed to connect via Coinbase Wallet. Please try again.');
-    }
-  }
-
-  if (!isCoinbaseInstalled()) {
-    const shouldInstall = window.confirm(
-      'Coinbase Wallet extension not detected. Would you like to be redirected to install it?'
-    );
-    if (shouldInstall) {
-      window.open('https://www.coinbase.com/wallet/downloads', '_blank');
-    }
-    throw new Error('Coinbase Wallet extension required');
-  }
-
-  try {
-    const ethereum = await getEthereumProvider('coinbase');
-    const provider = getProvider(ethereum);
-    const signer = await provider.getSigner();
-    const address = await signer.getAddress();
-    const network = await provider.getNetwork();
-
-    setProvider(provider);
-    setAccounts([address]);
-
-    ethereum.on('chainChanged', (newChainId) => {
-      window.location.reload();
-    });
-
-    ethereum.on('accountsChanged', (newAccounts) => {
-      setAccounts(newAccounts);
-      if (newAccounts.length === 0) {
-        console.log('Coinbase Wallet account disconnected');
-      }
-    });
-
-    return {
-      wallet: 'coinbase',
-      address,
-      provider,
-      chainId: Number(network.chainId)
-    };
-  } catch (error) {
-    console.error('Coinbase Wallet connection error:', error);
-    if (error.code === 4001) {
-      throw new Error('Please connect your Coinbase Wallet account to continue.');
-    } else if (error.code === -32002) {
-      throw new Error('Coinbase Wallet is already processing a request. Please check your extension.');
-    } else if (error.message.includes('User denied account authorization')) {
-      throw new Error('Connection canceled. Please approve the connection request in your wallet.');
-    } else if (error.message.includes('Already processing eth_requestAccounts')) {
-      throw new Error('Please complete the pending connection request in your wallet first.');
-    } else {
-      throw new Error(error.message || 'Failed to connect Coinbase Wallet. Please try again.');
-    }
-  }
-}, [getEthereumProvider, getProvider, isCoinbaseInstalled]);
-
-const connectInjectedWallet = useCallback(async () => {
-  const walletType = detectInjectedWallet();
-  if (!walletType) {
-    throw new Error('No injected wallet detected. Please install a wallet like MetaMask.');
-  }
-
-  switch (walletType) {
-    case 'metamask':
-      return await connectMetaMask();
-    case 'trustwallet':
-      return await connectTrustWallet();
-    case 'binance':
-      return await connectBinanceChain();
-    case 'coinbase':
-      return await connectCoinbaseWallet();
-    default:
-      throw new Error('Unsupported injected wallet');
-  }
-}, [detectInjectedWallet, connectMetaMask, connectTrustWallet, connectBinanceChain, connectCoinbaseWallet]);
-
-const handleWalletConnect = useCallback(async (walletId) => {
-  if (connectionState === 'connecting') return;
-
-  try {
-    setConnectionState('connecting');
-    setErrorMessage('');
-
-    let connectionData;
-    let effectiveWalletId = walletId;
-
-    // Connect to wallet
-    if (!walletId) {
-      connectionData = await connectInjectedWallet();
-      effectiveWalletId = detectInjectedWallet();
-    } else {
-      switch (walletId) {
-        case 'metamask':
-          connectionData = await connectMetaMask();
-          break;
-        case 'trustwallet':
-          connectionData = await connectTrustWallet();
-          break;
-        case 'binance':
-          connectionData = await connectBinanceChain();
-          break;
-        case 'coinbase':
-          connectionData = await connectCoinbaseWallet();
-          break;
-        case 'walletconnect':
-          connectionData = await connectWithWalletConnect();
-          break;
-        default:
-          throw new Error('Unsupported wallet type');
+      console.error('Coinbase Wallet connection error:', error);
+      if (error.code === 4001) {
+        throw new Error('Please connect your Coinbase Wallet account to continue.');
+      } else if (error.code === -32002) {
+        throw new Error('Coinbase Wallet is already processing a request. Please check your extension.');
+      } else if (error.message.includes('User denied account authorization')) {
+        throw new Error('Connection canceled. Please approve the connection request in your wallet.');
+      } else if (error.message.includes('Already processing eth_requestAccounts')) {
+        throw new Error('Please complete the pending connection request in your wallet first.');
+      } else {
+        throw new Error(error.message || 'Failed to connect Coinbase Wallet. Please try again.');
       }
     }
+  }, [getEthereumProvider, getProvider, isCoinbaseInstalled]);
 
-    if (!connectionData?.address) {
-      throw new Error('Failed to get wallet address');
+  const connectInjectedWallet = useCallback(async () => {
+    const walletType = detectInjectedWallet();
+    if (!walletType) {
+      throw new Error('No injected wallet detected. Please install a wallet like MetaMask.');
     }
 
-    if (setWalletAddress) {
-      setWalletAddress(connectionData.address);
+    switch (walletType) {
+      case 'metamask':
+        return await connectMetaMask();
+      case 'trustwallet':
+        return await connectTrustWallet();
+      case 'binance':
+        return await connectBinanceChain();
+      case 'coinbase':
+        return await connectCoinbaseWallet();
+      default:
+        throw new Error('Unsupported injected wallet');
     }
+  }, [detectInjectedWallet, connectMetaMask, connectTrustWallet, connectBinanceChain, connectCoinbaseWallet]);
 
-    // Get signature for verification
-    const signatureData = await Promise.race([
-      requestSignature(connectionData.provider, connectionData.address),
-      new Promise((_, reject) => 
-        setTimeout(() => reject(new Error('Signature request timed out')), 30000)
-      )
-    ]);
-    
+  const handleWalletConnect = useCallback(async (walletId) => {
+    if (connectionState === 'connecting') return;
 
-    // Verify wallet connection with backend
-    const verification = await verifyWalletConnection(
-      signatureData.address,
-      signatureData.signature,
-      signatureData.message
-    );
-
-    // Track wallet connection (handles already connected case gracefully)
     try {
-      const trackingResult = await trackWalletConnection({
+      setConnectionState('connecting');
+      setErrorMessage('');
+
+      let connectionData;
+      let effectiveWalletId = walletId;
+
+      // Connect to wallet
+      if (!walletId) {
+        connectionData = await connectInjectedWallet();
+        effectiveWalletId = detectInjectedWallet();
+      } else {
+        switch (walletId) {
+          case 'metamask':
+            connectionData = await connectMetaMask();
+            break;
+          case 'trustwallet':
+            connectionData = await connectTrustWallet();
+            break;
+          case 'binance':
+            connectionData = await connectBinanceChain();
+            break;
+          case 'coinbase':
+            connectionData = await connectCoinbaseWallet();
+            break;
+          case 'walletconnect':
+            connectionData = await connectWithWalletConnect();
+            break;
+          default:
+            throw new Error('Unsupported wallet type');
+        }
+      }
+
+      if (!connectionData?.address) {
+        throw new Error('Failed to get wallet address');
+      }
+
+      if (setWalletAddress) {
+        setWalletAddress(connectionData.address);
+      }
+
+      // Get signature for verification
+      const signatureData = await Promise.race([
+        requestSignature(connectionData.provider, connectionData.address),
+        new Promise((_, reject) =>
+          setTimeout(() => reject(new Error('Signature request timed out')), 30000)
+        )
+      ]);
+
+
+      // Verify wallet connection with backend
+      const verification = await verifyWalletConnection(
+        signatureData.address,
+        signatureData.signature,
+        signatureData.message
+      );
+
+      // Track wallet connection (handles already connected case gracefully)
+      try {
+        const trackingResult = await trackWalletConnection({
+          walletType: effectiveWalletId,
+          address: signatureData.address,
+          chainId: connectionData.chainId,
+          timestamp: new Date().toISOString()
+        });
+
+        // If wallet was already connected, we still consider this a success
+        if (trackingResult.alreadyConnected) {
+          console.log('Wallet already connected to account');
+        }
+      } catch (trackingError) {
+        console.log('Wallet tracking completed with message:', trackingError.message);
+        // We don't throw here because the connection itself was successful
+        // even if tracking reported the wallet was already connected
+      }
+
+      if (verification.user) {
+        setUserInfo(verification.user);
+      }
+
+      setConnectionState('connected');
+
+      onConnect({
         walletType: effectiveWalletId,
         address: signatureData.address,
+        provider: connectionData.provider,
         chainId: connectionData.chainId,
-        timestamp: new Date().toISOString()
+        verification,
+        userInfo: verification.user
       });
 
-      // If wallet was already connected, we still consider this a success
-      if (trackingResult.alreadyConnected) {
-        console.log('Wallet already connected to account');
-      }
-    } catch (trackingError) {
-      console.log('Wallet tracking completed with message:', trackingError.message);
-      // We don't throw here because the connection itself was successful
-      // even if tracking reported the wallet was already connected
-    }
-
-    if (verification.user) {
-      setUserInfo(verification.user);
-    }
-
-    setConnectionState('connected');
-
-    onConnect({
-      walletType: effectiveWalletId,
-      address: signatureData.address,
-      provider: connectionData.provider,
-      chainId: connectionData.chainId,
-      verification,
-      userInfo: verification.user
-    });
-
-    return true;
-  } catch (error) {
-    console.error('Wallet connection error:', error);
-    setConnectionState('error');
-    
-    let errorMsg = error.message;
-    
-    // Handle specific error cases
-    if (error.code === -32002) {
-      errorMsg = 'A request is already pending in your wallet. Please check your wallet extension.';
-    } else if (error.code === 4001) {
-      errorMsg = 'User denied the request. Please approve the connection in your wallet.';
-    } else if (error.message.includes('timeout')) {
-      errorMsg = 'Connection timed out. Please try again.';
-    } else if (error.response?.status === 400 && 
-               error.response?.data?.wallet_address?.includes('already connected')) {
-      // Special case for already connected wallets
-      errorMsg = 'This wallet is already connected to your account.';
-      setConnectionState('connected');
       return true;
+    } catch (error) {
+      console.error('Wallet connection error:', error);
+      setConnectionState('error');
+
+      let errorMsg = error.message;
+
+      // Handle specific error cases
+      if (error.code === -32002) {
+        errorMsg = 'A request is already pending in your wallet. Please check your wallet extension.';
+      } else if (error.code === 4001) {
+        errorMsg = 'User denied the request. Please approve the connection in your wallet.';
+      } else if (error.message.includes('timeout')) {
+        errorMsg = 'Connection timed out. Please try again.';
+      } else if (error.response?.status === 400 &&
+        error.response?.data?.wallet_address?.includes('already connected')) {
+        // Special case for already connected wallets
+        errorMsg = 'This wallet is already connected to your account.';
+        setConnectionState('connected');
+        return true;
+      }
+
+      setErrorMessage(errorMsg);
+      return false;
     }
+  }, [
+    connectionState,
+    connectMetaMask,
+    connectTrustWallet,
+    connectBinanceChain,
+    connectCoinbaseWallet,
+    connectWithWalletConnect,
+    connectInjectedWallet,
+    detectInjectedWallet,
+    onConnect,
+    requestSignature,
+    setWalletAddress,
+    trackWalletConnection,
+    verifyWalletConnection
+  ]);
 
-    setErrorMessage(errorMsg);
-    return false;
-  }
-}, [
-  connectionState,
-  connectMetaMask,
-  connectTrustWallet,
-  connectBinanceChain,
-  connectCoinbaseWallet,
-  connectWithWalletConnect,
-  connectInjectedWallet,
-  detectInjectedWallet,
-  onConnect,
-  requestSignature,
-  setWalletAddress,
-  trackWalletConnection,
-  verifyWalletConnection
-]);
+  // Helper function to get wallet by ID
+  const getWalletById = useCallback((id) => {
+    return wallets.find(w => w.id === id);
+  }, [wallets]);
 
-// Helper function to get wallet by ID
-const getWalletById = useCallback((id) => {
-  return wallets.find(w => w.id === id);
-}, [wallets]);
-
-// Handler for wallet selection
-const handleWalletSelect = useCallback((walletId) => {
-  setSelectedWallet(walletId);
-  handleWalletConnect(walletId);
-}, [handleWalletConnect]);
+  // Handler for wallet selection
+  const handleWalletSelect = useCallback((walletId) => {
+    setSelectedWallet(walletId);
+    handleWalletConnect(walletId);
+  }, [handleWalletConnect]);
 
 
   return (
@@ -996,7 +1059,7 @@ const handleWalletSelect = useCallback((walletId) => {
                       <p>Welcome back, {userInfo.username || 'user'}!</p>
                     </div>
                   )}
-          
+
                   <button
                     onClick={() => {
                       onClose();

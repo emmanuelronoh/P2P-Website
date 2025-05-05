@@ -1,11 +1,14 @@
-import React from "react";
-import { useState, useEffect, useRef, useCallback } from 'react';
+
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import EmojiPicker from 'emoji-picker-react';
 import { FiSearch, FiPlus, FiPaperclip, FiSmile, FiSend, FiCheck, FiChevronDown } from 'react-icons/fi';
 import { BsCheck2All, BsThreeDotsVertical } from 'react-icons/bs';
 import { IoClose } from 'react-icons/io5';
+import { toast } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
+import { ToastContainer } from 'react-toastify';
 import '../styles/Messages.css';
 
 const Messages = () => {
@@ -17,7 +20,6 @@ const Messages = () => {
   const socketRef = useRef(null);
   const messageInputRef = useRef(null);
   const typingTimeoutRef = useRef(null);
-
 
   const [state, setState] = useState({
     chatRooms: [],
@@ -39,11 +41,6 @@ const Messages = () => {
     isMobileView: window.innerWidth < 768,
     showChatList: window.innerWidth >= 768,
     showMobileMenu: false,
-    escrowStatus: null,
-    escrowAddress: null,
-    escrowDetails: null,
-    showEscrowActions: false,
-    isProcessingEscrow: false,
     darkMode: window.matchMedia('(prefers-color-scheme: dark)').matches
   });
 
@@ -79,7 +76,7 @@ const Messages = () => {
   const loadChatRooms = useCallback(async () => {
     try {
       const token = localStorage.getItem('accessToken');
-      const response = await fetch('https://cheetahx.onrender.com/chat-room/', {
+      const response = await fetch('http://127.0.0.1:8000/chat-room/', {
         headers: { Authorization: `Bearer ${token}` }
       });
       const data = await response.json();
@@ -301,7 +298,7 @@ const Messages = () => {
     try {
       const token = localStorage.getItem('accessToken');
       const response = await fetch(
-        `https://cheetahx.onrender.com/chat-room/${chatRoomId}/messages/`,
+        `http://127.0.0.1:8000/chat-room/${chatRoomId}/messages/`,
         { headers: { Authorization: `Bearer ${token}` } }
       );
       const data = await response.json();
@@ -326,9 +323,9 @@ const Messages = () => {
     try {
       const token = localStorage.getItem('accessToken');
       await fetch(
-        `https://cheetahx.onrender.com/chat-room/${chatRoomId}/mark-read/`,
+        `http://127.0.0.1:8000/chat-room/${chatRoomId}/mark-read/`,
         {
-          method: 'PATCH', // Change to 'PATCH' or 'PUT'
+          method: 'PATCH',
           headers: {
             'Content-Type': 'application/json',
             'Authorization': `Bearer ${token}`
@@ -391,7 +388,13 @@ const Messages = () => {
       const token = localStorage.getItem('accessToken');
       const tempTimestamp = new Date().toISOString();
 
-      // Create optimistic message immediately
+      // Generate thumbnail if needed
+      let thumbnail = null;
+      if (state.attachment?.type.startsWith('image/')) {
+        thumbnail = await generateThumbnail(state.attachment);
+      }
+
+      // Create optimistic message with preview
       setState(prev => ({
         ...prev,
         isUploading: true,
@@ -406,9 +409,13 @@ const Messages = () => {
             attachments: prev.attachment
               ? [{
                 id: 'temp-' + tempId,
-                file: URL.createObjectURL(prev.attachment),
-                file_type: prev.attachment.type.startsWith('image/') ? 'image' : 'file',
-                file_name: prev.attachment.name
+                url: URL.createObjectURL(prev.attachment),
+                file_type: getFileType(prev.attachment.type),
+                file_name: prev.attachment.name,
+                file_size: prev.attachment.size,
+                thumbnail: thumbnail,
+                isOptimistic: true,
+                uploadProgress: 0
               }]
               : []
           }
@@ -418,7 +425,7 @@ const Messages = () => {
         showEmojiPicker: false
       }));
 
-      // Handle text message via WebSocket
+      // Send text via WebSocket if available
       if (state.newMessage.trim() && socketRef.current) {
         socketRef.current.send(JSON.stringify({
           type: 'chat_message',
@@ -428,11 +435,11 @@ const Messages = () => {
         }));
       }
 
-      // Handle attachment upload if present
+      // Handle attachment upload
       if (state.attachment) {
-        // First create the message (even if empty)
+        // 1. Create message record
         const messageResponse = await fetch(
-          `https://cheetahx.onrender.com/chat-room/${state.currentChat.id}/messages/create/`,
+          `${API_BASE_URL}/chat-room/${state.currentChat.id}/messages/create/`,
           {
             method: 'POST',
             headers: {
@@ -440,60 +447,165 @@ const Messages = () => {
               'Authorization': `Bearer ${token}`
             },
             body: JSON.stringify({
-              content: state.newMessage.trim() || '[Attachment]'
+              content: state.newMessage.trim() || ''
             })
           }
         );
 
-        if (!messageResponse.ok) {
-          throw new Error('Failed to create message');
-        }
-
+        if (!messageResponse.ok) throw new Error('Failed to create message');
         const messageData = await messageResponse.json();
 
-        // Then upload the attachment
+        // 2. Upload attachment with progress tracking
         const formData = new FormData();
         formData.append('file', state.attachment);
+        formData.append('message_id', messageData.id);
 
-        const uploadResponse = await fetch(
-          `https://cheetahx.onrender.com/chat-room/chat-room/messages/${messageId}/attachments/`,
-          {
-            method: 'POST',
-            headers: {
-              'Authorization': `Bearer ${token}`,
-            },
-            body: formData
+        const xhr = new XMLHttpRequest();
+        xhr.upload.addEventListener('progress', (event) => {
+          if (event.lengthComputable) {
+            const progress = Math.round((event.loaded / event.total) * 100);
+            setState(prev => ({
+              ...prev,
+              messages: prev.messages.map(msg =>
+                msg.id === tempId
+                  ? {
+                    ...msg,
+                    attachments: msg.attachments.map(att => ({
+                      ...att,
+                      uploadProgress: progress
+                    }))
+                  }
+                  : msg
+              )
+            }));
           }
+        });
+
+        const uploadPromise = new Promise((resolve, reject) => {
+          xhr.onreadystatechange = () => {
+            if (xhr.readyState === 4) {
+              if (xhr.status === 200) {
+                resolve(JSON.parse(xhr.responseText));
+              } else {
+                reject(new Error('Upload failed'));
+              }
+            }
+          };
+        });
+
+        xhr.open(
+          'POST',
+          `${API_BASE_URL}/chat-room/messages/${messageData.id}/attachments/`,
+          true
         );
+        xhr.setRequestHeader('Authorization', `Bearer ${token}`);
+        xhr.send(formData);
 
-        if (!uploadResponse.ok) {
-          throw new Error('Failed to upload attachment');
+        const attachmentData = await uploadPromise;
+
+        // 3. Update message with server response
+        setState(prev => ({
+          ...prev,
+          messages: prev.messages.map(msg =>
+            msg.id === tempId
+              ? {
+                ...msg,
+                id: messageData.id,
+                attachments: [
+                  {
+                    ...attachmentData,
+                    thumbnail: attachmentData.file_type === 'image'
+                      ? attachmentData.thumbnail_url || attachmentData.url
+                      : null,
+                    uploadProgress: 100
+                  }
+                ]
+              }
+              : msg
+          ),
+          isUploading: false
+        }));
+
+        // 4. Notify via WebSocket
+        if (socketRef.current) {
+          socketRef.current.send(JSON.stringify({
+            type: 'attachment_message',
+            chat_room_id: state.currentChat.id,
+            message_id: messageData.id,
+            attachment: attachmentData
+          }));
         }
+      } else {
+        // Text-only message complete
+        setState(prev => ({ ...prev, isUploading: false }));
       }
 
-      // Focus back on input after sending
-      if (messageInputRef.current) {
-        messageInputRef.current.focus();
-      }
+      // Focus input after send
+      messageInputRef.current?.focus();
 
     } catch (error) {
       console.error('Error sending message:', error);
-      // Remove the optimistic message if sending fails
       setState(prev => ({
         ...prev,
         isUploading: false,
         messages: prev.messages.filter(msg => msg.id !== tempId),
-        attachment: prev.attachment, // Keep the attachment if upload failed
-        newMessage: prev.newMessage // Restore the message if needed
+        attachment: prev.attachment,
+        newMessage: prev.newMessage
       }));
+      showToast('Failed to send message: ' + error.message, 'error');
     }
   }, [state.newMessage, state.currentChat, state.attachment, state.userId]);
+
+  // Helper functions remain the same
+  const getFileType = (mimeType) => {
+    if (mimeType.startsWith('image/')) return 'image';
+    if (mimeType.startsWith('video/')) return 'video';
+    if (mimeType.startsWith('audio/')) return 'audio';
+    return 'file';
+  };
+
+  const generateThumbnail = async (file) => {
+    if (!file.type.startsWith('image/')) return null;
+
+    return new Promise((resolve) => {
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        const img = new Image();
+        img.onload = () => {
+          const canvas = document.createElement('canvas');
+          const maxSize = 200;
+          let width = img.width;
+          let height = img.height;
+
+          if (width > height) {
+            if (width > maxSize) {
+              height *= maxSize / width;
+              width = maxSize;
+            }
+          } else {
+            if (height > maxSize) {
+              width *= maxSize / height;
+              height = maxSize;
+            }
+          }
+
+          canvas.width = width;
+          canvas.height = height;
+          const ctx = canvas.getContext('2d');
+          ctx.drawImage(img, 0, 0, width, height);
+          resolve(canvas.toDataURL('image/jpeg', 0.8));
+        };
+        img.src = e.target.result;
+      };
+      reader.readAsDataURL(file);
+    });
+  };
 
   const startNewChat = useCallback(async (order, tradeType) => {
     try {
       const token = localStorage.getItem('accessToken');
       const response = await fetch(
-        'https://cheetahx.onrender.com/chat-room/api/trades/initiate/',
+        'http://127.0.0.1:8000/chat-room/api/trades/initiate/',
         {
           method: 'POST',
           headers: {
@@ -567,7 +679,6 @@ const Messages = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [state.messages]);
 
-
   useEffect(() => {
     // Focus on input when chat changes
     if (messageInputRef.current && state.currentChat) {
@@ -582,106 +693,6 @@ const Messages = () => {
       room.last_message?.content?.toLowerCase().includes(state.searchTerm.toLowerCase())
     );
   });
-
-
-
-  // Move this before the useEffect hooks that use it
-  const fetchEscrowStatus = useCallback(async (tradeId) => {
-    try {
-      const token = localStorage.getItem('accessToken');
-      const response = await fetch(
-        `https://cheetahx.onrender.com/api/trades/${tradeId}/escrow-status/`,
-        { headers: { Authorization: `Bearer ${token}` } }
-      );
-      const data = await response.json();
-
-      setState(prev => ({
-        ...prev,
-        escrowStatus: data.status,
-        escrowAddress: data.escrow_address,
-        escrowDetails: data,
-        showEscrowActions: ['PENDING', 'FUNDED'].includes(data.status)
-      }));
-    } catch (error) {
-      console.error('Error fetching escrow status:', error);
-    }
-  }, []);
-
-  // Then the useEffect that uses it
-  useEffect(() => {
-    if (state.currentChat?.tradeId) {
-      // Initial fetch
-      fetchEscrowStatus(state.currentChat.tradeId);
-
-      // Set up polling
-      const interval = setInterval(
-        () => fetchEscrowStatus(state.currentChat.tradeId),
-        15000 // Poll every 15 seconds
-      );
-
-      return () => clearInterval(interval);
-    }
-  }, [state.currentChat?.tradeId, fetchEscrowStatus]);
-
-  const verifyDeposit = async () => {
-    setState(prev => ({ ...prev, isProcessingEscrow: true }));
-    try {
-      const token = localStorage.getItem('accessToken');
-      const response = await fetch(
-        `https://cheetahx.onrender.com/api/escrow/${state.escrowAddress}/verify-deposit/`,
-        {
-          method: 'POST',
-          headers: { Authorization: `Bearer ${token}` }
-        }
-      );
-      await response.json();
-      fetchEscrowStatus(state.currentChat.tradeId);
-    } catch (error) {
-      console.error('Error verifying deposit:', error);
-    } finally {
-      setState(prev => ({ ...prev, isProcessingEscrow: false }));
-    }
-  };
-
-  const releaseEscrow = async () => {
-    setState(prev => ({ ...prev, isProcessingEscrow: true }));
-    try {
-      const token = localStorage.getItem('accessToken');
-      const response = await fetch(
-        `https://cheetahx.onrender.com/api/escrow/${state.escrowAddress}/release/`,
-        {
-          method: 'POST',
-          headers: { Authorization: `Bearer ${token}` }
-        }
-      );
-      await response.json();
-      fetchEscrowStatus(state.currentChat.tradeId);
-    } catch (error) {
-      console.error('Error releasing escrow:', error);
-    } finally {
-      setState(prev => ({ ...prev, isProcessingEscrow: false }));
-    }
-  };
-
-  const openDispute = async () => {
-    setState(prev => ({ ...prev, isProcessingEscrow: true }));
-    try {
-      const token = localStorage.getItem('accessToken');
-      const response = await fetch(
-        `https://cheetahx.onrender.com/api/trades/${state.currentChat.tradeId}/dispute/`,
-        {
-          method: 'POST',
-          headers: { Authorization: `Bearer ${token}` }
-        }
-      );
-      await response.json();
-      fetchEscrowStatus(state.currentChat.tradeId);
-    } catch (error) {
-      console.error('Error opening dispute:', error);
-    } finally {
-      setState(prev => ({ ...prev, isProcessingEscrow: false }));
-    }
-  };
 
   const renderAttachment = (attachment) => {
     // Determine if this is a temporary attachment (before upload completes)
@@ -817,6 +828,7 @@ const Messages = () => {
 
     // Default file attachment
     return (
+
       <div className="attachment-file" onClick={handleClick}>
         <div className="file-icon">
           <svg viewBox="0 0 24 24" width="24" height="24">
@@ -847,8 +859,96 @@ const Messages = () => {
     }
   };
 
+  const ActionDropdown = ({ chatRoomId }) => {
+    const [showMenu, setShowMenu] = useState(false);
+    const menuRef = useRef(null);
+
+    const handleClickOutside = useCallback((e) => {
+      if (menuRef.current && !menuRef.current.contains(e.target)) {
+        setShowMenu(false);
+      }
+    }, []);
+
+    useEffect(() => {
+      document.addEventListener('mousedown', handleClickOutside);
+      return () => document.removeEventListener('mousedown', handleClickOutside);
+    }, [handleClickOutside]);
+
+    const handleMarkAsPaid = () => {
+      // Implement actual mark as paid functionality
+      toast.success("Marked as paid. Waiting for confirmation.");
+      setShowMenu(false);
+    };
+
+    const handleOpenDispute = () => {
+      // Implement actual dispute functionality
+      toast.info("Dispute opened. Our team will contact you shortly.");
+      setShowMenu(false);
+    };
+
+    const handleReport = () => {
+      // Implement actual report functionality
+      toast.warn("User reported. Our team will review the case.");
+      setShowMenu(false);
+    };
+
+
+    return (
+
+      <div className="action-dropdown-container" ref={menuRef}>
+        <button
+          className="menu-button"
+          onClick={(e) => {
+            e.stopPropagation();
+            setShowMenu(prev => !prev);
+          }}
+        >
+          <BsThreeDotsVertical size={20} />
+        </button>
+
+        {showMenu && (
+          <div className="dropdown-menu">
+            <button
+              className="dropdown-item"
+              onClick={handleMarkAsPaid}
+            >
+              I have paid
+            </button>
+            <button
+              className="dropdown-item"
+              onClick={handleOpenDispute}
+            >
+              Open dispute
+            </button>
+            <button
+              className="dropdown-item danger"
+              onClick={handleReport}
+            >
+              Report seller
+            </button>
+          </div>
+        )}
+      </div>
+    );
+  };
+
+
+
+
   return (
     <div className={`messages-app ${state.darkMode ? 'dark-mode' : ''}`}>
+      <ToastContainer
+        position="top-right"
+        autoClose={5000}
+        hideProgressBar={false}
+        newestOnTop={false}
+        closeOnClick
+        rtl={false}
+        pauseOnFocusLoss
+        draggable
+        pauseOnHover
+        theme={state.darkMode ? "dark" : "light"}
+      />
       {/* Mobile header */}
       {state.isMobileView && (
         <div className="mobile-header">
@@ -868,9 +968,8 @@ const Messages = () => {
                   {state.isTyping ? "Typing..." : "Online"}
                 </p>
               </div>
-              <button className="menu-button">
-                <BsThreeDotsVertical size={20} />
-              </button>
+              {/* Use the ActionDropdown component here */}
+              <ActionDropdown chatRoomId={state.currentChat.id} />
             </div>
           ) : (
             <div className="mobile-list-header">
@@ -881,42 +980,6 @@ const Messages = () => {
               >
                 <FiPlus size={20} />
               </button>
-            </div>
-          )}
-          {state.currentChat?.tradeId && (
-            <div className="escrow-status-bar">
-              <div className={`status-indicator ${state.escrowStatus?.toLowerCase()}`}>
-                {state.escrowStatus || 'Loading...'}
-              </div>
-              {state.escrowAddress && (
-                <a
-                  href={`${BLOCKCHAIN_EXPLORER_URL}/address/${state.escrowAddress}`}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="view-on-blockchain"
-                >
-                  View Escrow
-                </a>
-              )}
-            </div>
-          )}
-          {state.currentChat?.orderDetails && (
-            <div className="trade-summary">
-              <h4>Trade Details</h4>
-              <div className="trade-details">
-                <div>
-                  <span>Amount:</span>
-                  <strong>{state.currentChat.orderDetails.amount} {state.currentChat.orderDetails.currency}</strong>
-                </div>
-                <div>
-                  <span>Price:</span>
-                  <strong>{state.currentChat.orderDetails.price} {state.currentChat.orderDetails.fiatCurrency}</strong>
-                </div>
-                <div>
-                  <span>Payment Method:</span>
-                  <strong>{state.currentChat.orderDetails.paymentMethod}</strong>
-                </div>
-              </div>
             </div>
           )}
         </div>
@@ -999,7 +1062,7 @@ const Messages = () => {
                   <p>No conversations found</p>
                   <button
                     className="start-chat-btn"
-                    onClick={() => navigate('/market')}
+                    onClick={() => navigate('/fiat-p2p')}
                   >
                     Start New Chat
                   </button>
@@ -1013,20 +1076,9 @@ const Messages = () => {
         <div className={`message-area ${!state.currentChat ? 'empty' : ''}`}>
           {state.currentChat ? (
             <>
-              {state.currentChat && (
+              {!state.isMobileView && (
                 <div className="message-header">
                   <div className="header-left">
-                    {/* Back button - always visible when in chat */}
-                    <button
-                      className="back-button"
-                      onClick={() => setState(prev => ({ ...prev, currentChat: null }))}
-                    >
-                      <svg viewBox="0 0 24 24" width="20" height="20">
-                        <path fill="currentColor" d="M20 11H7.83l5.59-5.59L12 4l-8 8 8 8 1.41-1.41L7.83 13H20v-2z" />
-                      </svg>
-                    </button>
-
-                    {/* Rest of your header content */}
                     <div className="avatar-container">
                       <img
                         src={state.currentChat.counterparty.profile_picture || 'https://i.ibb.co/PsXqD7Xd/groom-6925756.png'}
@@ -1041,6 +1093,12 @@ const Messages = () => {
                         {state.isTyping ? "Typing..." : "Online"}
                       </p>
                     </div>
+                  </div>
+                  <div className="header-right">
+                    <div className="trade-details">
+                      Trade #{state.currentChat.tradeId}
+                    </div>
+                    <ActionDropdown chatRoomId={state.currentChat.id} />
                   </div>
                 </div>
               )}
@@ -1175,40 +1233,6 @@ const Messages = () => {
                       )}
                     </button>
                   </div>
-                  {state.showEscrowActions && (
-                    <div className="escrow-actions">
-                      {/* Buyer actions */}
-                      {userIsBuyer && state.escrowStatus === 'PENDING' && (
-                        <button
-                          onClick={verifyDeposit}
-                          disabled={state.isProcessingEscrow}
-                        >
-                          {state.isProcessingEscrow ? 'Processing...' : 'I Paid'}
-                        </button>
-                      )}
-
-                      {/* Seller actions */}
-                      {userIsSeller && state.escrowStatus === 'FUNDED' && (
-                        <button
-                          onClick={releaseEscrow}
-                          disabled={state.isProcessingEscrow}
-                        >
-                          Release Funds
-                        </button>
-                      )}
-
-                      {/* Dispute button */}
-                      {(userIsBuyer || userIsSeller) &&
-                        ['PENDING', 'FUNDED'].includes(state.escrowStatus) && (
-                          <button
-                            onClick={openDispute}
-                            className="dispute-btn"
-                          >
-                            Open Dispute
-                          </button>
-                        )}
-                    </div>
-                  )}
                 </div>
               </div>
             </>
@@ -1223,7 +1247,7 @@ const Messages = () => {
               <p>Choose a chat from the list or start a new one</p>
               <button
                 className="start-chat-btn"
-                onClick={() => navigate('/market')}
+                onClick={() => navigate('/fiat-p2p')}
               >
                 Start New Chat
               </button>

@@ -693,6 +693,19 @@
     display: block;
   }
 }
+.p2p-no-hover-line {
+  text-decoration: none !important;
+  outline: none !important;
+  border: none !important;
+}
+
+.p2p-no-hover-line:focus,
+.p2p-no-hover-line:active,
+.p2p-no-hover-line:hover {
+  text-decoration: none !important;
+  outline: none !important;
+  border: none !important;
+}
 
 @media (max-width: 768px) {
   .navbar-container {
