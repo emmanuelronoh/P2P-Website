@@ -12,7 +12,7 @@ import ErrorModal from "../components/ErrorModal";
 import LoadingOverlay from "../components/LoadingOverlay";
 import "../styles/Amount.css";
 
-const API_BASE_URL = "https://cheetahx.onrender.com";
+const API_BASE_URL = "http://127.0.0.1:8000";
 
 const Amount = () => {
   const location = useLocation();

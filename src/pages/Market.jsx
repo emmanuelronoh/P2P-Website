@@ -13,7 +13,7 @@ import { RiExchangeDollarFill } from "react-icons/ri";
 import debounce from "lodash.debounce";
 import "../styles/market.css";
 
-const API_BASE_URL = "https://cheetahx.onrender.com";
+const API_BASE_URL = "http://127.0.0.1:8000";
 
 const DEFAULT_TRADER = {
   id: '',

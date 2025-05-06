@@ -47,7 +47,7 @@ const Login = () => {
             formData.append('trade_type', tradeType);
     
             const response = await axios.post(
-                "https://cheetahx.onrender.com/api/auth/login/",
+                "http://127.0.0.1:8000/api/auth/login/",
                 formData,
                 {
                     headers: {

@@ -3,7 +3,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import "../styles/CryptoListing.css"
 
-const BASE_URL = 'https://cheetahx.onrender.com/crypto/';
+const BASE_URL = 'http://127.0.0.1:8000/crypto/';
 
 const AmountForm = ({ mode = 'create', initialData = {} }) => {
   // Form state
