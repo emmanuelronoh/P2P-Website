@@ -15,6 +15,7 @@ const CheetahXHome = () => {
     const [scrollPosition, setScrollPosition] = useState(0);
     const [isMenuOpen, setIsMenuOpen] = useState(false);
     const navigate = useNavigate();
+    const [activeAssetsTab, setActiveAssetsTab] = useState('crypto');
 
     useEffect(() => {
         const handleScroll = () => {
@@ -206,7 +207,12 @@ const CheetahXHome = () => {
                                         <div className="method-tag">+8 more</div>
                                     </div>
 
-                                    <button className="preview-find-buyers">Find Buyers</button>
+                                    <button
+                                        className="preview-find-buyers"
+                                        onClick={() => navigate('/login')}
+                                    >
+                                        Find Buyers
+                                    </button>
 
                                     <div className="preview-buyers">
                                         <div className="buyer-item">
@@ -337,56 +343,151 @@ const CheetahXHome = () => {
             </section>
 
             {/* Supported Assets Section */}
-            <section id="supported-assets" className="assets-section">
-                <div className="section-header">
-                    <h2>Supported Cryptocurrencies & Fiat</h2>
-                    <p>Trade hundreds of assets with local payment methods</p>
-                </div>
+<section id="supported-assets" className="assets-section">
+    <div className="section-header">
+        <h2>Supported Cryptocurrencies & Fiat</h2>
+        <p>Trade hundreds of assets with local payment methods</p>
+    </div>
 
-                <div className="assets-tabs">
-                    <button className="assets-tab active">Cryptocurrencies</button>
-                    <button className="assets-tab">Fiat Currencies</button>
-                    <button className="assets-tab">Payment Methods</button>
-                </div>
+    <div className="assets-tabs">
+        <button 
+            className={`assets-tab ${activeAssetsTab === 'crypto' ? 'active' : ''}`}
+            onClick={() => setActiveAssetsTab('crypto')}
+        >
+            Cryptocurrencies
+        </button>
+        <button 
+            className={`assets-tab ${activeAssetsTab === 'fiat' ? 'active' : ''}`}
+            onClick={() => setActiveAssetsTab('fiat')}
+        >
+            Fiat Currencies
+        </button>
+        <button 
+            className={`assets-tab ${activeAssetsTab === 'payment' ? 'active' : ''}`}
+            onClick={() => setActiveAssetsTab('payment')}
+        >
+            Payment Methods
+        </button>
+    </div>
 
-                <div className="assets-grid">
-                    <div className="asset-card">
-                        <img src="https://i.ibb.co/21d9TgJT/bitcoin-btc-logo.png" alt="Bitcoin" />
-                        <span>Bitcoin (BTC)</span>
-                    </div>
-                    <div className="asset-card">
-                        <img src="https://i.ibb.co/hFJ0yD0m/ethereum-eth-logo.png" alt="Ethereum" />
-                        <span>Ethereum (ETH)</span>
-                    </div>
-                    <div className="asset-card">
-                        <img src="https://i.ibb.co/PvYNfpQG/tether-USDT-logo.png" alt="Tether" />
-                        <span>Tether (USDT)</span>
-                    </div>
-                    <div className="asset-card">
-                        <img src="https://i.ibb.co/pvJgTnqq/xrp-xrp-logo.png" alt="XRP" />
-                        <span>XRP (XRP)</span>
-                    </div>
-                    <div className="asset-card">
-                        <img src="https://i.ibb.co/1fLYWJXf/solana-sol-logo.png" alt="Solana" />
-                        <span>Solana (SOL)</span>
-                    </div>
-                    <div className="asset-card">
-                        <img src="https://i.ibb.co/LhCpsscs/cardano-ada-logo.png" alt="Cardano" />
-                        <span>Cardano (ADA)</span>
-                    </div>
-                    <div className="asset-card">
-                        <img src="https://i.ibb.co/pjtTr3WX/dogecoin-doge-logo.png" alt="Dogecoin" />
-                        <span>Dogecoin (DOGE)</span>
-                    </div>
-                    <div className="asset-card">
-                        <img src="https://i.ibb.co/RpQ2y3YB/polkadot-new-dot-logo.png" alt="Polkadot" />
-                        <span>Polkadot (DOT)</span>
-                    </div>
-                    <div className="asset-card view-more">
-                        <span>+150 more</span>
-                    </div>
+    <div className="assets-grid">
+        {activeAssetsTab === 'crypto' ? (
+            <>
+                <div className="asset-card">
+                    <img src="https://i.ibb.co/21d9TgJT/bitcoin-btc-logo.png" alt="Bitcoin" />
+                    <span>Bitcoin (BTC)</span>
                 </div>
-            </section>
+                <div className="asset-card">
+                    <img src="https://i.ibb.co/hFJ0yD0m/ethereum-eth-logo.png" alt="Ethereum" />
+                    <span>Ethereum (ETH)</span>
+                </div>
+                <div className="asset-card">
+                    <img src="https://i.ibb.co/PvYNfpQG/tether-USDT-logo.png" alt="Tether" />
+                    <span>Tether (USDT)</span>
+                </div>
+                <div className="asset-card">
+                    <img src="https://i.ibb.co/pvJgTnqq/xrp-xrp-logo.png" alt="XRP" />
+                    <span>XRP (XRP)</span>
+                </div>
+                <div className="asset-card">
+                    <img src="https://i.ibb.co/1fLYWJXf/solana-sol-logo.png" alt="Solana" />
+                    <span>Solana (SOL)</span>
+                </div>
+                <div className="asset-card">
+                    <img src="https://i.ibb.co/LhCpsscs/cardano-ada-logo.png" alt="Cardano" />
+                    <span>Cardano (ADA)</span>
+                </div>
+                <div className="asset-card">
+                    <img src="https://i.ibb.co/pjtTr3WX/dogecoin-doge-logo.png" alt="Dogecoin" />
+                    <span>Dogecoin (DOGE)</span>
+                </div>
+                <div className="asset-card">
+                    <img src="https://i.ibb.co/RpQ2y3YB/polkadot-new-dot-logo.png" alt="Polkadot" />
+                    <span>Polkadot (DOT)</span>
+                </div>
+                <div className="asset-card view-more">
+                    <span>+150 more</span>
+                </div>
+            </>
+        ) : activeAssetsTab === 'fiat' ? (
+            <>
+                <div className="asset-card">
+                    <img src="https://i.ibb.co/.../usd-icon.png" alt="USD" />
+                    <span>US Dollar (USD)</span>
+                </div>
+                <div className="asset-card">
+                    <img src="https://i.ibb.co/.../euro-icon.png" alt="EUR" />
+                    <span>Euro (EUR)</span>
+                </div>
+                <div className="asset-card">
+                    <img src="https://i.ibb.co/.../gbp-icon.png" alt="GBP" />
+                    <span>British Pound (GBP)</span>
+                </div>
+                <div className="asset-card">
+                    <img src="https://i.ibb.co/.../jpy-icon.png" alt="JPY" />
+                    <span>Japanese Yen (JPY)</span>
+                </div>
+                <div className="asset-card">
+                    <img src="https://i.ibb.co/.../cad-icon.png" alt="CAD" />
+                    <span>Canadian Dollar (CAD)</span>
+                </div>
+                <div className="asset-card">
+                    <img src="https://i.ibb.co/.../aud-icon.png" alt="AUD" />
+                    <span>Australian Dollar (AUD)</span>
+                </div>
+                <div className="asset-card">
+                    <img src="https://i.ibb.co/.../cny-icon.png" alt="CNY" />
+                    <span>Chinese Yuan (CNY)</span>
+                </div>
+                <div className="asset-card">
+                    <img src="https://i.ibb.co/.../ngn-icon.png" alt="NGN" />
+                    <span>Nigerian Naira (NGN)</span>
+                </div>
+                <div className="asset-card view-more">
+                    <span>+45 more</span>
+                </div>
+            </>
+        ) : (
+            <>
+                <div className="asset-card">
+                    <img src="https://i.ibb.co/.../bank-transfer-icon.png" alt="Bank Transfer" />
+                    <span>Bank Transfer</span>
+                </div>
+                <div className="asset-card">
+                    <img src="https://i.ibb.co/.../paypal-icon.png" alt="PayPal" />
+                    <span>PayPal</span>
+                </div>
+                <div className="asset-card">
+                    <img src="https://i.ibb.co/.../venmo-icon.png" alt="Venmo" />
+                    <span>Venmo</span>
+                </div>
+                <div className="asset-card">
+                    <img src="https://i.ibb.co/.../cashapp-icon.png" alt="Cash App" />
+                    <span>Cash App</span>
+                </div>
+                <div className="asset-card">
+                    <img src="https://i.ibb.co/.../mpesa-icon.png" alt="M-Pesa" />
+                    <span>M-Pesa</span>
+                </div>
+                <div className="asset-card">
+                    <img src="https://i.ibb.co/.../amazon-gc-icon.png" alt="Amazon GC" />
+                    <span>Amazon Gift Card</span>
+                </div>
+                <div className="asset-card">
+                    <img src="https://i.ibb.co/.../western-union-icon.png" alt="Western Union" />
+                    <span>Western Union</span>
+                </div>
+                <div className="asset-card">
+                    <img src="https://i.ibb.co/.../cash-deposit-icon.png" alt="Cash Deposit" />
+                    <span>Cash Deposit</span>
+                </div>
+                <div className="asset-card view-more">
+                    <span>+300 more</span>
+                </div>
+            </>
+        )}
+    </div>
+</section>
 
             {/* Testimonials Section */}
             <section id="testimonials" className="testimonials-section">

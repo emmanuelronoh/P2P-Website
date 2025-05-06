@@ -14,7 +14,7 @@
   --nav-shadow: 0 2px 20px rgba(0, 0, 0, 0.1);
   --input-bg: #ffffff;
   --input-border: #ddd;
-  --primary-gradient: #FF8A00;
+  --primary-gradient: #ff7800;
   --secondary-gradient: rgb(0 123 255);
   --floating-coin-opacity: 0.1;
   --wave-bg: radial-gradient(circle at 50% 0%, rgba(0, 150, 255, 0.1) 0%, transparent 70%);
@@ -69,16 +69,6 @@
   width: 75px;
   height: 40px;
   margin-right: 10px;
-}
-
-.logo-text {
-  font-size: 1.7rem;
-  font-weight: 700;
-  background: var(--secondary-gradient);
-  background-clip: text;
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  color: transparent;
 }
 
 .nav-links {
@@ -443,9 +433,9 @@
 }
 
 .method-tag.active {
-  background: #ff8a00;
+  background: #ff7800;
   color: white;
-  border-color: #FF6B00;
+  border-color: #ff7800;
 }
 
 .method-tag:hover {

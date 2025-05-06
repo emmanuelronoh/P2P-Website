@@ -142,7 +142,11 @@
     white-space: nowrap;
     transition: var(--transition);
 }
-
+.no-hover-line {
+    text-decoration: none;
+    color: inherit;
+  }
+  
 /* Mobile Menu Button */
 .p2p-mobile-menu-btn {
     display: none;
@@ -758,14 +762,6 @@ select:focus-visible {
     }
 }
 
-/* Utility Classes */
-.p2p-no-hover-line {
-    text-decoration: none;
-}
-
-.p2p-no-hover-line:hover {
-    text-decoration: none;
-}
 
 .sr-only {
     position: absolute;

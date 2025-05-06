@@ -33,15 +33,7 @@
     margin-right: 0.5rem;
   }
   
-  .logo-text {
-    font-size: 1.7rem;
-    font-weight: 700;
-    background: #ff7800;
-    -webkit-background-clip: text;
-    background-clip: text;
-    color: transparent;
-    margin: 0;
-  }
+
   
   .brand-tagline {
     font-size: 0.9rem;
