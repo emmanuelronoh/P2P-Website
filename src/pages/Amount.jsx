@@ -746,11 +746,11 @@ const Amount = () => {
 
         <div className="security-info">
           <div className="security-tip">
-            <span className="icon">🔒</span>
+            <span className="icon"></span>
             <span>All trades are protected by escrow</span>
           </div>
           <div className="security-tip">
-            <span className="icon">⚠️</span>
+            <span className="icon"></span>
             <span>Never share sensitive information outside the platform</span>
           </div>
         </div>
