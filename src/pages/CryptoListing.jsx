@@ -18,7 +18,7 @@ const AmountForm = ({ mode = 'create', initialData = {} }) => {
     secondaryCurrency: initialData.secondaryCurrency || 'ETH',
     rate: initialData.rate || '',
     paymentMethods: initialData.paymentMethods || [],
-    timeWindow: initialData.timeWindow || 30,
+    timeWindow: initialData.timeWindow?.toString() || "",
     terms: initialData.terms || '',
     ...initialData
   });
@@ -53,11 +53,15 @@ const AmountForm = ({ mode = 'create', initialData = {} }) => {
 
         const timeRes = await fetch(`${BASE_URL}time-windows/`);
         const timeData = await timeRes.json();
-        setTimeWindows(timeData.map(window => ({
+        const windows = timeData.map(window => ({
           value: window.id.toString(),
           label: window.display_name,
           minutes: window.minutes
-        })));
+        }));
+        setTimeWindows(windows);
+        if (!formData.timeWindow && windows.length > 0) {
+          setFormData(prev => ({ ...prev, timeWindow: windows[0].value }));
+        }
 
       } catch (error) {
         console.error('Error fetching initial data:', error);
