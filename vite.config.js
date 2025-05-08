@@ -14,5 +14,6 @@ export default defineConfig({
   // Polyfill for 'global'
   define: {
     global: 'window',  // This will resolve the 'global is not defined' issue
+   'process.env': {},
   }
 });

@@ -116,7 +116,7 @@ const CheetahXFooter = () => {
               <h3 className="links-heading">Navigation</h3>
               <ul className="links-list">
                 <li><a href="/">Home</a></li>
-                <li><a href="/wallet">Wallet</a></li>
+                <li><a href="/dapp">Wallet</a></li>
                 <li><a href="/markets">Markets</a></li>
               </ul>
             </div>

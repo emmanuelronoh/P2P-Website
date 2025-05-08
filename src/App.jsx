@@ -8,12 +8,12 @@ import {
   useNavigate,
   Navigate
 } from "react-router-dom";
+import DApp from "./pages/DApp";
 import AOS from 'aos';
+import { useLocation } from "react-router-dom";
 import 'aos/dist/aos.css';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
 import { WalletProvider } from './contexts/walletContext';
-
-// Import all your pages and components as before...
 import Home from "./layout/Home";
 import Cookie from './Footer_links/Cookie';
 import Risk from "./Footer_links/Risk";
@@ -69,7 +69,7 @@ const LoadingScreen = () => {
   useEffect(() => {
     const interval = setInterval(() => {
       setProgress(prev => {
-        if (prev >= 95) return prev; 
+        if (prev >= 95) return prev;
         return prev + Math.random() * 10;
       });
     }, 300);
@@ -95,16 +95,16 @@ const LoadingScreen = () => {
             <div className="coin ripple"></div>
           </div>
           <div className="progress-container">
-            <div 
-              className="progress-bar" 
+            <div
+              className="progress-bar"
               style={{ width: `${progress}%` }}
             ></div>
           </div>
           <div className="loading-text">
-            {progress < 30 ? "Initializing..." : 
-             progress < 60 ? "Loading resources..." : 
-             progress < 90 ? "Almost there..." : 
-             "Finalizing..."}
+            {progress < 30 ? "Initializing..." :
+              progress < 60 ? "Loading resources..." :
+                progress < 90 ? "Almost there..." :
+                  "Finalizing..."}
             <span className="ellipsis-animation">
               <span>.</span>
               <span>.</span>
@@ -123,7 +123,7 @@ const LoadingScreen = () => {
 
 const SkeletonLoader = ({ type = "default" }) => {
   const { theme } = React.useContext(ThemeContext);
-  
+
   if (type === "dashboard") {
     return (
       <div className={`skeleton-loader ${theme} dashboard`}>
@@ -137,7 +137,7 @@ const SkeletonLoader = ({ type = "default" }) => {
       </div>
     );
   }
-  
+
   return (
     <div className={`skeleton-loader ${theme}`}>
       <div className="skeleton-line"></div>
@@ -146,6 +146,7 @@ const SkeletonLoader = ({ type = "default" }) => {
     </div>
   );
 };
+
 
 function AppWrapper() {
   const [theme, setTheme] = useState(() => {
@@ -249,23 +250,19 @@ function FullPageLayout() {
   );
 }
 
+
 // Enhanced route protection components
 function PrivateRoute({ children }) {
-  const { isAuthenticated, loading, checkTokenValidity } = useAuth();
+  const { isAuthenticated, loading } = useAuth();
   const navigate = useNavigate();
 
   useEffect(() => {
     if (!loading && !isAuthenticated) {
       navigate("/login", { replace: true, state: { from: location.pathname } });
     }
-    
-    // Check token validity periodically
-    const interval = setInterval(() => {
-      checkTokenValidity();
-    }, 300000); // Check every 5 minutes
 
-    return () => clearInterval(interval);
-  }, [isAuthenticated, loading, navigate, checkTokenValidity]);
+
+  }, [isAuthenticated, loading, navigate]);
 
   if (loading) {
     return <SkeletonLoader type="dashboard" />;
@@ -311,8 +308,10 @@ function VerifiedUserRoute({ children }) {
   return children;
 }
 
+
 function AppInner() {
   const { loading: authLoading } = useAuth();
+  const location = useLocation();
   const [showLoader, setShowLoader] = useState(true);
   const [showSkeleton, setShowSkeleton] = useState(false);
 
@@ -333,15 +332,20 @@ function AppInner() {
     }
   }, [authLoading]);
 
-  if (showLoader) {
+  const showLoadingForRoutes = ["/wallets", "/vendor"]; 
+
+  const shouldShowLoadingScreen = showLoadingForRoutes.includes(location.pathname);
+
+  if (showLoader && shouldShowLoadingScreen) {
     return <LoadingScreen />;
   }
 
-  if (showSkeleton) {
+  if (showSkeleton && shouldShowLoadingScreen) {
     return <SkeletonLoader type="dashboard" />;
   }
 
   return (
+
     <Routes>
       {/* Public routes */}
       <Route element={<MainLayout />}>
@@ -395,6 +399,10 @@ function AppInner() {
             </VerifiedUserRoute>
           </PrivateRoute>
         } />
+      </Route>
+
+      <Route element={<MainLayout />}>
+        <Route path="/dapp" element={<DApp />} />
       </Route>
 
       {/* P2P Routes - Most don't need verification */}

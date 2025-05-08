@@ -383,7 +383,7 @@ const Navbar = ({ theme, toggleTheme }) => {
   const accountItems = isAuthenticated
     ? [
       { label: "Dashboard", path: "/dashboard", icon: FaChartLine },
-      { label: "Wallet", path: "/wallet", icon: FaWallet },
+      { label: "Wallet", path: "/dapp", icon: FaWallet },
       { label: "Profile", path: `/profile/${user?.id}`, icon: FaUserCircle },
       {
         label: `Messages ${unreadMessages > 0 ? `(${unreadMessages})` : ""}`,
@@ -442,7 +442,7 @@ const Navbar = ({ theme, toggleTheme }) => {
                   <span className="unknown-network">Unknown</span>
                 )}
               </div>
-              <div className="wallet-balance" onClick={() => navigate('/wallet')}>
+              <div className="wallet-balance" onClick={() => navigate('/dapp')}>
                 {parseFloat(balance).toFixed(4)} ETH
               </div>
             </>
@@ -451,7 +451,7 @@ const Navbar = ({ theme, toggleTheme }) => {
           <div className="wallet-address-dropdown">
             <button
               className="wallet-address-btn"
-              onClick={() => navigate('/wallet')}
+              onClick={() => navigate('/dapp')}
               aria-label="Wallet address"
             >
               <FaWallet className="wallet-icon" />
@@ -476,7 +476,7 @@ const Navbar = ({ theme, toggleTheme }) => {
                 </div>
                 <button
                   className="wallet-dropdown-item"
-                  onClick={() => navigate('/wallet')}
+                  onClick={() => navigate('/dapp')}
                 >
                   <FaWallet /> Wallet Dashboard
                 </button>
@@ -527,7 +527,7 @@ const Navbar = ({ theme, toggleTheme }) => {
                       <FaExchangeAlt className="nav-icon" />
                       Trade
                     </Link>
-                    <Link to="/wallet" className="nav-link">
+                    <Link to="/dapp" className="nav-link">
                       <FaWallet className="nav-icon" />
                       Wallet
                     </Link>
@@ -629,7 +629,7 @@ const Navbar = ({ theme, toggleTheme }) => {
                               Trade
                             </Link>
                             <Link
-                              to="/wallet"
+                              to="/daap"
                               className="mobile-nav-link"
                               onClick={() => setMenuOpen(false)}
                             >

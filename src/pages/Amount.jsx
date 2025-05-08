@@ -555,7 +555,7 @@ const Amount = () => {
 
   const navigateToWalletSettings = () => {
     closeErrorModal();
-    navigate("/wallet", { state: { section: "wallet" } });
+    navigate("/dapp", { state: { section: "wallet" } });
   };
 
   if (!trader || !cryptoSymbol) {

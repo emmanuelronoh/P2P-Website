@@ -86,7 +86,7 @@ const CheetahXFAQ = () => {
   const toggleFAQ = (index) => {
     setActiveIndex(activeIndex === index ? null : index);
   };
-  
+
   // Accessibility improvements
   const handleKeyDown = (e, index) => {
     if (e.key === 'Enter' || e.key === ' ') {
@@ -107,7 +107,7 @@ const CheetahXFAQ = () => {
 
   // Get appropriate icon for each section
   const getSectionIcon = (title) => {
-    switch(title) {
+    switch (title) {
       case 'Security & Trust':
         return <FiShield />;
       case 'Trading Process':
@@ -125,7 +125,7 @@ const CheetahXFAQ = () => {
         <h2>CheetahX Knowledge Base</h2>
         <p>Everything you need to know about trading crypto and fiat securely</p>
       </Header>
-      
+
       <SearchBox>
         <input type="text" placeholder="Search FAQs..." />
         <button>Search</button>
@@ -144,14 +144,15 @@ const CheetahXFAQ = () => {
               {section.items.map((item, itemIndex) => {
                 const globalIndex = faqSections.slice(0, sectionIndex).reduce((acc, curr) => acc + curr.items.length, 0) + itemIndex;
                 const isActive = activeIndex === globalIndex;
-                
+
                 return (
-                  <FAQItem 
+                  <FAQItem
                     key={itemIndex}
                     ref={el => faqRefs.current[globalIndex] = el}
-                    isActive={isActive}
+                    $isActive={isActive}
                   >
-                    <FAQQuestion 
+
+                    <FAQQuestion
                       onClick={() => toggleFAQ(globalIndex)}
                       onKeyDown={(e) => handleKeyDown(e, globalIndex)}
                       tabIndex="0"
@@ -163,7 +164,7 @@ const CheetahXFAQ = () => {
                         <FiChevronDown />
                       </ChevronIcon>
                     </FAQQuestion>
-                    <FAQAnswer 
+                    <FAQAnswer
                       id={`faq-answer-${globalIndex}`}
                       isActive={isActive}
                       aria-hidden={!isActive}
@@ -327,13 +328,13 @@ const FAQList = styled.ul`
   margin: 0;
 `;
 
-const FAQItem = styled.li`
+const FAQItem = styled.li.attrs(() => ({}))`
   margin-bottom: 0.5rem;
   border-radius: 8px;
   overflow: hidden;
   transition: all 0.2s;
-  background: ${props => props.isActive ? '#fff9f6' : 'transparent'};
-  border: 1px solid ${props => props.isActive ? '#ffe8dc' : '#f0f0f0'};
+  background: ${({ $isActive }) => ($isActive ? '#f0f0f0' : 'white')};
+  border-left: ${({ $isActive }) => ($isActive ? '3px solid green' : 'none')};
 `;
 
 const FAQQuestion = styled.div`
