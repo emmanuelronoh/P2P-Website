@@ -20,7 +20,7 @@ if (!projectId || typeof projectId !== 'string') {
 export const metadata = {
   name: 'CheetahX',
   description: 'Cheetahx is a system for p2p payments',
-  url: 'https://p2p-frontend-zfe9.vercel.app/', 
+  url: 'https://p2p-frontend-rfhu.vercel.app/', 
   icons: ['https://imagedelivery.net/_aTEfDRm7z3tKgu9JhfeKA/809b3643-aa12-4aa6-cb38-cc4d3b34e900/sm']
 };
 

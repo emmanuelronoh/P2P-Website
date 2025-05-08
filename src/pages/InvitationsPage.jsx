@@ -45,7 +45,7 @@ const InvitationsPage = () => {
     return () => clearTimeout(timer);
   }, []);
 
-  const referralLink = `https://p2p-frontend-zfe9.vercel.app/register?ref=${referralCode}`;
+  const referralLink = `https://p2p-frontend-rfhu.vercel.app/register?ref=${referralCode}`;
 
   const handleCopyLink = () => {
     navigator.clipboard.writeText(referralLink);
