@@ -362,7 +362,7 @@ const Navbar = ({ toggleTheme, theme }) => {
                             whileHover={{ scale: 1.05 }}
                             transition={{ type: "spring", stiffness: 400, damping: 10 }}
                         >
-                            <Link to="/" className="p2p-no-hover-line">
+                            <Link to="/fiat-p2p" className="p2p-no-hover-line">
                                 <img src={logo} alt="Cheetah P2P Logo" className="p2p-logo" />
                                 <span className="p2p-logo-text">CHEETAH P2P</span>
                             </Link>
