@@ -82,7 +82,7 @@
     bottom: 0;
     width: 40px;
     height: 2px;
-    background: linear-gradient(90deg, #ff8a00, #e52e71);
+    background: linear-gradient(90deg, #FF6B00, #e52e71);
   }
   
   .links-list {
@@ -152,12 +152,12 @@
   
   .newsletter-input:focus {
     outline: none;
-    border-color: #ff8a00;
+    border-color: #FF6B00;
   }
   
   .newsletter-button {
     padding: 0.8rem 1.5rem;
-    background: linear-gradient(90deg, #ff8a00, #e52e71) !important;
+    background: linear-gradient(90deg, #FF6B00, #e52e71) !important;
     color: white;
     border: none;
     border-radius: 4px;
