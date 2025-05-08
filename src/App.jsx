@@ -36,6 +36,7 @@ import Feedback from "./Footer_links/Feedback";
 import VerifyOTP from "./authentications/VerifyOTP";
 import FiatP2P from "./components/FiatP2P";
 import Support from "./pages/Support";
+import GiveReview from "./pages/GiveReview";
 import Tutorials from "./pages/Tutorials";
 import Faq from "./pages/Faq-page";
 import Profile from "./pages/Profile";
@@ -301,10 +302,6 @@ function VerifiedUserRoute({ children }) {
     return <Navigate to="/login" replace />;
   }
 
-  if (!user?.isVerified) {
-    return <Navigate to="/verification-pending" replace />;
-  }
-
   return children;
 }
 
@@ -365,6 +362,7 @@ function AppInner() {
         <Route path="/feedback" element={<Feedback />} />
         <Route path="/profile/:username" element={<Profile />} />
         <Route path="/invitations" element={<InvitationsPage />} />
+
       </Route>
 
       {/* Authenticated but not necessarily verified routes */}
@@ -377,6 +375,7 @@ function AppInner() {
         <Route path="/profile-details-users/:userId" element={<PrivateRoute><ProfileDetails /></PrivateRoute>} />
         <Route path="/tutorials" element={<PrivateRoute><Tutorials /></PrivateRoute>} />
         <Route path="/support" element={<PrivateRoute><Support /></PrivateRoute>} />
+        <Route path="/give-review" element={<PrivateRoute><GiveReview /></PrivateRoute>} />
       </Route>
 
       <Route element={<MessagesLayout />}>

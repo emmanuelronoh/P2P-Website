@@ -71,11 +71,32 @@
     cursor: pointer;
   }
   
-  .checkbox-label input[type="checkbox"] {
-    transform: scale(1.25);
-    accent-color: var(--primary);
-  }
-  
+  /* Replace the existing checkbox styles with this */
+.checkbox-label input[type="checkbox"] {
+  position: relative;
+  appearance: none;
+  width: 18px;
+  height: 18px;
+  border: 2px solid var(--primary);
+  border-radius: 4px;
+  margin-right: 8px;
+  cursor: pointer;
+}
+
+.checkbox-label input[type="checkbox"]:checked {
+  background-color: var(--primary);
+}
+
+.checkbox-label input[type="checkbox"]:checked::after {
+  content: "✓";
+  position: absolute;
+  color: white;
+  font-size: 14px;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+}
+
   .agree-button {
     width: 100%;
     padding: 12px;
@@ -88,9 +109,11 @@
     cursor: pointer;
     transition: var(--transition);
   }
-
-  .agreeCheckbox {
-    width: 10% !important;
+  .agree-checkbox {
+    width: 18px;
+    height: 18px;
+    margin-right: 8px;
+    accent-color: var(--primary);
   }
   .agree-button.disabled {
     background-color: #9ca3af;

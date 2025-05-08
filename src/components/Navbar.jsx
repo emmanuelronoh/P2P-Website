@@ -62,7 +62,7 @@ const AdvertisementBar = () => {
   useEffect(() => {
     const fetchAds = async () => {
       try {
-        const response = await fetch('http://127.0.0.1:8000/api/auth/advertisements/'); 
+        const response = await fetch('https://cheetahx.onrender.com/api/auth/advertisements/'); 
         if (!response.ok) {
           throw new Error('Failed to fetch advertisements');
         }
@@ -127,6 +127,7 @@ const DropdownMenu = ({ title, items, icon: Icon }) => {
   const dropdownRef = useRef(null);
   const { width } = useWindowSize();
   const isMobile = width < 992;
+
 
   const toggleDropdown = () => {
     setIsOpen(!isOpen);
@@ -252,9 +253,10 @@ const Navbar = ({ theme, toggleTheme }) => {
   const [unreadMessages, setUnreadMessages] = useState(0);
   const [notifications, setNotifications] = useState(3);
   const [menuOpen, setMenuOpen] = useState(false);
-  const [balance, setBalance] = useState("0.00");
+  const [balance, setBalance] = useState("0");
   const [isScrolled, setIsScrolled] = useState(false);
   const navigate = useNavigate();
+  const [errorMessage, setErrorMessage] = useState(null);
   const location = useLocation();
   const [showWalletModal, setShowWalletModal] = useState(false);
   const [provider, setProvider] = useState(null);
@@ -269,9 +271,16 @@ const Navbar = ({ theme, toggleTheme }) => {
         throw new Error('No wallet address provided');
       }
   
-      // Validate provider
+      // Enhanced provider validation
       if (provider) {
-        if (typeof provider.request !== 'function') {
+        // Check for EIP-1193 compliance
+        const isEIP1193 = (
+          typeof provider.request === 'function' ||
+          (provider.isWalletConnect && typeof provider.send === 'function') ||
+          (provider.connector && typeof provider.connector.sendCustomRequest === 'function')
+        );
+  
+        if (!isEIP1193) {
           throw new Error('Invalid provider - does not implement EIP-1193');
         }
   
@@ -280,7 +289,13 @@ const Navbar = ({ theme, toggleTheme }) => {
         // Ethers v6 provider initialization
         let ethersProvider;
         try {
-          ethersProvider = new ethers.BrowserProvider(provider);
+          // Handle WalletConnect provider specially
+          if (provider.isWalletConnect) {
+            ethersProvider = new ethers.BrowserProvider(provider);
+          } else {
+            ethersProvider = new ethers.BrowserProvider(provider);
+          }
+  
           const signer = await ethersProvider.getSigner();
           
           setSigner(signer);
@@ -289,23 +304,25 @@ const Navbar = ({ theme, toggleTheme }) => {
           localStorage.setItem("walletAddress", address);
   
           // Set up event listeners
-          provider.on('accountsChanged', (accounts) => {
-            if (accounts.length === 0) {
+          if (provider.on) {
+            provider.on('accountsChanged', (accounts) => {
+              if (accounts.length === 0) {
+                handleWalletDisconnect();
+              } else {
+                setWalletAddress(accounts[0]);
+                localStorage.setItem("walletAddress", accounts[0]);
+              }
+            });
+  
+            provider.on('chainChanged', (newChainId) => {
+              setChainId(parseInt(newChainId, 16));
+              window.location.reload();
+            });
+  
+            provider.on('disconnect', () => {
               handleWalletDisconnect();
-            } else {
-              setWalletAddress(accounts[0]);
-              localStorage.setItem("walletAddress", accounts[0]);
-            }
-          });
-  
-          provider.on('chainChanged', (newChainId) => {
-            setChainId(parseInt(newChainId, 16));
-            window.location.reload();
-          });
-  
-          provider.on('disconnect', () => {
-            handleWalletDisconnect();
-          });
+            });
+          }
   
           // Fetch initial balance
           await fetchBalance(address);
@@ -319,7 +336,8 @@ const Navbar = ({ theme, toggleTheme }) => {
       return true;
     } catch (error) {
       console.error('Wallet connection error:', error);
-      // You might want to set some error state here to show to the user
+      // Set error state to show to the user
+      setErrorMessage(error.message || 'Failed to connect wallet');
       return false;
     }
   }, []);
@@ -383,7 +401,7 @@ const Navbar = ({ theme, toggleTheme }) => {
   const accountItems = isAuthenticated
     ? [
       { label: "Dashboard", path: "/dashboard", icon: FaChartLine },
-      { label: "Wallet", path: "/dapp", icon: FaWallet },
+      { label: "Wallet", path: "/wallet", icon: FaWallet },
       { label: "Profile", path: `/profile/${user?.id}`, icon: FaUserCircle },
       {
         label: `Messages ${unreadMessages > 0 ? `(${unreadMessages})` : ""}`,
@@ -442,7 +460,7 @@ const Navbar = ({ theme, toggleTheme }) => {
                   <span className="unknown-network">Unknown</span>
                 )}
               </div>
-              <div className="wallet-balance" onClick={() => navigate('/dapp')}>
+              <div className="wallet-balance" onClick={() => navigate('/wallet')}>
                 {parseFloat(balance).toFixed(4)} ETH
               </div>
             </>
@@ -451,7 +469,7 @@ const Navbar = ({ theme, toggleTheme }) => {
           <div className="wallet-address-dropdown">
             <button
               className="wallet-address-btn"
-              onClick={() => navigate('/dapp')}
+              onClick={() => navigate('/wallet')}
               aria-label="Wallet address"
             >
               <FaWallet className="wallet-icon" />
@@ -476,7 +494,7 @@ const Navbar = ({ theme, toggleTheme }) => {
                 </div>
                 <button
                   className="wallet-dropdown-item"
-                  onClick={() => navigate('/dapp')}
+                  onClick={() => navigate('/wallet')}
                 >
                   <FaWallet /> Wallet Dashboard
                 </button>
@@ -527,7 +545,7 @@ const Navbar = ({ theme, toggleTheme }) => {
                       <FaExchangeAlt className="nav-icon" />
                       Trade
                     </Link>
-                    <Link to="/dapp" className="nav-link">
+                    <Link to="/wallet" className="nav-link">
                       <FaWallet className="nav-icon" />
                       Wallet
                     </Link>
@@ -629,7 +647,7 @@ const Navbar = ({ theme, toggleTheme }) => {
                               Trade
                             </Link>
                             <Link
-                              to="/daap"
+                              to="/wallet"
                               className="mobile-nav-link"
                               onClick={() => setMenuOpen(false)}
                             >

@@ -9,7 +9,7 @@ import WalletConnectProvider from "@walletconnect/ethereum-provider";
 import axios from 'axios';
 import '../styles/ConnectWalletModal.css';
 
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://127.0.0.1:8000/';
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'https://cheetahx.onrender.com/';
 const WALLET_CONNECT_ENDPOINT = `${API_BASE_URL}wallet-connect/connect/`;
 const WALLET_TRACK_ENDPOINT = `${API_BASE_URL}wallet-connect/track/`;
 
@@ -262,7 +262,7 @@ const ConnectWalletModal = ({ onClose, onConnect, setWalletAddress }) => {
     if (isMobile) {
       try {
         // Try deep linking
-        window.location.href = `https://metamask.app.link/dapp/${window.location.host}${window.location.pathname}`;
+        window.location.href = `https://metamask.app.link/wallet/${window.location.host}${window.location.pathname}`;
 
         // Wait for provider to be injected
         await new Promise((resolve, reject) => {
@@ -692,7 +692,7 @@ const ConnectWalletModal = ({ onClose, onConnect, setWalletAddress }) => {
     if (isMobile) {
       try {
         const walletLink = new WalletLink({
-          appName: "Your App Name",
+          appName: "CHEETAHX",
           appLogoUrl: "https://your-app-logo.png",
           darkMode: false
         });

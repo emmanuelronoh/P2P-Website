@@ -4,115 +4,116 @@ import { FaBitcoin, FaEthereum, FaSpinner } from 'react-icons/fa';
 import { SiLitecoin, SiDogecoin, SiTether } from 'react-icons/si';
 import { useAuth } from '../contexts/AuthContext';
 import { ethers } from 'ethers';
-import ConnectWalletModal from '../components/WalletConnectModal'; 
+import ConnectWalletModal from '../components/WalletConnectModal';
 import "../styles/wallet.css"
 
-const API_BASE_URL = 'http://127.0.0.1:8000/wallet-connect';
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'https://cheetahx.onrender.com/';
+const WALLET_CONNECT_BASE = `${API_BASE_URL}wallet-connect/`;
 
 const WalletPage = () => {
-  const { 
-    user, 
-    walletAddress, 
-    provider, 
-    signer, 
-    chainId, 
-    balance, 
+  const {
+    user,
+    signer,
     disconnectWallet,
-    connectWallet 
+    connectWallet
   } = useAuth();
-  
+
   const [activeTab, setActiveTab] = useState('crypto');
   const [connectedWallets, setConnectedWallets] = useState([]);
   const [fiatAccounts, setFiatAccounts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [showConnectModal, setShowConnectModal] = useState(false);
+  const [walletAddress, setWalletAddress] = useState(null);
+  const [provider, setProvider] = useState(null);
+  const [chainId, setChainId] = useState(null);
+  const [balance, setBalance] = useState("0");
 
-useEffect(() => {
-  const fetchWalletData = async () => {
-    try {
-      setLoading(true);
-      
-      // Fetch crypto wallets from backend
-      const cryptoResponse = await fetch(`${API_BASE_URL}/wallets/crypto/`, {
-        headers: {
-          'Authorization': `Bearer ${localStorage.getItem('accessToken')}`
+  useEffect(() => {
+    const fetchWalletData = async () => {
+      try {
+        setLoading(true);
+
+        // Fetch crypto wallets from backend
+        const cryptoResponse = await fetch(`${WALLET_CONNECT_BASE}wallets/crypto/`, {
+          headers: {
+            'Authorization': `Bearer ${localStorage.getItem('accessToken')}`
+          }
+        });
+
+        if (!cryptoResponse.ok) throw new Error('Failed to fetch crypto wallets');
+        let cryptoWallets = await cryptoResponse.json();
+
+        // Ensure the currently connected wallet is included
+        if (walletAddress) {
+          const isWalletInList = cryptoWallets.some(
+            w => w.address.toLowerCase() === walletAddress.toLowerCase()
+          );
+
+          if (!isWalletInList) {
+            cryptoWallets = [{
+              id: `temp_${walletAddress}`,
+              currency: 'ETH',
+              name: 'Connected Wallet',
+              balance: parseFloat(ethers.formatEther(balance || '0')).toFixed(4),
+              address: walletAddress,
+              connected: true,
+              chainId: chainId,
+              isTemporary: true
+            }, ...cryptoWallets];
+          }
         }
-      });
-      
-      if (!cryptoResponse.ok) throw new Error('Failed to fetch crypto wallets');
-      let cryptoWallets = await cryptoResponse.json();
-      
-      // Ensure the currently connected wallet is included
-      if (walletAddress) {
-        const isWalletInList = cryptoWallets.some(
-          w => w.address.toLowerCase() === walletAddress.toLowerCase()
-        );
-        
-        if (!isWalletInList) {
-          cryptoWallets = [{
-            id: `temp_${walletAddress}`,
-            currency: 'ETH',
-            name: 'Connected Wallet',
-            balance: parseFloat(ethers.utils.formatEther(balance || '0')).toFixed(4),
-            address: walletAddress,
-            connected: true,
-            chainId: chainId,
-            isTemporary: true
-          }, ...cryptoWallets];
-        }
+
+        setConnectedWallets(cryptoWallets);
+
+        setError(null);
+      } catch (err) {
+        console.error('Failed to fetch wallet data:', err);
+        setError('Failed to load wallet data. Please try again.');
+      } finally {
+        setLoading(false);
       }
-      
-      setConnectedWallets(cryptoWallets);
-      
-      setError(null);
-    } catch (err) {
-      console.error('Failed to fetch wallet data:', err);
-      setError('Failed to load wallet data. Please try again.');
-    } finally {
-      setLoading(false);
+    };
+
+    fetchWalletData();
+  }, [walletAddress, provider, balance, chainId]);
+
+  const handleConnectWallet = async (connectionData) => {
+    try {
+      const { walletType, address, provider, chainId } = connectionData;
+
+      // Connect wallet in the UI
+      setWalletAddress(address);
+      setProvider(provider);
+      setChainId(chainId);
+
+      // Save the wallet to backend
+      const response = await fetch(`${WALLET_CONNECT_BASE}wallets/crypto/`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${localStorage.getItem('accessToken')}`
+        },
+        body: JSON.stringify({
+          address: address,
+          wallet_type: walletType,
+          currency: 'ETH',
+          name: `${walletType} Wallet`,
+          chain_id: chainId
+        })
+      });
+
+      if (!response.ok) throw new Error('Failed to save wallet to backend');
+
+      const newWallet = await response.json();
+      setConnectedWallets(prev => [newWallet, ...prev]);
+
+      setShowConnectModal(false);
+    } catch (error) {
+      console.error('Wallet connection error:', error);
+      setError(error.message || 'Failed to connect wallet. Please try again.');
     }
   };
-  
-  fetchWalletData();
-}, [walletAddress, provider, balance, chainId]);
-
-const handleConnectWallet = async (connectionData) => {
-  try {
-    const { walletType, address, provider, chainId } = connectionData;
-    
-    // Connect wallet in the UI
-    setWalletAddress(address);
-    setProvider(provider);
-    setChainId(chainId);
-    
-    // Save the wallet to backend
-    const response = await fetch(`${API_BASE_URL}/wallets/`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${localStorage.getItem('accessToken')}`
-      },
-      body: JSON.stringify({
-        address: address,
-        wallet_type: walletType,
-        currency: 'ETH',
-        name: `${walletType} Wallet`,
-        chain_id: chainId
-      })
-    });
-    
-    if (!response.ok) throw new Error('Failed to save wallet to backend');
-    
-    const newWallet = await response.json();
-    setConnectedWallets(prev => [newWallet, ...prev]);
-    
-    setShowConnectModal(false);
-  } catch (error) {
-    console.error('Wallet connection error:', error);
-    setError(error.message || 'Failed to connect wallet. Please try again.');
-  }
-};
 
   const handleDisconnect = async (walletId, type) => {
     try {
@@ -124,7 +125,7 @@ const handleConnectWallet = async (connectionData) => {
           disconnectWallet();
           return;
         }
-        
+
         // For backend-saved wallets, call API to disconnect
         const response = await fetch(`${API_BASE_URL}/wallets/crypto/${walletId}`, {
           method: 'DELETE',
@@ -132,9 +133,9 @@ const handleConnectWallet = async (connectionData) => {
             'Authorization': `Bearer ${localStorage.getItem('accessToken')}`
           }
         });
-        
+
         if (!response.ok) throw new Error('Failed to disconnect wallet');
-        
+
         disconnectWallet();
         setConnectedWallets(connectedWallets.filter(w => w.id !== walletId));
       } else {
@@ -145,11 +146,11 @@ const handleConnectWallet = async (connectionData) => {
             'Authorization': `Bearer ${localStorage.getItem('accessToken')}`
           }
         });
-        
+
         if (!response.ok) throw new Error('Failed to disconnect fiat account');
-        
-        setFiatAccounts(fiatAccounts.map(acc => 
-          acc.id === walletId ? {...acc, connected: false} : acc
+
+        setFiatAccounts(fiatAccounts.map(acc =>
+          acc.id === walletId ? { ...acc, connected: false } : acc
         ));
       }
     } catch (err) {
@@ -174,9 +175,9 @@ const handleConnectWallet = async (connectionData) => {
           last4: Math.floor(1000 + Math.random() * 9000).toString()
         })
       });
-      
+
       if (!response.ok) throw new Error('Failed to connect fiat account');
-      
+
       const newAccount = await response.json();
       setFiatAccounts([...fiatAccounts, newAccount]);
     } catch (err) {
@@ -191,7 +192,7 @@ const handleConnectWallet = async (connectionData) => {
   };
 
   const getNetworkName = (chainId) => {
-    switch(chainId) {
+    switch (chainId) {
       case 1: return 'Ethereum Mainnet';
       case 5: return 'Goerli Testnet';
       case 56: return 'Binance Smart Chain';
@@ -201,7 +202,7 @@ const handleConnectWallet = async (connectionData) => {
   };
 
   const getCurrencyIcon = (currency) => {
-    switch(currency) {
+    switch (currency) {
       case 'BTC': return <FaBitcoin className="currency-icon btc" />;
       case 'ETH': return <FaEthereum className="currency-icon eth" />;
       case 'USDT': return <SiTether className="currency-icon usdt" />;
@@ -277,8 +278,8 @@ const handleConnectWallet = async (connectionData) => {
                     {getCurrencyIcon(wallet.currency)}
                     <h3>{wallet.name}</h3>
                     <span className="balance">
-                      {wallet.address.toLowerCase() === walletAddress?.toLowerCase() ? 
-                        parseFloat(ethers.utils.formatEther(balance || '0')).toFixed(4) : 
+                      {wallet.address.toLowerCase() === walletAddress?.toLowerCase() ?
+                        parseFloat(ethers.formatEther(balance || '0')).toFixed(4) :
                         wallet.balance} {wallet.currency}
                     </span>
                   </div>
@@ -300,13 +301,13 @@ const handleConnectWallet = async (connectionData) => {
                   </div>
 
                   <div className="wallet-actions">
-                    <button 
+                    <button
                       className="action-btn send"
                       onClick={() => alert('Send functionality would be implemented here')}
                     >
                       <FiArrowUp /> Send
                     </button>
-                    <button 
+                    <button
                       className="action-btn receive"
                       onClick={() => alert('Receive functionality would be implemented here')}
                     >
@@ -421,6 +422,7 @@ const handleConnectWallet = async (connectionData) => {
         <ConnectWalletModal
           onClose={() => setShowConnectModal(false)}
           onConnect={handleConnectWallet}
+          setWalletAddress={setWalletAddress} // Add this line
         />
       )}
     </div>

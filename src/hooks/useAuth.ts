@@ -13,7 +13,7 @@ export const useAuth = () => {
   const verifySignature = useCallback(async (walletAddress: string, signature: string, message: string) => {
     try {
       setLoading(true);
-      const response = await axios.post('http://127.0.0.1:8000/api/connect/', {
+      const response = await axios.post('https://cheetahx.onrender.com/api/connect/', {
         wallet_address: walletAddress,
         signature: signature,
         message: message,
@@ -69,7 +69,7 @@ export const useAuth = () => {
       if (!token) return;
 
       try {
-        const response = await axios.get('http://127.0.0.1:8000/wallet-connect/user-info/', {
+        const response = await axios.get('https://cheetahx.onrender.com/wallet-connect/user-info/', {
           headers: { Authorization: `Bearer ${token}` }
         });
         setUser(response.data);

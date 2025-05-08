@@ -12,7 +12,7 @@ import ErrorModal from "../components/ErrorModal";
 import LoadingOverlay from "../components/LoadingOverlay";
 import "../styles/Amount.css";
 
-const API_BASE_URL = "http://127.0.0.1:8000";
+const API_BASE_URL = "https://cheetahx.onrender.com";
 
 const Amount = () => {
   const location = useLocation();
@@ -171,7 +171,7 @@ const Amount = () => {
   // Validate trader data on mount
   useEffect(() => {
     if (!trader || !cryptoSymbol) {
-      navigate("/market", {
+      navigate("/wallet", {
         state: {
           notification: {
             type: "error",
@@ -555,7 +555,7 @@ const Amount = () => {
 
   const navigateToWalletSettings = () => {
     closeErrorModal();
-    navigate("/dapp", { state: { section: "wallet" } });
+    navigate("/wallet", { state: { section: "wallet" } });
   };
 
   if (!trader || !cryptoSymbol) {

@@ -10,10 +10,11 @@ import {
 import { IoMdFlash, IoMdTime } from "react-icons/io";
 import { MdOutlineArrowForwardIos, MdPayment, MdLocationOn } from "react-icons/md";
 import { RiExchangeDollarFill } from "react-icons/ri";
-import debounce from "lodash.debounce";
+
+import debounce from 'lodash.debounce';
 import "../styles/market.css";
 
-const API_BASE_URL = "http://127.0.0.1:8000";
+const API_BASE_URL = "https://cheetahx.onrender.com";
 
 const DEFAULT_TRADER = {
   id: '',
@@ -521,7 +522,6 @@ const Market = () => {
               className="market-select"
             >
               <option value="CHX">CHX</option>
-              <option value="">Select a cryptocurrency</option>
               <option value="USDT">USDT</option>
               <option value="USDC">USDC</option>
               <option value="DAI">DAI</option>

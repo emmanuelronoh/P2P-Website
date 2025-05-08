@@ -94,10 +94,10 @@ const FiatP2P = () => {
 
             // Fetch all data in parallel
             const [ordersResponse, paymentMethodsResponse, userOrdersResponse, priceTrendsResponse] = await Promise.all([
-                axios.get('http://127.0.0.1:8000/escrow/orders/', { headers }),
-                axios.get('http://127.0.0.1:8000/escrow/payment-methods-fiat/', { headers }),
-                axios.get('http://127.0.0.1:8000/escrow/user-orders/', { headers }),
-                axios.get('http://127.0.0.1:8000/escrow/price-trends/', { headers }),
+                axios.get('https://cheetahx.onrender.com/escrow/orders/', { headers }),
+                axios.get('https://cheetahx.onrender.com/escrow/payment-methods-fiat/', { headers }),
+                axios.get('https://cheetahx.onrender.com/escrow/user-orders/', { headers }),
+                axios.get('https://cheetahx.onrender.com/escrow/price-trends/', { headers }),
             ]);
 
             // Transform market orders
@@ -185,7 +185,7 @@ const FiatP2P = () => {
                 paymentMethods: paymentMethodsResponse.data,
                 userOrders: transformedUserOrders,
                 priceTrends: priceTrendsResponse.data,
-                securityDeposit: 200
+                securityDeposit: 50
             }));
 
         } catch (error) {
@@ -215,7 +215,7 @@ const FiatP2P = () => {
             }
 
             await axios.delete(
-                `http://127.0.0.1:8000/escrow/orders/${orderId}/`,
+                `https://cheetahx.onrender.com/escrow/orders/${orderId}/`,
                 {
                     headers: {
                         'Authorization': `Bearer ${token}`,
@@ -302,7 +302,7 @@ const filteredMarketOrders = uiState.orders
         try {
             const token = localStorage.getItem('accessToken');
             const response = await axios.post(
-                'http://127.0.0.1:8000/chat-room/api/trades/initiate/',
+                'https://cheetahx.onrender.com/chat-room/api/trades/initiate/',
                 {
                     order_id: order.id,
                     trade_type: uiState.activeTab,
@@ -377,7 +377,7 @@ const filteredMarketOrders = uiState.orders
 
             // Make the API call to create the order
             const response = await axios.post(
-                'http://127.0.0.1:8000/escrow/orders/',
+                'https://cheetahx.onrender.com/escrow/orders/',
                 orderData,
                 {
                     headers: {
@@ -388,7 +388,7 @@ const filteredMarketOrders = uiState.orders
             );
 
             // After successful creation, fetch the updated orders list
-            const refreshedOrders = await axios.get('http://127.0.0.1:8000/escrow/user-orders/', {
+            const refreshedOrders = await axios.get('https://cheetahx.onrender.com/escrow/user-orders/', {
                 headers: {
                     Authorization: `Bearer ${token}`,
                     'Content-Type': 'application/json'
@@ -469,8 +469,7 @@ const filteredMarketOrders = uiState.orders
                         </button>
                     </div>
                     <div className="market-stats">
-                        <span>Market Rate: 1 {filterState.sellCurrency} = {calculateMarketPrice().toFixed(2)} {filterState.receiveCurrency}</span>
-                        <span>24h Volume: {uiState.marketStats.volume || '0'} {filterState.sellCurrency}</span>
+                        <span>Trade fiat currencies directly with peers – fast, safe, and reliable.</span>
                     </div>
                 </div>
 

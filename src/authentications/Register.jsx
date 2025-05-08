@@ -53,7 +53,7 @@ const Register = () => {
         setCheckingEmail(true);
         try {
             const response = await axios.get(
-                `http://127.0.0.1:8000/api/auth/check-email/?email=${encodeURIComponent(email)}`
+                `https://cheetahx.onrender.com/api/auth/check-email/?email=${encodeURIComponent(email)}`
             );
             if (response.data.exists) {
                 setFieldErrors(prev => ({
@@ -75,7 +75,7 @@ const Register = () => {
         setCheckingUsername(true);
         try {
             const response = await axios.get(
-                `http://127.0.0.1:8000/api/auth/check-username/?username=${encodeURIComponent(username)}`
+                `https://cheetahx.onrender.com/api/auth/check-username/?username=${encodeURIComponent(username)}`
             );
             if (response.data.exists) {
                 setFieldErrors(prev => ({
@@ -288,7 +288,7 @@ const Register = () => {
 
         try {
             const response = await axios.post(
-                "http://127.0.0.1:8000/api/auth/register/",
+                "https://cheetahx.onrender.com/api/auth/register/",
                 formData,
                 {
                     headers: {

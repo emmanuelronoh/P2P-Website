@@ -9,9 +9,7 @@ import '../styles/userProfile.css';
 const UserProfile = () => {
   const { userId } = useParams();
   const navigate = useNavigate();
-  const [profile, setProfile] = useState({
-    reviews: [],
-  });
+  const [profile, setProfile] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [activeTab, setActiveTab] = useState('overview');
@@ -28,12 +26,12 @@ const UserProfile = () => {
 
         console.log("userId:", userId);
         console.log("token:", token);
-        const response = await axios.get(`http://127.0.0.1:8000/user/api/users/${userId}/profile/`, {
+        const response = await axios.get(`https://cheetahx.onrender.com/user/api/users/${userId}/profile/`, {
           headers: {
             Authorization: `Bearer ${token}`
           }
         });
-        setProfile(response.data);
+        setProfile(response.data.data);
       } catch (err) {
         setError(err.response?.data?.message || 'Failed to load profile');
         console.error('Error fetching profile:', err);

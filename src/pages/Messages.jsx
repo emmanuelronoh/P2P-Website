@@ -76,7 +76,7 @@ const Messages = () => {
   const loadChatRooms = useCallback(async () => {
     try {
       const token = localStorage.getItem('accessToken');
-      const response = await fetch('http://127.0.0.1:8000/chat-room/', {
+      const response = await fetch('https://cheetahx.onrender.com/chat-room/', {
         headers: { Authorization: `Bearer ${token}` }
       });
       const data = await response.json();
@@ -100,7 +100,7 @@ const Messages = () => {
 
   const connectToChat = useCallback((chatRoomId) => {
     const token = localStorage.getItem('accessToken');
-    const wsUrl = `ws://localhost:8001/ws/chat/${chatRoomId}/?token=${token}`;
+    const wsUrl = `ws://cheetahx.onrender.com/ws/chat/${chatRoomId}/?token=${token}`;
 
     if (socketRef.current) {
       socketRef.current.close();
@@ -298,7 +298,7 @@ const Messages = () => {
     try {
       const token = localStorage.getItem('accessToken');
       const response = await fetch(
-        `http://127.0.0.1:8000/chat-room/${chatRoomId}/messages/`,
+        `https://cheetahx.onrender.com/chat-room/${chatRoomId}/messages/`,
         { headers: { Authorization: `Bearer ${token}` } }
       );
       const data = await response.json();
@@ -323,7 +323,7 @@ const Messages = () => {
     try {
       const token = localStorage.getItem('accessToken');
       await fetch(
-        `http://127.0.0.1:8000/chat-room/${chatRoomId}/mark-read/`,
+        `https://cheetahx.onrender.com/chat-room/${chatRoomId}/mark-read/`,
         {
           method: 'PATCH',
           headers: {
@@ -605,7 +605,7 @@ const Messages = () => {
     try {
       const token = localStorage.getItem('accessToken');
       const response = await fetch(
-        'http://127.0.0.1:8000/chat-room/api/trades/initiate/',
+        'https://cheetahx.onrender.com/chat-room/api/trades/initiate/',
         {
           method: 'POST',
           headers: {
@@ -878,6 +878,9 @@ const Messages = () => {
       // Implement actual mark as paid functionality
       toast.success("Marked as paid. Waiting for confirmation.");
       setShowMenu(false);
+      
+      // Navigate to the review page
+      navigate('/give-review');
     };
 
     const handleOpenDispute = () => {

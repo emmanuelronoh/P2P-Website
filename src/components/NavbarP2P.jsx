@@ -37,7 +37,7 @@ const AdvertisementBar = () => {
   useEffect(() => {
     const fetchAds = async () => {
       try {
-        const response = await fetch('http://127.0.0.1:8000/api/auth/advertisements/'); // Your API endpoint
+        const response = await fetch('https://cheetahx.onrender.com/api/auth/advertisements/'); // Your API endpoint
         if (!response.ok) {
           throw new Error('Failed to fetch advertisements');
         }
@@ -250,7 +250,7 @@ const Navbar = ({ toggleTheme, theme }) => {
     const [unreadMessages, setUnreadMessages] = useState(0);
     const [notifications, setNotifications] = useState(3);
     const [menuOpen, setMenuOpen] = useState(false);
-    const [balance, setBalance] = useState("0.00");
+    const [balance, setBalance] = useState("0");
     const [isScrolled, setIsScrolled] = useState(false);
     const navigate = useNavigate();
     const location = useLocation();
@@ -322,13 +322,13 @@ const Navbar = ({ toggleTheme, theme }) => {
 
     // Menu items configuration
     const marketItems = [
-        { label: "Create Offer", path: "/market", icon: FaChartLine },
-        { label: "Trade History", path: "/dashboard", icon: FaChartLine },
+        { label: "Create Offer", path: "/fiat-p2p", icon: FaChartLine },
+        { label: "Trade History", path: "/dashboard-fiat", icon: FaChartLine },
 
     ];
 
     const helpItems = [
-        { label: "FAQ", path: "/cryptolisting", icon: FaQuestionCircle },
+        { label: "FAQ", path: "/faq-fiat", icon: FaQuestionCircle },
         { label: "Tutorials", path: "/tutorials-fiat", icon: FaQuestionCircle },
         { label: "Contact Support", path: "/support-fiat", icon: FaHeadset }
     ];

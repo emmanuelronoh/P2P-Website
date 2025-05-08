@@ -1,6 +1,6 @@
 import React, { useState } from "react";
-import { useNavigate } from "react-router-dom"; 
-import "../styles/styles.css"; 
+import { useNavigate } from "react-router-dom";
+import "../styles/styles.css";
 
 const TermsAndCondition = () => {
   const [agreed, setAgreed] = useState(false);
@@ -34,8 +34,8 @@ const TermsAndCondition = () => {
               id="agreeCheckbox"
               checked={agreed}
               onChange={() => setAgreed(!agreed)}
+              className="agree-checkbox"  // Add this class
             />
-            <span className="custom-checkbox" />
             <span>I have read and agree to the terms and conditions.</span>
           </label>
         </div>
@@ -45,7 +45,7 @@ const TermsAndCondition = () => {
           onClick={handleAgreement}
           disabled={!agreed}
         >
-           Continue to Crypto Listing
+          Continue to Crypto Listing
         </button>
       </div>
     </section>

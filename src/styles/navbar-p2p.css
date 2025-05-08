@@ -143,7 +143,7 @@
     transition: var(--transition);
 }
 .no-hover-line {
-    text-decoration: none;
+    text-decoration: none !important;
     color: inherit;
   }
   
@@ -1140,6 +1140,10 @@ select:focus-visible {
     }
 }
 
+a {
+    text-decoration: none;
+  }
+  
 /* Mobile menu overlay fixes */
 .p2p-mobile-menu-overlay {
     position: fixed;

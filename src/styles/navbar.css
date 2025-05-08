@@ -726,6 +726,10 @@
   }
 }
 
+a {
+  text-decoration: none;
+}
+
 @media (max-width: 480px) {
   .navbar-container {
     padding: 0 0.75rem;
