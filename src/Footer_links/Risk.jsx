@@ -8,14 +8,6 @@ const Risk = () => {
   return (
     <div className="risk-container">
       <header className="risk-header">
-        <div className="navigation-buttons">
-          <button className="nav-button back-button" onClick={() => navigate(-1)}>
-            &larr; Back
-          </button>
-          <button className="nav-button next-button" onClick={() => navigate(1)}>
-            Next &rarr;
-          </button>
-        </div>
         <h1>CheetahX Risk Disclosure</h1>
         <p className="effective-date">Last Updated: {new Date().toLocaleDateString()}</p>
       </header>

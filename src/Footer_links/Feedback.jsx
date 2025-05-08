@@ -88,14 +88,6 @@ const Feedback = () => {
   return (
     <div className="feedback-container">
       <header className="feedback-header">
-        <div className="navigation-buttons">
-          <button className="nav-button back-button" onClick={() => navigate(-1)}>
-            &larr; Back
-          </button>
-          <button className="nav-button next-button" onClick={() => navigate(1)}>
-            Next &rarr;
-          </button>
-        </div>
         <h1>Share Your Feedback</h1>
         <p className="subtitle">Help us improve CheetahX</p>
       </header>
