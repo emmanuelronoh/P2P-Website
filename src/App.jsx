@@ -353,6 +353,7 @@ function AppInner() {
         <Route path="/forgot-password" element={<PublicOnlyRoute><ForgotPassword /></PublicOnlyRoute>} />
         <Route path="/reset-password/:uidb64/:token" element={<PublicOnlyRoute><ResetPassword /></PublicOnlyRoute>} />
         <Route path="/market" element={<Market />} />
+        <Route path="/notifications" element={<Notifications />} />
         <Route path="/terms" element={<Terms />} />
         <Route path="/cookie" element={<Cookie />} />
         <Route path="/termsAndcondition" element={<TermsAndCondition />} />
@@ -409,6 +410,7 @@ function AppInner() {
         <Route path="/fiat-p2p" element={<PrivateRoute><FiatP2P /></PrivateRoute>} />
         <Route path="/home-fiat" element={<PrivateRoute><HomeFiat /></PrivateRoute>} />
         <Route path="/notifications-p2p" element={<PrivateRoute><NotificationsPage /></PrivateRoute>} />
+
         <Route path="/dashboard-fiat" element={<PrivateRoute><DashboardFiatPage /></PrivateRoute>} />
         <Route path="/become-vendor-fiat" element={<PrivateRoute><Vendor /></PrivateRoute>} />
         <Route path="/faq-fiat" element={<PrivateRoute><Faq /></PrivateRoute>} />
