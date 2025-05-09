@@ -109,11 +109,13 @@
   default-src 'self';
   script-src 'self' 'unsafe-inline' https://*.cheetahxofficial.com https://api.web3modal.org;
   style-src 'self' 'unsafe-inline' https://fonts.googleapis.com;
+  style-src-elem 'self' 'unsafe-inline' https://fonts.googleapis.com;
   font-src 'self' https://fonts.gstatic.com;
-  img-src 'self' data: https://*.cheetahxofficial.com https://*.twitter.com;
+  img-src 'self' data: https://*.cheetahxofficial.com https://*.twitter.com https://i.ibb.co https://ibb.co;
   connect-src 'self' https://api.cheetahxofficial.com https://api.web3modal.org https://cheetahx.onrender.com;
   frame-src 'none';
   object-src 'none';
+  media-src 'self' https://i.ibb.co;
 ">
 
   <meta http-equiv="Strict-Transport-Security" content="max-age=31536000; includeSubDomains; preload">
