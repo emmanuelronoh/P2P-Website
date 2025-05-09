@@ -1,0 +1,8 @@
+{
+  "name": "Cheetah X",
+  "short_name": "CheetahX",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#000000"
+}
