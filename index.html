@@ -34,7 +34,7 @@
   <meta property="og:title" content="Cheetah X | Fast & Secure P2P Crypto & Fiat Exchange Platform">
   <meta property="og:description"
     content="Trade cryptocurrencies and fiat currencies instantly on Cheetah X's secure P2P exchange platform. Lowest fees in the industry with escrow protection.">
-  <meta property="og:image" content="https://www.cheetahxofficial.com/public/logo.png">
+  <meta property="og:image" content="https://i.ibb.co/WWrSXmcX/cheetah-logo.png">
   <meta property="og:image:width" content="1200">
   <meta property="og:image:height" content="630">
   <meta property="og:site_name" content="Cheetah X">
@@ -48,7 +48,7 @@
   <meta name="twitter:title" content="Cheetah X | Fast & Secure P2P Crypto & Fiat Exchange Platform">
   <meta name="twitter:description"
     content="Join thousands trading crypto and fiat securely on Cheetah X's P2P platform. Instant settlements and military-grade security.">
-  <meta name="twitter:image" content="https://www.cheetahxofficial.com/public/logo.png">
+  <meta name="twitter:image" content="https://i.ibb.co/WWrSXmcX/cheetah-logo.png">
   <meta name="twitter:image:alt" content="Cheetah X P2P Exchange Platform">
 
   <!-- Structured Data / Schema.org -->
@@ -58,7 +58,7 @@
       "@type": ["FinancialService", "WebApplication"],
       "name": "Cheetah X",
       "url": "https://www.cheetahxofficial.com",
-      "logo": "https://www.cheetahxofficial.com/logo.png",
+      "logo": "https://i.ibb.co/WWrSXmcX/cheetah-logo.png",
       "description": "Peer-to-peer cryptocurrency and fiat currency exchange platform",
       "operatingSystem": "Web",
       "applicationCategory": "FinancialApplication",
@@ -89,9 +89,9 @@
     </script>
 
   <!-- Favicon and App Icons -->
-  <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png">
-  <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png">
-  <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="https://i.ibb.co/WWrSXmcX/cheetah-logo.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="https://i.ibb.co/WWrSXmcX/cheetah-logo.png">
+  <link rel="apple-touch-icon" sizes="180x180" href="https://i.ibb.co/WWrSXmcX/cheetah-logo.png">
   <link rel="mask-icon" href="/safari-pinned-tab.svg" color="#5bbad5">
   <link rel="manifest" href="/site.webmanifest">
 
@@ -107,15 +107,18 @@
   <!-- Security Headers -->
    <meta http-equiv="Content-Security-Policy" content="
   default-src 'self';
-  script-src 'self' 'unsafe-inline' https://*.cheetahxofficial.com https://api.web3modal.org;
+  script-src 'self' 'unsafe-inline' 'unsafe-eval' https://*.cheetahxofficial.com https://api.web3modal.org;
   style-src 'self' 'unsafe-inline' https://fonts.googleapis.com;
   style-src-elem 'self' 'unsafe-inline' https://fonts.googleapis.com;
   font-src 'self' https://fonts.gstatic.com;
-  img-src 'self' data: https://*.cheetahxofficial.com https://*.twitter.com https://i.ibb.co https://ibb.co;
-  connect-src 'self' https://api.cheetahxofficial.com https://api.web3modal.org https://cheetahx.onrender.com;
-  frame-src 'none';
+  img-src 'self' data: blob: https://*.cheetahxofficial.com https://*.twitter.com https://*.ibb.co https://i.ibb.co;
+  connect-src 'self' https://api.cheetahxofficial.com https://api.web3modal.org https://cheetahx.onrender.com wss://*.web3modal.org;
+  frame-src 'self' https://web3modal.com;
   object-src 'none';
-  media-src 'self' https://i.ibb.co;
+  media-src 'self' https://*.ibb.co;
+  worker-src 'self' blob:;
+  form-action 'self';
+  base-uri 'self';
 ">
 
   <meta http-equiv="Strict-Transport-Security" content="max-age=31536000; includeSubDomains; preload">
