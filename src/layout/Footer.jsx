@@ -172,11 +172,8 @@ const CheetahXFooter = () => {
           <div className="social-container">
             <h3 className="social-heading">Connect With Us</h3>
             <div className="social-icons">
-              <a href="https://twitter.com/cheetahx" aria-label="Twitter"><FaTwitter className="social-icon" /></a>
-              <a href="https://t.me/cheetahx" aria-label="Telegram"><FaTelegram className="social-icon" /></a>
-              <a href="https://discord.gg/cheetahx" aria-label="Discord"><FaDiscord className="social-icon" /></a>
-              <a href="https://medium.com/cheetahx" aria-label="Medium"><FaMedium className="social-icon" /></a>
-              <a href="https://linkedin.com/company/cheetahx" aria-label="LinkedIn"><FaLinkedin className="social-icon" /></a>
+              <a href="https://x.com/Cheetahxof91133" aria-label="Twitter"><FaTwitter className="social-icon" /></a>
+              <a href="https://t.me/CheetahxofficialCHX" aria-label="Telegram"><FaTelegram className="social-icon" /></a>
             </div>
           </div>
         </div>
@@ -187,16 +184,11 @@ const CheetahXFooter = () => {
             © {new Date().getFullYear()} CheetahX. All rights reserved.
           </div>
           <div className="legal-links">
-            <a href="/compliance">Compliance</a>
+            <a href="/cookie">Compliance</a>
             <span className="separator">|</span>
-            <a href="/security">Security</a>
+            <a href="/privacy">Privacy</a>
             <span className="separator">|</span>
-            <a href="/sitemap">Sitemap</a>
-          </div>
-          <div className="language-selector">
-            <select className="language-dropdown" aria-label="Language selector">
-              <option value="en">English</option>
-            </select>
+            <a href="/terms">Terms</a>
           </div>
         </div>
       </footer>
